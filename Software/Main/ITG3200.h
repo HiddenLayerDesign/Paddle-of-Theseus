@@ -15,6 +15,10 @@
  
 #include "Arduino.h"
 
+/* ITG3200 Slave Addr and simple WHOAMI response */
+#define ITG3200_SLAVE_ADDR      (0xD0 >> 1)
+#define ITG3200_WHOMAI_VAL      0x68
+
 /* ITG3200 Registers */
 #define ITG3200_WHOAMI_REG      0x00
 #define ITG3200_SMPLRT_DIV_REG  0x15
@@ -30,9 +34,6 @@
 #define ITG3200_GYRO_ZOUT_H_REG 0x21
 #define ITG3200_GYRO_ZOUT_L_REG 0x22
 #define ITG3200_PWR_MGM_REG     0x3E
-
-/* Expected POR value of ITG3200 WHOAMI */
-#define ITG3200_WHOAMI_VAL 0x68
 
 
 

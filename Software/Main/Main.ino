@@ -20,6 +20,9 @@
 #include "ITG3200.h"
 #include "ADXL345.h"
 
+#define ACCEL_I2C_ADDR              (0xA6>>1)
+
+
 /* Teensy layout constants */
 const int TEENSY_LED_PIN = 13;
 
@@ -33,6 +36,19 @@ int prev_note     = 0;
 int curr_bend_val = 1;
 int prev_bend_val = 0;
 
+/**
+ * Just print a quick serial banner- this is to de-clutter setup()
+ */
+void print_banner(void)
+{
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println("****************************************");
+  Serial.println("*** Paddle of Theseus Serial Output  ***");
+  Serial.println("****************************************");
+  Serial.println();  
+}
 
 /**
  * Read the linear potentiometer and use it to get a note in the scale
@@ -48,23 +64,39 @@ int note_from_lin_pot(void)
   lin_pot_voltage = max(lin_pot_voltage, SENSOR_MIN);
   lin_pot_voltage = min(lin_pot_voltage, SENSOR_MAX);
 
-  Serial.print("Analog 0 is: ");
-  Serial.println(lin_pot_voltage);
+  if (lin_pot_voltage > 5)
+  {
+    Serial.print("Analog 0 is: ");
+    Serial.println(lin_pot_voltage);
+  }
   return BLUES_SCALE[(lin_pot_voltage/ SCALE_LEN)];
 }
 
 Ultrasonic ultrasonic(TEENSY_ULTRASONIC_PIN);
+ADXL345 accel;
 
 void setup() 
 {
+  byte rx_byte = 255;
+  
   pinMode(TEENSY_LED_PIN, OUTPUT);
   Serial.begin(9600);
+  print_banner();
+
+  Serial.println("INFO: Initializing Accelerometer");
+  if ( accel.init() < 0)
+  {
+    Serial.println("WARN: Failed to init ADXL345");
+  }
+
+  
 }
 
 void loop() 
-{
+{  
   if (msec >= 200) 
   {
+    accel.accel_update();
     msec = 0;
 
     curr_note = note_from_lin_pot();
