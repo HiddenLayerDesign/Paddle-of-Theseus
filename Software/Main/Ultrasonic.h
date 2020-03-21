@@ -17,8 +17,6 @@
 
 #include "Arduino.h"
 
-const int TEENSY_ULTRASONIC_PIN = 0;
-
 class Ultrasonic
 {
   public:

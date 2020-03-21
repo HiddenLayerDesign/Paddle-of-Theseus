@@ -53,9 +53,10 @@ class ADXL345
     ADXL345(void);
     int8_t init(void);
     void accel_update(void);
-    uint16_t accel_x;
-    uint16_t accel_y;
-    uint16_t accel_z;
+    void print_accel(void);
+    float x;
+    float y;
+    float z;
   private:
     int8_t ADXL345_set_registers(); 
     uint8_t _slave_addr;

@@ -24,9 +24,9 @@ void Ultrasonic::DistanceMeasure(void)
 {
   pinMode(_pin, OUTPUT);
   digitalWrite(_pin, LOW);
-  delayMicroseconds(2);
+  delay(2);
   digitalWrite(_pin, HIGH);
-  delayMicroseconds(5);
+  delay(5);
   digitalWrite(_pin,LOW);
   pinMode(_pin,INPUT);
   duration = pulseIn(_pin,HIGH);

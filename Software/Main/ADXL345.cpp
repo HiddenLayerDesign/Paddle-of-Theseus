@@ -12,15 +12,16 @@
 #include "ADXL345.h"
 #include "Wire.h"
 
+const float accel_factor = 0.0078;
 
 ADXL345::ADXL345()
 {
   Wire.begin();
 
   _slave_addr = ADXL345_SLAVE_ADDR;
-  accel_x = 0;
-  accel_y = 0;
-  accel_z = 0;
+  x = 0;
+  y = 0;
+  z = 0;
 }
 
 int8_t ADXL345::init(void)
@@ -38,7 +39,7 @@ int8_t ADXL345::init(void)
     return -1;  
   }
   Wire.endTransmission();
-  Serial.print("INFO: ADXL345 WHOAMI value matches expected value: 0x");
+  Serial.print("DEBUG: ADXL345 WHOAMI value matches expected value: 0x");
   Serial.println(rx_byte, HEX);
 
   /* Set ADXL345 Registers */
@@ -46,23 +47,22 @@ int8_t ADXL345::init(void)
   Wire.write(ADXL345_POWER_CTL_REG);
   Wire.write(ADXL345_POWER_CTL_MEAS);
   Wire.endTransmission();
-  Serial.println("INFO: ADXL345 POW_CTRL mode MEASURE");
+  Serial.println("DEBUG: ADXL345 POW_CTRL mode MEASURE");
 
   Wire.beginTransmission(_slave_addr);
   Wire.write(ADXL345_DATA_FORMAT_REG);
   Wire.write(ADXL345_RANGE_0);
   Wire.endTransmission();  
-  Serial.println("INFO: ADXL345 DATA_FMT setting MODE_0");
+  Serial.println("DEBUG: ADXL345 DATA_FMT setting MODE_0");
+  Serial.println("INFO: Accelerometer initialization complete");
   return 0;
 }
-
-    
-    
+   
 void ADXL345::accel_update(void)
 {
-  uint16_t accel_x_lsb, accel_x_msb;
-  uint16_t accel_y_lsb, accel_y_msb;
-  uint16_t accel_z_lsb, accel_z_msb;
+  uint16_t accel_x_lsb, accel_x_msb, combined_x;
+  uint16_t accel_y_lsb, accel_y_msb, combined_y;
+  uint16_t accel_z_lsb, accel_z_msb, combined_z;
 
   /* Get X-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -72,7 +72,8 @@ void ADXL345::accel_update(void)
   accel_x_msb = (uint16_t) Wire.read();
   accel_x_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
-  accel_x = (accel_x_msb << 8) | (accel_x_lsb);
+  combined_x = (accel_x_msb << 8) | (accel_x_lsb);
+  x = (float) (combined_x * accel_factor);
 
   /* Get Y-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -82,7 +83,8 @@ void ADXL345::accel_update(void)
   accel_y_msb = (uint16_t) Wire.read();
   accel_y_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
-  accel_y = (accel_y_msb << 8) | (accel_y_lsb);
+  combined_y = (accel_y_msb << 8) | (accel_y_lsb);
+  y = (float) (combined_y * accel_factor);
 
   /* Get Z-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -92,5 +94,17 @@ void ADXL345::accel_update(void)
   accel_z_msb = (uint16_t) Wire.read();
   accel_z_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
-  accel_z = (accel_z_msb << 8) | (accel_z_lsb);
+  combined_z = (accel_z_msb << 8) | (accel_z_lsb);
+  z = (float) (combined_z * accel_factor);
+}
+
+void ADXL345::print_accel(void)
+{
+    Serial.print("INFO: X_ACCEL: ");
+    Serial.print(x, 4);
+    Serial.print(", Y_ACCEL: ");
+    Serial.print(y, 4);
+    Serial.print(", Z_ACCEL: ");
+    Serial.print(z, 4);
+    Serial.println();
 }
