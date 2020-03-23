@@ -1,6 +1,9 @@
 # Paddle-of-Theseus
 This Repository holds the design work for Hidden Layer Design's "Paddle of Theseus" project.
 
+### Hardware Diagram
+![Fritzing Diagram of "Paddle of Theseus" Hardware](https://github.com/ChaseStewart/Paddle-of-Theseus/blob/master/Hardware/Diagrams/Paddle_of_Theseus_bb.png)
+
 ## Author
 [Chase E Stewart](mailto:chase@hiddenlayerdesign.com) for [Hidden Layer Design](https://hiddenlayerdesign.com)
 
