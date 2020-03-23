@@ -7,7 +7,8 @@ This Repository holds the design work for Hidden Layer Design's "Paddle of These
 ## Repository Contents
 * **/Software/Main** - Software Arduino Project to program the Teensy 4.0. This Teensy is the main microcontroller for this project, and uses input sensor data to output MIDI commands to an external controller.
 * **/Documentation** - _TODO this will have connection diagrams, etc._
-* **/Hardware** - _TODO this may have details of our physical board outside of electronics._
+* **/Hardware/Fritzing**  - Fritzing file for project Hardware _NOTE: HW Diagram uses a Teensy3.1 but I own a Teensy4.0_
+* **/Hardware/Diagrams**  - HW diagrams generated from the Fritzing file; currently I have a schematic and breadboard diagram
 
 ## Features
 This project will create a bass-guitar-like skeumorphic MIDI instrument out of a standard rowing paddle (or arbitrary instrument body) and sensors. The Teensy 4.0 microcontroller will take in sensor values and provide MIDI output to an external Audio DAW (In our case, we use Ableton Live).
@@ -15,7 +16,7 @@ This project will create a bass-guitar-like skeumorphic MIDI instrument out of a
 ## Requirements
 Implementing this project will require some knowledge of electronics, prototyping, and potentially phyiscal fabrication. 
 
-_Note: Several of the sensors in this project are old and discontinued. It would likely be worth extending this project to utilize sensors that are more future-proof. Modernizing the sensors isn't a high priority for me right now, but also would not take much effort._
+_Note: Several of the sensors in this project including the 6DoF_IMU and the SEN136B5B are old and discontinued. It would likely be worth extending this project to utilize sensors that are more future-proof. Modernizing the sensors isn't a high priority for me right now, but also would not take much effort._
 
 ### Software Requirements
 - [Arduino IDE](https://www.arduino.cc/en/Main/Software)
@@ -29,7 +30,8 @@ You will need the following to run this project
 - 1x [Ultrasonic Rangefinder](https://www.rpelectronics.com/sen136b5b-ultrasonic-distance-sensor-module.html) or equivalent
 - 1x [6DoF IMU](https://www.sparkfun.com/products/retired/10121) or equivalent
 - 1x [ThinPot Linear Potentiometer](https://www.digikey.com/en/product-highlight/s/spectra-symbol/thinpot-potentiometers)
-- 4x [Instantaneous Capacitive Touch Sensors](https://www.adafruit.com/product/1374) **NOTE: NOT CONFIRMED FOR THIS PROJECT**
+- 1x [Instantaneous Capacitive Touch Sensors](https://www.adafruit.com/product/1374) **NOTE: This may become 4 of the same model**
+- 1x [Rotary Encoder](https://www.digikey.com/product-detail/en/bourns-inc/PEC11L-4215F-S0015/PEC11L-4215F-S0015-ND/4699176)
 - Audio Software that supports MIDI (I use Ableton Live 8)
 
 ### Assembly

@@ -32,12 +32,18 @@ const int MIDI_CHANNEL_14 = 13;
 const int MIDI_CHANNEL_15 = 14;
 const int MIDI_CHANNEL_16 = 15;
 
+/* Generally accepted MIDI Control Change messages */
+const int MIDI_CTRL_CHG_MOD_WHEEL  = 0x01;
+const int MIDI_CTRL_CHG_MOD_BREATH = 0x02;
+const int MIDI_CTRL_CHG_PORTAMENTO = 0x05;
+const int MIDI_CTRL_CHG_EXPRESSION = 0x0B;
+const int MIDI_CTRL_CHG_EFFECT_1   = 0x0C;
+const int MIDI_CTRL_CHG_EFFECT_2   = 0x0D;
+const int MIDI_CTRL_CHG_LEGATO_FSW = 0x44;
+
 /* Pitch Bend limits*/
 const int MIDI_PBEND_MAX  = 72;
 const int MIDI_PBEND_MIN  = 48;
-
-
-
 
 const int SCALE_LEN = 32;
 /* Various MIDI Scales- thanks to http://lawriecape.co.uk/theblog/index.php/archives/881 for writing these out */
