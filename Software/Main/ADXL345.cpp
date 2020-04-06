@@ -63,6 +63,7 @@ void ADXL345::accel_update(void)
   uint16_t accel_x_lsb, accel_x_msb, combined_x;
   uint16_t accel_y_lsb, accel_y_msb, combined_y;
   uint16_t accel_z_lsb, accel_z_msb, combined_z;
+  float raw_x, raw_y, raw_z;
 
   /* Get X-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -73,7 +74,8 @@ void ADXL345::accel_update(void)
   accel_x_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
   combined_x = (accel_x_msb << 8) | (accel_x_lsb);
-  x = (float) (combined_x * accel_factor);
+  raw_x = (float) (combined_x * accel_factor);
+  x = (uint8_t) min(raw_x, 0xFF);
 
   /* Get Y-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -84,7 +86,8 @@ void ADXL345::accel_update(void)
   accel_y_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
   combined_y = (accel_y_msb << 8) | (accel_y_lsb);
-  y = (float) (combined_y * accel_factor);
+  raw_y = (float) (combined_y * accel_factor);
+  y = (uint8_t) min(raw_y, 0xFF);
 
   /* Get Z-axis Acceleration */
   Wire.beginTransmission(_slave_addr);
@@ -95,7 +98,8 @@ void ADXL345::accel_update(void)
   accel_z_lsb = (uint16_t) Wire.read();
   Wire.endTransmission();
   combined_z = (accel_z_msb << 8) | (accel_z_lsb);
-  z = (float) (combined_z * accel_factor);
+  raw_z = (float) (combined_z * accel_factor);
+  z = (uint8_t) min(raw_z, 0xFF);
 }
 
 void ADXL345::print_accel(void)

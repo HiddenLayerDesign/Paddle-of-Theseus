@@ -19,13 +19,19 @@
 #include "MIDIConstants.h"
 #include "ITG3200.h"
 #include "ADXL345.h"
+#include "Rotary_Encoder.h"
+#include <Encoder.h>
 
 /* Teensy layout constants */
-const int TEENSY_LED_PIN        = 13;
-const int TEENSY_ULTRASONIC_PIN = 0;
-const int TEENSY_CAP_TOUCH_PIN  = 1;
-const int CAP_TOUCH_DEBOUNCE_DELAY = 50;
-const int PITCH_BEND_RESOLUTION = 1;
+const int TEENSY_ULTRASONIC_PIN     = 0;
+const int TEENSY_CAP_TOUCH_PIN      = 1;
+const int TEENSY_ROT_ENC_PIN_1      = 3;
+const int TEENSY_ROT_ENC_PIN_2      = 4;
+const int TEENSY_LED_PIN            = 13;
+const int TEENSY_ROT_ENC_BUTTON_PIN = 16;
+
+const int CAP_TOUCH_DEBOUNCE_DELAY  = 50;
+const int PITCH_BEND_RESOLUTION     = 1;
 
 /* Prototypes */
 void print_banner(void);
@@ -41,6 +47,13 @@ int prev_note     = 0;
 int curr_bend_val = 1;
 int prev_bend_val = 0;
 
+/* Rotary Encoder Variables */
+char rot_enc_array[ROT_ENC_ENUM_SIZE];
+int curr_rot_button = LOW;
+int prev_rot_button = LOW;
+enum rot_enc_state encoder_state = ROT_ENC_EFFECT_1;
+bool update_rot_enc = false;
+
 /* Capacitive Touch variables */
 int cap_touch_reading = 0;
 int update_midi_msec  = 0;
@@ -49,6 +62,7 @@ bool midi_needs_update  = true;
 /* Sensor class variables */
 Ultrasonic ultrasonic(TEENSY_ULTRASONIC_PIN);
 ADXL345 accel;
+Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
 
 /*
  * Setup PinModes and Serial port, Init digital sensors 
@@ -57,7 +71,8 @@ void setup()
 {
   pinMode(TEENSY_LED_PIN, OUTPUT);
   pinMode(TEENSY_CAP_TOUCH_PIN, INPUT);
-
+  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT_PULLUP);
+  
   Serial.begin(9600);
   print_banner();
 
@@ -72,7 +87,39 @@ void setup()
  * Read all sensors, create and send MIDI messages as needed.
  */
 void loop() 
-{  
+{
+  update_rot_enc = false;
+  
+  /* Sample Rotary Encoder Pushbutton */
+  curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
+  if (curr_rot_button == HIGH && prev_rot_button == LOW)  
+  {
+    encoder_state = ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
+    Serial.print("NEW ENC_STATUS: ");
+    Serial.println(encoder_state);
+    rot_enc.write(rot_enc_array[encoder_state]);
+  }
+  prev_rot_button = curr_rot_button;
+  
+  /* Sample Rotary Encoder Twist Knob */
+  long enc_reading;
+  enc_reading = rot_enc.read();
+  if (enc_reading < ROT_ENC_MIN)
+  {
+    rot_enc.write(ROT_ENC_MIN);  
+  }
+  else if (enc_reading > ROT_ENC_MAX)
+  {
+    rot_enc.write(ROT_ENC_MAX);  
+  }
+  if (enc_reading != rot_enc_array[encoder_state])
+  { 
+    rot_enc_array[encoder_state] = enc_reading;  
+    update_rot_enc = true;
+    Serial.print("ENC VALUE: ");
+    Serial.println(enc_reading);
+  }
+  
   /* Get Pitch-bend value from Ultrasonic Sensor */
   ultrasonic.DistanceMeasure();
   range_in_cm = ultrasonic.microsecondsToCentimeters();
@@ -95,8 +142,9 @@ void loop()
     digitalWrite(TEENSY_LED_PIN, LOW);
   }
 
-  /* TODO Get X/Y/Z from Accelerometer */
+  /* Set Expression value from Accelerometer X value */
   accel.accel_update();
+
 
   /* Read MIDI note from potentiometer */
   curr_note = note_from_lin_pot();
@@ -114,7 +162,7 @@ void loop()
       usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
       update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
       midi_needs_update = false;
-      prev_note = curr_note;      
+      prev_note = curr_note;
     }
   }
   else
@@ -122,12 +170,28 @@ void loop()
     midi_needs_update = true;
   }
 
-  /* Update Pitch Bend and flush usbMIDI message */
-  if (update_pitch_bend == true)
+  if (encoder_state != ROT_ENC_OFF)
   {
-    usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
-    usbMIDI.send_now();
-    update_pitch_bend = false;
+    if (update_rot_enc == true)
+    {
+      usbMIDI.sendControlChange(rot_enc_ctrl_change[encoder_state], rot_enc_array[encoder_state], MIDI_CHANNEL_1);
+      usbMIDI.send_now();
+    }
+    else
+    {
+      /* Update Pitch Bend and flush usbMIDI message */
+      if (update_pitch_bend == true)
+      {
+        usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
+        usbMIDI.send_now();
+        update_pitch_bend = false;
+      }
+    }
+  }
+  /* Only send accelerometer data when the Rotary Encoder is in OFF mode */
+  else
+  {
+    usbMIDI.sendControlChange(MIDI_CTRL_CHG_EXPRESSION, accel.x, MIDI_CHANNEL_1);  
   }
 
   /* 
