@@ -95,8 +95,6 @@ void loop()
   if (curr_rot_button == HIGH && prev_rot_button == LOW)  
   {
     encoder_state = ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
-    Serial.print("NEW ENC_STATUS: ");
-    Serial.println(encoder_state);
     rot_enc.write(rot_enc_array[encoder_state]);
   }
   prev_rot_button = curr_rot_button;
@@ -116,35 +114,7 @@ void loop()
   { 
     rot_enc_array[encoder_state] = enc_reading;  
     update_rot_enc = true;
-    Serial.print("ENC VALUE: ");
-    Serial.println(enc_reading);
   }
-  
-  /* Get Pitch-bend value from Ultrasonic Sensor */
-  ultrasonic.DistanceMeasure();
-  range_in_cm = ultrasonic.microsecondsToCentimeters();
-  if (range_in_cm < 50)
-  {
-    curr_bend_val = range_in_cm * 200;
-    if (curr_bend_val != prev_bend_val)
-    {
-      update_pitch_bend = true;
-      digitalWrite(TEENSY_LED_PIN, HIGH);
-    }
-    else
-    {
-      digitalWrite(TEENSY_LED_PIN, LOW);
-    }
-    prev_bend_val = curr_bend_val;
-  }
-  else
-  {
-    digitalWrite(TEENSY_LED_PIN, LOW);
-  }
-
-  /* Set Expression value from Accelerometer X value */
-  accel.accel_update();
-
 
   /* Read MIDI note from potentiometer */
   curr_note = note_from_lin_pot();
@@ -172,26 +142,43 @@ void loop()
 
   if (encoder_state != ROT_ENC_OFF)
   {
+    digitalWrite(TEENSY_LED_PIN, HIGH);
+    
     if (update_rot_enc == true)
     {
       usbMIDI.sendControlChange(rot_enc_ctrl_change[encoder_state], rot_enc_array[encoder_state], MIDI_CHANNEL_1);
       usbMIDI.send_now();
     }
-    else
-    {
-      /* Update Pitch Bend and flush usbMIDI message */
-      if (update_pitch_bend == true)
-      {
-        usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
-        usbMIDI.send_now();
-        update_pitch_bend = false;
-      }
-    }
   }
-  /* Only send accelerometer data when the Rotary Encoder is in OFF mode */
+  /* Only send accelerometer/ Pitch bend data when the Rotary Encoder is in OFF mode */
   else
   {
+    /* Get Pitch-bend value from Ultrasonic Sensor */
+    ultrasonic.DistanceMeasure();
+    range_in_cm = ultrasonic.microsecondsToCentimeters();
+    if (range_in_cm < 50)
+    {
+      curr_bend_val = range_in_cm * 200;
+      if (curr_bend_val != prev_bend_val)
+      {
+        update_pitch_bend = true;
+      }
+      prev_bend_val = curr_bend_val;
+    }
+
+    /* Set Expression value from Accelerometer X value */
+    accel.accel_update();
+    
+    digitalWrite(TEENSY_LED_PIN, LOW);
+
+    /* Update Pitch Bend and flush usbMIDI message */
+    if (update_pitch_bend == true)
+    {
+      usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
+      update_pitch_bend = false;
+    }
     usbMIDI.sendControlChange(MIDI_CTRL_CHG_EXPRESSION, accel.x, MIDI_CHANNEL_1);  
+    usbMIDI.send_now();
   }
 
   /* 
@@ -232,5 +219,5 @@ uint8_t note_from_lin_pot(void)
   lin_pot_voltage = max(lin_pot_voltage, SENSOR_MIN);
   lin_pot_voltage = min(lin_pot_voltage, SENSOR_MAX);
 
-  return BLUES_SCALE[(lin_pot_voltage/ SCALE_LEN)];
+  return IONIAN_SHARP_5_SCALE[(lin_pot_voltage/ SCALE_LEN)];
 }
