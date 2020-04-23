@@ -30,7 +30,9 @@ const int TEENSY_ROT_ENC_PIN_2      = 4;
 const int TEENSY_LED_PIN            = 13;
 const int TEENSY_ROT_ENC_BUTTON_PIN = 16;
 
-const int CAP_TOUCH_DEBOUNCE_DELAY  = 50;
+const int CAP_TOUCH_ARRAY_LEN       = 3;
+const int CAP_TOUCH_HYPER_DELAY     = 75;
+const int CAP_TOUCH_DEBOUNCE_DELAY  = 10;
 const int PITCH_BEND_RESOLUTION     = 1;
 
 /* Prototypes */
@@ -53,10 +55,13 @@ int curr_rot_button = LOW;
 int prev_rot_button = LOW;
 enum rot_enc_state encoder_state = ROT_ENC_EFFECT_1;
 bool update_rot_enc = false;
+int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 
 /* Capacitive Touch variables */
+int cap_touch_array[CAP_TOUCH_ARRAY_LEN] = {0};
+int cap_array_idx = 0;
 int cap_touch_reading = 0;
-int update_midi_msec  = 0;
+unsigned int update_midi_msec  = 0;
 bool midi_needs_update  = true;
 
 /* Sensor class variables */
@@ -88,6 +93,7 @@ void setup()
  */
 void loop() 
 {
+  loop_start = micros(); 
   update_rot_enc = false;
   
   /* Sample Rotary Encoder Pushbutton */
@@ -96,6 +102,10 @@ void loop()
   {
     encoder_state = ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
     rot_enc.write(rot_enc_array[encoder_state]);
+    if (encoder_state == ROT_ENC_HYPER)
+    {
+      rot_enc.write(CAP_TOUCH_HYPER_DELAY);
+    }
   }
   prev_rot_button = curr_rot_button;
   
@@ -121,26 +131,46 @@ void loop()
 
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH_PIN */
   cap_touch_reading = digitalRead(TEENSY_CAP_TOUCH_PIN);
-  if (cap_touch_reading == HIGH)
+  cap_touch_array[cap_array_idx] = cap_touch_reading;
+  cap_array_idx = (cap_array_idx + 1) % CAP_TOUCH_ARRAY_LEN;
+
+  if (encoder_state != ROT_ENC_HYPER)
   {
-    if ( (millis() > update_midi_msec) && midi_needs_update)
+    if ( cap_touch_reading == HIGH && midi_needs_update == true)
     {
-      curr_note = note_from_lin_pot();
-      Serial.print("INFO: Sent MIDI note ");
-      Serial.println(curr_note);
-      usbMIDI.sendNoteOff(prev_note, 0, MIDI_CHANNEL_1);   
-      usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
-      update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-      midi_needs_update = false;
-      prev_note = curr_note;
+      if (millis() > update_midi_msec) 
+      {
+        curr_note = note_from_lin_pot();
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note);
+        usbMIDI.sendNoteOff(prev_note, 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
+        update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
+        midi_needs_update = false;
+        prev_note = curr_note;
+      }
     }
   }
   else
   {
-    midi_needs_update = true;
+    if (cap_touch_reading == HIGH && (millis() > update_midi_msec))
+    {
+        curr_note = note_from_lin_pot();
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note);
+        usbMIDI.sendNoteOff(prev_note, 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
+        update_midi_msec  = millis() + hyper_delay;
+        midi_needs_update = false;
+        prev_note = curr_note;
+    }
   }
 
-  if (encoder_state != ROT_ENC_OFF)
+  int sum = 0;
+  for (int i=0; i < CAP_TOUCH_ARRAY_LEN; i++) { sum += cap_touch_array[i]; }
+  midi_needs_update = (sum == 0) ? true : false;
+ 
+  if (encoder_state != ROT_ENC_HYPER)
   {
     digitalWrite(TEENSY_LED_PIN, HIGH);
     
@@ -150,36 +180,34 @@ void loop()
       usbMIDI.send_now();
     }
   }
-  /* Only send accelerometer/ Pitch bend data when the Rotary Encoder is in OFF mode */
   else
   {
-    /* Get Pitch-bend value from Ultrasonic Sensor */
-    ultrasonic.DistanceMeasure();
-    range_in_cm = ultrasonic.microsecondsToCentimeters();
-    if (range_in_cm < 50)
+    digitalWrite(TEENSY_LED_PIN, LOW);  
+    if (update_rot_enc == true)
     {
-      curr_bend_val = range_in_cm * 200;
-      if (curr_bend_val != prev_bend_val)
-      {
-        update_pitch_bend = true;
-      }
-      prev_bend_val = curr_bend_val;
+      hyper_delay = rot_enc_array[encoder_state];
     }
-
-    /* Set Expression value from Accelerometer X value */
-    accel.accel_update();
-    
-    digitalWrite(TEENSY_LED_PIN, LOW);
-
-    /* Update Pitch Bend and flush usbMIDI message */
-    if (update_pitch_bend == true)
-    {
-      usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
-      update_pitch_bend = false;
-    }
-    usbMIDI.sendControlChange(MIDI_CTRL_CHG_EXPRESSION, accel.x, MIDI_CHANNEL_1);  
-    usbMIDI.send_now();
   }
+
+  ultrasonic.distance_measure_blocking();
+  range_in_cm = ultrasonic.microseconds_to_centimeters();
+  if (range_in_cm < 50)
+  {
+    curr_bend_val = range_in_cm * 200;
+    if (curr_bend_val != prev_bend_val)
+    {
+      update_pitch_bend = true;
+    }
+    prev_bend_val = curr_bend_val;
+  }
+
+  /* Update Pitch Bend and flush usbMIDI message */
+  if (update_pitch_bend == true)
+  {
+    usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
+    update_pitch_bend = false;
+  }
+  usbMIDI.send_now();
 
   /* 
    *  MIDI Controllers should discard incoming MIDI messages.

@@ -20,7 +20,7 @@ Ultrasonic::Ultrasonic(int pin)
 }
 
 /*Begin the detection and get the pulse back signal*/
-void Ultrasonic::DistanceMeasure(void)
+void Ultrasonic::distance_measure_blocking(void)
 {
   pinMode(_pin, OUTPUT);
   digitalWrite(_pin, LOW);
@@ -33,7 +33,7 @@ void Ultrasonic::DistanceMeasure(void)
 }
 
 /*The measured distance from the range 0 to 400 Centimeters*/
-long Ultrasonic::microsecondsToCentimeters(void)
+long Ultrasonic::microseconds_to_centimeters(void)
 {
   return duration/29/2; 
 }

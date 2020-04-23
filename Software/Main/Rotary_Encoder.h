@@ -19,7 +19,7 @@
 
 /* Enumeration of Settings that can be controlled by the rotary encoder */
 enum rot_enc_state {
-  ROT_ENC_OFF,
+  ROT_ENC_HYPER,
   ROT_ENC_EFFECT_1,
   ROT_ENC_EFFECT_2,
   ROT_ENC_EFFECT_3,
