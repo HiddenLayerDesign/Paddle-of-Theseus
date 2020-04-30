@@ -34,11 +34,14 @@ You will need the following to run this project
 - 1x [6DoF IMU](https://www.sparkfun.com/products/retired/10121) or equivalent
 - 1x [ThinPot Linear Potentiometer](https://www.digikey.com/en/product-highlight/s/spectra-symbol/thinpot-potentiometers)
 - 1x [Instantaneous Capacitive Touch Sensors](https://www.adafruit.com/product/1374) **NOTE: This may become 4 of the same model**
-- 1x [Rotary Encoder](https://www.digikey.com/product-detail/en/bourns-inc/PEC11L-4215F-S0015/PEC11L-4215F-S0015-ND/4699176)
+- 1x [RGB Common-Anode Illuminated Rotary Encoder](https://www.sparkfun.com/products/15141)
+- 1x [Clear Plastic Rotary Encoder Knob](https://www.sparkfun.com/products/10597)
+- 1x [Illuminated Rotary Encoder Breakout Board](https://www.sparkfun.com/products/11722)
+- 1x [USB Panel Mount Extension Cable](https://www.adafruit.com/product/3258)
 - Audio Software that supports MIDI (I use Ableton Live 8)
 
 ### Assembly
-Assemble the Sensors and Teensy according to the *TODO Wiring Diagram*, paying special attention to the labeled inputs.
+Assemble the Sensors and Teensy according to the schematic and breadboard diagrams in */Hardware/Diagrams*, paying special attention to the labeled inputs.
 
 ## Getting Started
 - Download All Software Requirements above

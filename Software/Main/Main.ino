@@ -23,21 +23,26 @@
 #include <Encoder.h>
 
 /* Teensy layout constants */
-const int TEENSY_ULTRASONIC_PIN     = 0;
-const int TEENSY_CAP_TOUCH_PIN      = 1;
-const int TEENSY_ROT_ENC_PIN_1      = 3;
-const int TEENSY_ROT_ENC_PIN_2      = 4;
-const int TEENSY_LED_PIN            = 13;
-const int TEENSY_ROT_ENC_BUTTON_PIN = 16;
+#define TEENSY_ULTRASONIC_PIN     0
+#define TEENSY_CAP_TOUCH_PIN      1
+#define TEENSY_ROT_ENC_PIN_1      3
+#define TEENSY_ROT_ENC_PIN_2      4
+#define TEENSY_LED_PIN            13
+#define TEENSY_ROT_ENC_BUTTON_PIN 16
+#define TEENSY_ROT_LEDG           10
+#define TEENSY_ROT_LEDB           11
+#define TEENSY_ROT_LEDR           9
 
-const int CAP_TOUCH_ARRAY_LEN       = 3;
-const int CAP_TOUCH_HYPER_DELAY     = 75;
-const int CAP_TOUCH_DEBOUNCE_DELAY  = 10;
-const int PITCH_BEND_RESOLUTION     = 1;
+#define CAP_TOUCH_ARRAY_LEN      3
+#define CAP_TOUCH_HYPER_DELAY    75
+#define CAP_TOUCH_DEBOUNCE_DELAY 10
+#define PITCH_BEND_RESOLUTION    1
+
 
 /* Prototypes */
 void print_banner(void);
 uint8_t note_from_lin_pot(void);
+void set_rot_enc_led(uint8_t color);
 
 /* Ultrasonic Pitch Bend variables */
 int range_in_cm        = 100;
@@ -77,6 +82,12 @@ void setup()
   pinMode(TEENSY_LED_PIN, OUTPUT);
   pinMode(TEENSY_CAP_TOUCH_PIN, INPUT);
   pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT_PULLUP);
+
+  // The rotary switch is common anode with external pulldown, do not turn on pullup
+  pinMode(TEENSY_ROT_LEDB, OUTPUT);
+  pinMode(TEENSY_ROT_LEDG, OUTPUT);
+  pinMode(TEENSY_ROT_LEDR, OUTPUT);
+  set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
   
   Serial.begin(9600);
   print_banner();
@@ -93,14 +104,14 @@ void setup()
  */
 void loop() 
 {
-  loop_start = micros(); 
   update_rot_enc = false;
   
   /* Sample Rotary Encoder Pushbutton */
   curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
-  if (curr_rot_button == HIGH && prev_rot_button == LOW)  
+  if (curr_rot_button == LOW && prev_rot_button == HIGH)  
   {
     encoder_state = ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
+    set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
     rot_enc.write(rot_enc_array[encoder_state]);
     if (encoder_state == ROT_ENC_HYPER)
     {
@@ -248,4 +259,16 @@ uint8_t note_from_lin_pot(void)
   lin_pot_voltage = min(lin_pot_voltage, SENSOR_MAX);
 
   return IONIAN_SHARP_5_SCALE[(lin_pot_voltage/ SCALE_LEN)];
+}
+
+/**
+ * Set the rotary encoder's built-in LED to one of the values defined at the top of the file 
+ * 
+ * @param color An enum of one of the possible RGB colors. 
+ */
+void set_rot_enc_led(uint8_t color)
+{
+  digitalWrite(TEENSY_ROT_LEDR, color & 0x1);
+  digitalWrite(TEENSY_ROT_LEDG, color & 0x2);
+  digitalWrite(TEENSY_ROT_LEDB, color & 0x4);
 }
