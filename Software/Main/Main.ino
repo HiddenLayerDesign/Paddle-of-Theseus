@@ -24,7 +24,9 @@
 
 /* Teensy layout constants */
 #define TEENSY_ULTRASONIC_PIN     0
-#define TEENSY_CAP_TOUCH_PIN      1
+#define TEENSY_CAP_TOUCH1_PIN     2
+#define TEENSY_CAP_TOUCH2_PIN     21
+#define TEENSY_CAP_TOUCH3_PIN     22
 #define TEENSY_ROT_ENC_PIN_1      3
 #define TEENSY_ROT_ENC_PIN_2      4
 #define TEENSY_LED_PIN            13
@@ -49,8 +51,12 @@ int range_in_cm        = 100;
 bool update_pitch_bend = false;
 
 /* MIDI variables */
-int curr_note     = 0;
-int prev_note     = 0;
+int curr_note1    = 0;
+int curr_note2    = 0;
+int curr_note3    = 0;
+int prev_note1    = 0;
+int prev_note2    = 0;
+int prev_note3    = 0;
 int curr_bend_val = 1;
 int prev_bend_val = 0;
 
@@ -63,11 +69,21 @@ bool update_rot_enc = false;
 int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 
 /* Capacitive Touch variables */
-int cap_touch_array[CAP_TOUCH_ARRAY_LEN] = {0};
-int cap_array_idx = 0;
-int cap_touch_reading = 0;
-unsigned int update_midi_msec  = 0;
-bool midi_needs_update  = true;
+int cap_touch_array1[CAP_TOUCH_ARRAY_LEN] = {0};
+int cap_touch_array2[CAP_TOUCH_ARRAY_LEN] = {0};
+int cap_touch_array3[CAP_TOUCH_ARRAY_LEN] = {0};
+int cap_array_idx1 = 0;
+int cap_array_idx2 = 0;
+int cap_array_idx3 = 0;
+int cap_touch_reading1 = 0;
+int cap_touch_reading2 = 0;
+int cap_touch_reading3 = 0;
+unsigned int update_midi_msec1  = 0;
+unsigned int update_midi_msec2  = 0;
+unsigned int update_midi_msec3  = 0;
+bool midi_needs_update1  = true;
+bool midi_needs_update2  = true;
+bool midi_needs_update3  = true;
 
 /* Sensor class variables */
 Ultrasonic ultrasonic(TEENSY_ULTRASONIC_PIN);
@@ -80,7 +96,7 @@ Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
 void setup() 
 {
   pinMode(TEENSY_LED_PIN, OUTPUT);
-  pinMode(TEENSY_CAP_TOUCH_PIN, INPUT);
+  pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
   pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT_PULLUP);
 
   // The rotary switch is common anode with external pulldown, do not turn on pullup
@@ -138,48 +154,113 @@ void loop()
   }
 
   /* Read MIDI note from potentiometer */
-  curr_note = note_from_lin_pot();
+  curr_note1 = note_from_lin_pot();
 
-  /* Send note on debounced rising edge of TEENSY_CAP_TOUCH_PIN */
-  cap_touch_reading = digitalRead(TEENSY_CAP_TOUCH_PIN);
-  cap_touch_array[cap_array_idx] = cap_touch_reading;
-  cap_array_idx = (cap_array_idx + 1) % CAP_TOUCH_ARRAY_LEN;
+  /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
+  cap_touch_reading1 = digitalRead(TEENSY_CAP_TOUCH1_PIN);
+  cap_touch_array1[cap_array_idx1] = cap_touch_reading1;
+  cap_array_idx1 = (cap_array_idx1 + 1) % CAP_TOUCH_ARRAY_LEN;
+
+  cap_touch_reading2 = digitalRead(TEENSY_CAP_TOUCH2_PIN);
+  cap_touch_array2[cap_array_idx2] = cap_touch_reading2;
+  cap_array_idx2 = (cap_array_idx2 + 1) % CAP_TOUCH_ARRAY_LEN;
+
+  cap_touch_reading3 = digitalRead(TEENSY_CAP_TOUCH3_PIN);
+  cap_touch_array3[cap_array_idx3] = cap_touch_reading3;
+  cap_array_idx3 = (cap_array_idx3 + 1) % CAP_TOUCH_ARRAY_LEN;
 
   if (encoder_state != ROT_ENC_HYPER)
   {
-    if ( cap_touch_reading == HIGH && midi_needs_update == true)
+    if ( cap_touch_reading1 == HIGH && midi_needs_update1 == true)
     {
-      if (millis() > update_midi_msec) 
+      if (millis() > update_midi_msec1) 
       {
-        curr_note = note_from_lin_pot();
         Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note);
-        usbMIDI.sendNoteOff(prev_note, 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
-        update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-        midi_needs_update = false;
-        prev_note = curr_note;
+        Serial.println(curr_note1);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], 50, MIDI_CHANNEL_1);
+        update_midi_msec1  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
+        midi_needs_update1 = false;
+        prev_note1 = curr_note1;
+      }
+    }
+    if ( cap_touch_reading2 == HIGH && midi_needs_update2 == true)
+    {
+      if (millis() > update_midi_msec2) 
+      {
+        curr_note2 = min(curr_note1 + 3, SCALE_LEN-1);
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note2);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], 50, MIDI_CHANNEL_1);
+        update_midi_msec2  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
+        midi_needs_update2 = false;
+        prev_note2 = curr_note2;
+      }
+    }
+    if ( cap_touch_reading3 == HIGH && midi_needs_update3 == true)
+    {
+      if (millis() > update_midi_msec3) 
+      {
+        curr_note3 = min(curr_note1 + 5, SCALE_LEN-1);
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note3);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], 50, MIDI_CHANNEL_1);
+        update_midi_msec3  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
+        midi_needs_update3 = false;
+        prev_note3 = curr_note3;
       }
     }
   }
   else
   {
-    if (cap_touch_reading == HIGH && (millis() > update_midi_msec))
+    if (cap_touch_reading1 == HIGH && (millis() > update_midi_msec1))
     {
-        curr_note = note_from_lin_pot();
         Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note);
-        usbMIDI.sendNoteOff(prev_note, 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(curr_note, 50, MIDI_CHANNEL_1);
-        update_midi_msec  = millis() + hyper_delay;
-        midi_needs_update = false;
-        prev_note = curr_note;
+        Serial.println(curr_note1);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], 50, MIDI_CHANNEL_1);
+        update_midi_msec1  = millis() + hyper_delay;
+        midi_needs_update1 = false;
+        prev_note1 = curr_note1;
+    }
+    if (cap_touch_reading2 == HIGH && (millis() > update_midi_msec2))
+    {
+        curr_note2 = min(curr_note1 + 3, SCALE_LEN-1);
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note2);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], 50, MIDI_CHANNEL_1);
+        update_midi_msec2  = millis() + hyper_delay;
+        midi_needs_update2 = false;
+        prev_note2 = curr_note2;
+    }
+    if (cap_touch_reading3 == HIGH && (millis() > update_midi_msec3))
+    {
+        curr_note3 = min(curr_note1 + 5, SCALE_LEN-1);
+        Serial.print("INFO: Sent MIDI note ");
+        Serial.println(curr_note3);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_1);   
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], 50, MIDI_CHANNEL_1);
+        update_midi_msec3  = millis() + hyper_delay;
+        midi_needs_update3 = false;
+        prev_note3 = curr_note3;
     }
   }
 
-  int sum = 0;
-  for (int i=0; i < CAP_TOUCH_ARRAY_LEN; i++) { sum += cap_touch_array[i]; }
-  midi_needs_update = (sum == 0) ? true : false;
+  int sum1 = 0;
+  int sum2 = 0;
+  int sum3 = 0;
+  for (int i=0; i < CAP_TOUCH_ARRAY_LEN; i++)
+  {
+    sum1 += cap_touch_array1[i]; 
+    sum2 += cap_touch_array2[i]; 
+    sum3 += cap_touch_array3[i];
+  }
+  midi_needs_update1 = (sum1 == 0) ? true : false;
+  midi_needs_update2 = (sum2 == 0) ? true : false;
+  midi_needs_update3 = (sum3 == 0) ? true : false;
  
   if (encoder_state != ROT_ENC_HYPER)
   {
@@ -258,7 +339,7 @@ uint8_t note_from_lin_pot(void)
   lin_pot_voltage = max(lin_pot_voltage, SENSOR_MIN);
   lin_pot_voltage = min(lin_pot_voltage, SENSOR_MAX);
 
-  return IONIAN_SHARP_5_SCALE[(lin_pot_voltage/ SCALE_LEN)];
+  return (lin_pot_voltage/ SCALE_LEN);
 }
 
 /**
