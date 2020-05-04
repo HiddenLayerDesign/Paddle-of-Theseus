@@ -178,7 +178,7 @@ void loop()
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note1);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec1  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
         midi_needs_update1 = false;
         prev_note1 = curr_note1;
@@ -192,7 +192,7 @@ void loop()
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note2);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec2  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
         midi_needs_update2 = false;
         prev_note2 = curr_note2;
@@ -206,7 +206,7 @@ void loop()
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note3);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec3  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
         midi_needs_update3 = false;
         prev_note3 = curr_note3;
@@ -219,8 +219,8 @@ void loop()
     {
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note1);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec1  = millis() + hyper_delay;
         midi_needs_update1 = false;
         prev_note1 = curr_note1;
@@ -231,7 +231,7 @@ void loop()
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note2);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec2  = millis() + hyper_delay;
         midi_needs_update2 = false;
         prev_note2 = curr_note2;
@@ -242,7 +242,7 @@ void loop()
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note3);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_1);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], 50, MIDI_CHANNEL_1);
+        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], rot_enc_array[ROT_ENC_VOLUME], MIDI_CHANNEL_1);
         update_midi_msec3  = millis() + hyper_delay;
         midi_needs_update3 = false;
         prev_note3 = curr_note3;

@@ -44,6 +44,8 @@ const int MIDI_CTRL_CHG_LEGATO_FSW = 0x44;
 /* Pitch Bend limits*/
 const int MIDI_PBEND_MAX  = 72;
 const int MIDI_PBEND_MIN  = 48;
+const int MIDI_VOLUME_MIN = 0;
+const int MIDI_VOLUME_MAX = 100;
 
 const int SCALE_LEN = 32;
 /* Various MIDI Scales- thanks to http://lawriecape.co.uk/theblog/index.php/archives/881 for writing these out */
