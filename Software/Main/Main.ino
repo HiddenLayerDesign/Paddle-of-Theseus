@@ -16,35 +16,21 @@
 
 #include "Arduino.h"
 #include "Ultrasonic.h"
+#include "LinearPotentiometer.h"
 #include "MIDIConstants.h"
 #include "ITG3200.h"
 #include "ADXL345.h"
-#include "Rotary_Encoder.h"
+#include "RotaryEncoder.h"
+#include "TeensyBSP.h"
 #include <Encoder.h>
-
-/* Teensy layout constants */
-#define TEENSY_ULTRASONIC_PIN     0
-#define TEENSY_CAP_TOUCH1_PIN     2
-#define TEENSY_CAP_TOUCH2_PIN     21
-#define TEENSY_CAP_TOUCH3_PIN     22
-#define TEENSY_ROT_ENC_PIN_1      3
-#define TEENSY_ROT_ENC_PIN_2      4
-#define TEENSY_LED_PIN            13
-#define TEENSY_ROT_ENC_BUTTON_PIN 16
-#define TEENSY_ROT_LEDG           10
-#define TEENSY_ROT_LEDB           11
-#define TEENSY_ROT_LEDR           9
 
 #define CAP_TOUCH_ARRAY_LEN      3
 #define CAP_TOUCH_HYPER_DELAY    75
 #define CAP_TOUCH_DEBOUNCE_DELAY 10
 #define PITCH_BEND_RESOLUTION    1
 
-
 /* Prototypes */
 void print_banner(void);
-uint8_t note_from_lin_pot(void);
-void set_rot_enc_led(uint8_t color);
 
 /* Ultrasonic Pitch Bend variables */
 int range_in_cm        = 100;
@@ -87,7 +73,6 @@ bool midi_needs_update3  = true;
 
 /* Sensor class variables */
 Ultrasonic ultrasonic(TEENSY_ULTRASONIC_PIN);
-ADXL345 accel;
 Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
 
 /*
@@ -99,7 +84,7 @@ void setup()
   pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
   pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT_PULLUP);
 
-  // The rotary switch is common anode with external pulldown, do not turn on pullup
+  /* The rotary switch is common anode with external pulldown, do not turn on pullup */
   pinMode(TEENSY_ROT_LEDB, OUTPUT);
   pinMode(TEENSY_ROT_LEDG, OUTPUT);
   pinMode(TEENSY_ROT_LEDR, OUTPUT);
@@ -107,12 +92,6 @@ void setup()
   
   Serial.begin(9600);
   print_banner();
-
-  Serial.println("INFO: Initializing Accelerometer");
-  if ( accel.init() < 0)
-  {
-    Serial.println("WARN: Failed to init ADXL345");
-  }
 }
 
 /*
@@ -126,30 +105,24 @@ void loop()
   curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
   if (curr_rot_button == LOW && prev_rot_button == HIGH)  
   {
-    encoder_state = ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
+    encoder_state =  (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
     set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
-    rot_enc.write(rot_enc_array[encoder_state]);
-    if (encoder_state == ROT_ENC_HYPER)
-    {
-      rot_enc.write(CAP_TOUCH_HYPER_DELAY);
-    }
+    rot_enc.write((encoder_state == ROT_ENC_HYPER) ? CAP_TOUCH_HYPER_DELAY : rot_enc_array[encoder_state] );
+    Serial.print("INFO: Encoder state is");
+    Serial.println(encoder_state);    
   }
   prev_rot_button = curr_rot_button;
   
   /* Sample Rotary Encoder Twist Knob */
   long enc_reading;
+  int constrained_enc_reading;
   enc_reading = rot_enc.read();
-  if (enc_reading < ROT_ENC_MIN)
-  {
-    rot_enc.write(ROT_ENC_MIN);  
-  }
-  else if (enc_reading > ROT_ENC_MAX)
-  {
-    rot_enc.write(ROT_ENC_MAX);  
-  }
-  if (enc_reading != rot_enc_array[encoder_state])
+  constrained_enc_reading = constrain(enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+  if (constrained_enc_reading != rot_enc_array[encoder_state])
   { 
-    rot_enc_array[encoder_state] = enc_reading;  
+    Serial.print("INFO: Encoder value is");
+    Serial.println(enc_reading);    
+    rot_enc_array[encoder_state] = constrained_enc_reading;
     update_rot_enc = true;
   }
 
@@ -171,7 +144,7 @@ void loop()
 
   if (encoder_state != ROT_ENC_HYPER)
   {
-    if ( cap_touch_reading1 == HIGH && midi_needs_update1 == true)
+    if ( cap_touch_reading1 == HIGH && midi_needs_update1)
     {
       if (millis() > update_midi_msec1) 
       {
@@ -184,7 +157,7 @@ void loop()
         prev_note1 = curr_note1;
       }
     }
-    if ( cap_touch_reading2 == HIGH && midi_needs_update2 == true)
+    if ( cap_touch_reading2 == HIGH && midi_needs_update2)
     {
       if (millis() > update_midi_msec2) 
       {
@@ -198,7 +171,7 @@ void loop()
         prev_note2 = curr_note2;
       }
     }
-    if ( cap_touch_reading3 == HIGH && midi_needs_update3 == true)
+    if ( cap_touch_reading3 == HIGH && midi_needs_update3)
     {
       if (millis() > update_midi_msec3) 
       {
@@ -249,6 +222,7 @@ void loop()
     }
   }
 
+  /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
   int sum1 = 0;
   int sum2 = 0;
   int sum3 = 0;
@@ -258,29 +232,30 @@ void loop()
     sum2 += cap_touch_array2[i]; 
     sum3 += cap_touch_array3[i];
   }
-  midi_needs_update1 = (sum1 == 0) ? true : false;
-  midi_needs_update2 = (sum2 == 0) ? true : false;
-  midi_needs_update3 = (sum3 == 0) ? true : false;
- 
-  if (encoder_state != ROT_ENC_HYPER)
+  midi_needs_update1 = (!sum1) ? true : false;
+  midi_needs_update2 = (!sum2) ? true : false;
+  midi_needs_update3 = (!sum3) ? true : false;
+
+  /* Update MIDI settings based on RotEnc twist knob */
+  if (encoder_state == ROT_ENC_HYPER)
   {
-    digitalWrite(TEENSY_LED_PIN, HIGH);
-    
-    if (update_rot_enc == true)
+    if (update_rot_enc)
+    {
+      hyper_delay = rot_enc_array[encoder_state];
+    }
+  }
+  else
+  {
+    if (update_rot_enc)
     {
       usbMIDI.sendControlChange(rot_enc_ctrl_change[encoder_state], rot_enc_array[encoder_state], MIDI_CHANNEL_1);
       usbMIDI.send_now();
     }
   }
-  else
-  {
-    digitalWrite(TEENSY_LED_PIN, LOW);  
-    if (update_rot_enc == true)
-    {
-      hyper_delay = rot_enc_array[encoder_state];
-    }
-  }
+  digitalWrite(TEENSY_LED_PIN, (encoder_state == ROT_ENC_HYPER) ? LOW : HIGH);
 
+
+  /* Get Ultrasonic Distance sensor reading */
   ultrasonic.distance_measure_blocking();
   range_in_cm = ultrasonic.microseconds_to_centimeters();
   if (range_in_cm < 50)
@@ -294,7 +269,7 @@ void loop()
   }
 
   /* Update Pitch Bend and flush usbMIDI message */
-  if (update_pitch_bend == true)
+  if (update_pitch_bend)
   {
     usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_1);
     update_pitch_bend = false;
@@ -323,33 +298,4 @@ void print_banner(void)
   Serial.println("*** Paddle of Theseus Serial Output  ***");
   Serial.println("****************************************");
   Serial.println();  
-}
-
-/**
- * Read the linear potentiometer and use it to get a note in the scale
- * 
- * @return MIDI note
- */
-uint8_t note_from_lin_pot(void)
-{
-  const int SENSOR_MAX = 1024;
-  const int SENSOR_MIN = 0;
-
-  int lin_pot_voltage = analogRead(0);
-  lin_pot_voltage = max(lin_pot_voltage, SENSOR_MIN);
-  lin_pot_voltage = min(lin_pot_voltage, SENSOR_MAX);
-
-  return (lin_pot_voltage/ SCALE_LEN);
-}
-
-/**
- * Set the rotary encoder's built-in LED to one of the values defined at the top of the file 
- * 
- * @param color An enum of one of the possible RGB colors. 
- */
-void set_rot_enc_led(uint8_t color)
-{
-  digitalWrite(TEENSY_ROT_LEDR, color & 0x1);
-  digitalWrite(TEENSY_ROT_LEDG, color & 0x2);
-  digitalWrite(TEENSY_ROT_LEDB, color & 0x4);
 }
