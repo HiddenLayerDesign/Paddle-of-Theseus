@@ -237,16 +237,13 @@ void loop()
   midi_needs_update3 = (!sum3) ? true : false;
 
   /* Update MIDI settings based on RotEnc twist knob */
-  if (encoder_state == ROT_ENC_HYPER)
+  if (update_rot_enc)
   {
-    if (update_rot_enc)
+    if (encoder_state == ROT_ENC_HYPER)
     {
       hyper_delay = rot_enc_array[encoder_state];
     }
-  }
-  else
-  {
-    if (update_rot_enc)
+    else
     {
       usbMIDI.sendControlChange(rot_enc_ctrl_change[encoder_state], rot_enc_array[encoder_state], MIDI_CHANNEL_1);
       usbMIDI.send_now();
@@ -254,20 +251,15 @@ void loop()
   }
   digitalWrite(TEENSY_LED_PIN, (encoder_state == ROT_ENC_HYPER) ? LOW : HIGH);
 
-
   /* Get Ultrasonic Distance sensor reading */
   ultrasonic.distance_measure_blocking();
   range_in_cm = ultrasonic.microseconds_to_centimeters();
-  if (range_in_cm < 50)
-  {
-    curr_bend_val = range_in_cm * 200;
-    if (curr_bend_val != prev_bend_val)
-    {
-      update_pitch_bend = true;
-    }
-    prev_bend_val = curr_bend_val;
-  }
 
+  /* Decide whether to update ultrasonic sensor */
+  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 200) : 0 ;
+  update_pitch_bend = (curr_bend_val != prev_bend_val);
+  prev_bend_val = curr_bend_val;
+  
   /* Update Pitch Bend and flush usbMIDI message */
   if (update_pitch_bend)
   {
