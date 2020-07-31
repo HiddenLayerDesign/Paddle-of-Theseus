@@ -13,20 +13,18 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
+#include <Encoder.h>
 
 #include "Arduino.h"
-#include "Ultrasonic.h"
+#include "ADXL345.h"
+#include "CapTouch.h"
 #include "LinearPotentiometer.h"
 #include "MIDIConstants.h"
 #include "ITG3200.h"
-#include "ADXL345.h"
 #include "RotaryEncoder.h"
 #include "TeensyBSP.h"
-#include <Encoder.h>
+#include "Ultrasonic.h"
 
-#define CAP_TOUCH_ARRAY_LEN      3
-#define CAP_TOUCH_HYPER_DELAY    75
-#define CAP_TOUCH_DEBOUNCE_DELAY 10
 #define PITCH_BEND_RESOLUTION    1
 
 /* Prototypes */
@@ -48,22 +46,13 @@ int prev_bend_val = 0;
 
 /* Rotary Encoder Variables */
 char rot_enc_array[ROT_ENC_ENUM_SIZE];
+enum rot_enc_state encoder_state = ROT_ENC_EFFECT_1;
+int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 int curr_rot_button = LOW;
 int prev_rot_button = LOW;
-enum rot_enc_state encoder_state = ROT_ENC_EFFECT_1;
 bool update_rot_enc = false;
-int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 
 /* Capacitive Touch variables */
-int cap_touch_array1[CAP_TOUCH_ARRAY_LEN] = {0};
-int cap_touch_array2[CAP_TOUCH_ARRAY_LEN] = {0};
-int cap_touch_array3[CAP_TOUCH_ARRAY_LEN] = {0};
-int cap_array_idx1 = 0;
-int cap_array_idx2 = 0;
-int cap_array_idx3 = 0;
-int cap_touch_reading1 = 0;
-int cap_touch_reading2 = 0;
-int cap_touch_reading3 = 0;
 unsigned int update_midi_msec1  = 0;
 unsigned int update_midi_msec2  = 0;
 unsigned int update_midi_msec3  = 0;
@@ -74,6 +63,9 @@ bool midi_needs_update3  = true;
 /* Sensor class variables */
 Ultrasonic ultrasonic(TEENSY_ULTRASONIC_PIN);
 Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
+CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN);
+CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN);
+CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN);
 
 /*
  * Setup PinModes and Serial port, Init digital sensors 
@@ -119,7 +111,7 @@ void loop()
   enc_reading = rot_enc.read();
   constrained_enc_reading = constrain(enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
   if (constrained_enc_reading != rot_enc_array[encoder_state])
-  { 
+  {
     Serial.print("INFO: Encoder value is");
     Serial.println(enc_reading);    
     rot_enc_array[encoder_state] = constrained_enc_reading;
@@ -130,21 +122,13 @@ void loop()
   curr_note1 = note_from_lin_pot();
 
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
-  cap_touch_reading1 = digitalRead(TEENSY_CAP_TOUCH1_PIN);
-  cap_touch_array1[cap_array_idx1] = cap_touch_reading1;
-  cap_array_idx1 = (cap_array_idx1 + 1) % CAP_TOUCH_ARRAY_LEN;
-
-  cap_touch_reading2 = digitalRead(TEENSY_CAP_TOUCH2_PIN);
-  cap_touch_array2[cap_array_idx2] = cap_touch_reading2;
-  cap_array_idx2 = (cap_array_idx2 + 1) % CAP_TOUCH_ARRAY_LEN;
-
-  cap_touch_reading3 = digitalRead(TEENSY_CAP_TOUCH3_PIN);
-  cap_touch_array3[cap_array_idx3] = cap_touch_reading3;
-  cap_array_idx3 = (cap_array_idx3 + 1) % CAP_TOUCH_ARRAY_LEN;
+  capTouch1.Update();
+  capTouch2.Update();
+  capTouch3.Update();
 
   if (encoder_state != ROT_ENC_HYPER)
   {
-    if ( cap_touch_reading1 == HIGH && midi_needs_update1)
+    if (capTouch1.GetReading() && midi_needs_update1)
     {
       if (millis() > update_midi_msec1) 
       {
@@ -157,7 +141,7 @@ void loop()
         prev_note1 = curr_note1;
       }
     }
-    if ( cap_touch_reading2 == HIGH && midi_needs_update2)
+    if (capTouch2.GetReading() && midi_needs_update2)
     {
       if (millis() > update_midi_msec2) 
       {
@@ -171,7 +155,7 @@ void loop()
         prev_note2 = curr_note2;
       }
     }
-    if ( cap_touch_reading3 == HIGH && midi_needs_update3)
+    if (capTouch3.GetReading() && midi_needs_update3)
     {
       if (millis() > update_midi_msec3) 
       {
@@ -188,7 +172,7 @@ void loop()
   }
   else
   {
-    if (cap_touch_reading1 == HIGH && (millis() > update_midi_msec1))
+    if (capTouch1.GetReading() && (millis() > update_midi_msec1))
     {
         Serial.print("INFO: Sent MIDI note ");
         Serial.println(curr_note1);
@@ -198,7 +182,7 @@ void loop()
         midi_needs_update1 = false;
         prev_note1 = curr_note1;
     }
-    if (cap_touch_reading2 == HIGH && (millis() > update_midi_msec2))
+    if (capTouch2.GetReading() && (millis() > update_midi_msec2))
     {
         curr_note2 = min(curr_note1 + 3, SCALE_LEN-1);
         Serial.print("INFO: Sent MIDI note ");
@@ -209,7 +193,7 @@ void loop()
         midi_needs_update2 = false;
         prev_note2 = curr_note2;
     }
-    if (cap_touch_reading3 == HIGH && (millis() > update_midi_msec3))
+    if (capTouch3.GetReading() && (millis() > update_midi_msec3))
     {
         curr_note3 = min(curr_note1 + 5, SCALE_LEN-1);
         Serial.print("INFO: Sent MIDI note ");
@@ -223,18 +207,9 @@ void loop()
   }
 
   /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
-  int sum1 = 0;
-  int sum2 = 0;
-  int sum3 = 0;
-  for (int i=0; i < CAP_TOUCH_ARRAY_LEN; i++)
-  {
-    sum1 += cap_touch_array1[i]; 
-    sum2 += cap_touch_array2[i]; 
-    sum3 += cap_touch_array3[i];
-  }
-  midi_needs_update1 = (!sum1) ? true : false;
-  midi_needs_update2 = (!sum2) ? true : false;
-  midi_needs_update3 = (!sum3) ? true : false;
+  midi_needs_update1 = capTouch1.NewNote();
+  midi_needs_update2 = capTouch2.NewNote();
+  midi_needs_update3 = capTouch3.NewNote();
 
   /* Update MIDI settings based on RotEnc twist knob */
   if (update_rot_enc)
@@ -256,7 +231,7 @@ void loop()
   range_in_cm = ultrasonic.microseconds_to_centimeters();
 
   /* Decide whether to update ultrasonic sensor */
-  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 200) : 0 ;
+  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 50) : 0 ;
   update_pitch_bend = (curr_bend_val != prev_bend_val);
   prev_bend_val = curr_bend_val;
   
