@@ -20,11 +20,12 @@
 class Ultrasonic
 {
   public:
-    Ultrasonic(int pin);
+    Ultrasonic(int trig_pin, int sens_pin);
     void distance_measure_blocking(void);
     long microseconds_to_centimeters(void);
   private:
-    int _pin; // pin number of Arduino that is connected with SIG pin of Ultrasonic Ranger.
+    int _sens_pin; // pin number of Arduino that is connected with SENSE pin of Ultrasonic Ranger.
+    int _trig_pin; // pin number of Arduino that is connected with TRIG pin of Ultrasonic Ranger.
     long duration;// the Pulse time received;
 };
 
