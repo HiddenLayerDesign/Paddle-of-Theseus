@@ -16,11 +16,10 @@
 #include <Encoder.h>
 
 #include "Arduino.h"
-#include "ADXL345.h"
+#include "MMA8452Q.h"
 #include "CapTouch.h"
 #include "LinearPotentiometer.h"
 #include "MIDIConstants.h"
-#include "ITG3200.h"
 #include "RotaryEncoder.h"
 #include "TeensyBSP.h"
 #include "Ultrasonic.h"
@@ -51,10 +50,10 @@ int prev_bend_val = 0;
 
 /* Rotary Encoder Variables */
 char rot_enc_array[ROT_ENC_ENUM_SIZE];
-enum rot_enc_state encoder_state = ROT_ENC_EFFECT_1;
+enum rot_enc_state encoder_state = 0;
 int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
-int curr_rot_button = LOW;
-int prev_rot_button = LOW;
+int curr_rot_button = HIGH;
+int prev_rot_button = HIGH;
 bool update_rot_enc = false;
 
 /* Capacitive Touch variables */
@@ -74,34 +73,40 @@ CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN);
 CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN);
 CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN);
 CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN);
+MMA8452Q accel;
 
 /*
  * Setup PinModes and Serial port, Init digital sensors 
  */
 void setup() 
 {
-  
+  pinMode(TEENSY_LED_PIN, OUTPUT);
   pinMode(TEENSY_CAP_TOUCH0_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
-  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT_PULLUP);
-  pinMode(TEENSY_ROT_POT_PIN, INPUT);
+  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
 
   /* The rotary switch is common anode with external pulldown, do not turn on pullup */
   pinMode(TEENSY_ROT_LEDB, OUTPUT);
   pinMode(TEENSY_ROT_LEDG, OUTPUT);
   pinMode(TEENSY_ROT_LEDR, OUTPUT);
-  set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
-  digitalWrite(TEENSY_LED_PIN, HIGH);
+
+ set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
+ digitalWrite(TEENSY_LED_PIN, HIGH);
 
   for (int i=0; i< ROT_ENC_ENUM_SIZE; i++)
   {
     rot_enc_array[i] = 100;
   }
-  
+
   Serial.begin(9600);
   print_banner();
+
+  if (!accel.init())
+  {
+     Serial.println("WARNING: Failed to init accelerometer!");  
+  }
 }
 
 /*
@@ -109,15 +114,13 @@ void setup()
  */
 void loop() 
 {
-  analog_volume = GET_VOLUME(TEENSY_ROT_POT_PIN);
-  Serial.print("INFO: Volume is");
-  Serial.println(analog_volume);      
+  analog_volume = GET_VOLUME(TEENSY_ROT_POT_PIN);  
 
   update_rot_enc = false;
   
   /* Sample Rotary Encoder Pushbutton */
   curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
-  if (curr_rot_button == LOW && prev_rot_button == HIGH)  
+  if (curr_rot_button == HIGH && prev_rot_button == LOW)  
   {
     encoder_state =  (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
     set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
@@ -143,6 +146,12 @@ void loop()
   /* Read MIDI note from potentiometer */
   curr_note0 = note_from_lin_pot();
 
+  if (0 != curr_note0)
+  {
+    Serial.print("INFO: Note is");
+    Serial.println(curr_note0);        
+  }
+
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
   capTouch0.Update();
   capTouch1.Update();
@@ -155,10 +164,13 @@ void loop()
     {
       if (millis() > update_midi_msec0) 
       {
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note0);
+        Serial.print("INFO: Sent MIDI note: ");
+        Serial.print(curr_note0);
+        Serial.print("volume: ");
+        Serial.println(analog_volume);    
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note0], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note0], analog_volume, MIDI_CHANNEL_2);
+        
         update_midi_msec0  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
         midi_needs_update0 = false;
         prev_note0 = curr_note0;
@@ -169,7 +181,7 @@ void loop()
       if (millis() > update_midi_msec1) 
       {
         curr_note1 = min(curr_note0 + 3, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
+        Serial.print("INFO: Sent MIDI note: ");
         Serial.println(curr_note1);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], analog_volume, MIDI_CHANNEL_2);
@@ -286,9 +298,12 @@ void loop()
   /* Update Pitch Bend and flush usbMIDI message */
   if (update_pitch_bend)
   {
+    Serial.print("INFO: Sent Pitch bend ");
+    Serial.println(curr_bend_val);
     usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
     update_pitch_bend = false;
   }
+  
   usbMIDI.send_now();
 
   /* 

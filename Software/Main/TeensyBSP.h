@@ -12,12 +12,13 @@
 
 #include "Arduino.h"
 
-#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
+//#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way
 
 /* Teensy layout constants */
-#define TEENSY_ROT_POT_PIN        15
-#define TEENSY_LIN_POT_PIN        14
+#define TEENSY_ROT_POT_PIN        1 // Analog A1
+#define TEENSY_LIN_POT_PIN        0 // Analog A0
+
 #define TEENSY_LED_PIN            13
 
 /* the Parallax Ping sensor only has 3 pins, so TRIG_PIN == SENS_PIN */
@@ -25,9 +26,10 @@
 #define TEENSY_ULTRA_TRIG_PIN     12
 #define TEENSY_ULTRA_SENS_PIN     12
 #else
-#define TEENSY_ULTRA_TRIG_PIN     12
-#define TEENSY_ULTRA_SENS_PIN     11
-#endif /* ULTRASONIC_PING*/
+#define TEENSY_ULTRA_TRIG_PIN     11
+#define TEENSY_ULTRA_SENS_PIN     12
+#endif /* ULTRASONIC_PIN
+*/
 
 #define TEENSY_CAP_TOUCH0_PIN     10
 #define TEENSY_CAP_TOUCH1_PIN     9

@@ -18,18 +18,18 @@ Ultrasonic::Ultrasonic(int trig_pin, int sens_pin)
 {
   _trig_pin = trig_pin;
   _sens_pin = sens_pin;
+  pinMode(_trig_pin, OUTPUT);
+  pinMode(_sens_pin,INPUT);
 }
 
 /*Begin the detection and get the pulse back signal*/
 void Ultrasonic::distance_measure_blocking(void)
 {
-  pinMode(_trig_pin, OUTPUT);
   digitalWrite(_trig_pin, LOW);
   delay(2);
   digitalWrite(_trig_pin, HIGH);
   delay(5);
   digitalWrite(_trig_pin,LOW);
-  pinMode(_sens_pin,INPUT);
   duration = pulseIn(_sens_pin,HIGH);
 }
 
