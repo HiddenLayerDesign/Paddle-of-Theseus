@@ -14,22 +14,23 @@
 #include "Arduino.h"
 #include "Ultrasonic.h"
 
-Ultrasonic::Ultrasonic(int pin)
+Ultrasonic::Ultrasonic(int trig_pin, int sens_pin)
 {
-  _pin = pin;
+  _trig_pin = trig_pin;
+  _sens_pin = sens_pin;
+  pinMode(_trig_pin, OUTPUT);
+  pinMode(_sens_pin,INPUT);
 }
 
 /*Begin the detection and get the pulse back signal*/
 void Ultrasonic::distance_measure_blocking(void)
 {
-  pinMode(_pin, OUTPUT);
-  digitalWrite(_pin, LOW);
+  digitalWrite(_trig_pin, LOW);
   delay(2);
-  digitalWrite(_pin, HIGH);
+  digitalWrite(_trig_pin, HIGH);
   delay(5);
-  digitalWrite(_pin,LOW);
-  pinMode(_pin,INPUT);
-  duration = pulseIn(_pin,HIGH);
+  digitalWrite(_trig_pin,LOW);
+  duration = pulseIn(_sens_pin,HIGH);
 }
 
 /*The measured distance from the range 0 to 400 Centimeters*/

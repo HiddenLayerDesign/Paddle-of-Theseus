@@ -18,12 +18,11 @@
 
 /* Enumeration of Settings that can be controlled by the rotary encoder */
 enum rot_enc_state {
-  ROT_ENC_VOLUME,
-  ROT_ENC_HYPER,
   ROT_ENC_EFFECT_1,
   ROT_ENC_EFFECT_2,
   ROT_ENC_EFFECT_3,
   ROT_ENC_EFFECT_4,
+  ROT_ENC_HYPER,
   ROT_ENC_ENUM_SIZE
 };
 
@@ -38,7 +37,7 @@ enum rot_enc_state {
 #define LED_WHITE  0x0 //B000
 
 
-const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_OFF, LED_WHITE, LED_GREEN, LED_YELLOW, LED_RED, LED_PURPLE};
+const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_OFF, LED_GREEN, LED_BLUE, LED_RED, LED_WHITE};
 const char rot_enc_ctrl_change[ROT_ENC_ENUM_SIZE] = {0x14, 0x15, 0x16, 0x17};
 
 
