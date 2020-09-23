@@ -12,6 +12,7 @@
 
 #include "Arduino.h"
 
+//#define DEBUG // uncomment to enable printing variables for debug
 //#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way
 

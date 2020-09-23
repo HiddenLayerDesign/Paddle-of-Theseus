@@ -24,7 +24,15 @@
 #include "TeensyBSP.h"
 #include "Ultrasonic.h"
 
-#define PITCH_BEND_RESOLUTION    1
+#define PITCH_BEND_RESOLUTION 1
+
+#ifdef DEBUG
+#define DEBUG_PRINTLN(x)  Serial.println(x)
+#define DEBUG_PRINT(x)  Serial.print(x)
+#else
+#define DEBUG_PRINTLN(x)
+#define DEBUG_PRINT(x)
+#endif /* DEBUG */
 
 /* Prototypes */
 void print_banner(void);
@@ -100,12 +108,14 @@ void setup()
     rot_enc_array[i] = 100;
   }
 
+#ifdef DEBUG
   Serial.begin(9600);
   print_banner();
+#endif /* DEBUG */
 
   if (!accel.init())
   {
-     Serial.println("WARNING: Failed to init accelerometer!");  
+     DEBUG_PRINTLN("WARNING: Failed to init accelerometer!");  
   }
 }
 
@@ -125,8 +135,8 @@ void loop()
     encoder_state =  (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
     set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
     rot_enc.write((encoder_state == ROT_ENC_HYPER) ? CAP_TOUCH_HYPER_DELAY : rot_enc_array[encoder_state] );
-    Serial.print("INFO: Encoder state is");
-    Serial.println(encoder_state);    
+    DEBUG_PRINT("INFO: Encoder state is");
+    DEBUG_PRINTLN(encoder_state);    
   }
   prev_rot_button = curr_rot_button;
   
@@ -137,8 +147,8 @@ void loop()
   constrained_enc_reading = constrain(enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
   if (constrained_enc_reading != rot_enc_array[encoder_state])
   {
-    Serial.print("INFO: Encoder value is");
-    Serial.println(enc_reading);    
+    DEBUG_PRINT("INFO: Encoder value is");
+    DEBUG_PRINTLN(enc_reading);    
     rot_enc_array[encoder_state] = constrained_enc_reading;
     update_rot_enc = true;
   }
@@ -148,8 +158,8 @@ void loop()
 
   if (0 != curr_note0)
   {
-    Serial.print("INFO: Note is");
-    Serial.println(curr_note0);        
+    DEBUG_PRINT("INFO: Note is");
+    DEBUG_PRINTLN(curr_note0);        
   }
 
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
@@ -164,10 +174,10 @@ void loop()
     {
       if (millis() > update_midi_msec0) 
       {
-        Serial.print("INFO: Sent MIDI note: ");
-        Serial.print(curr_note0);
-        Serial.print("volume: ");
-        Serial.println(analog_volume);    
+        DEBUG_PRINT("INFO: Sent MIDI note: ");
+        DEBUG_PRINT(curr_note0);
+        DEBUG_PRINT("volume: ");
+        DEBUG_PRINTLN(analog_volume);    
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note0], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note0], analog_volume, MIDI_CHANNEL_2);
         
@@ -181,8 +191,8 @@ void loop()
       if (millis() > update_midi_msec1) 
       {
         curr_note1 = min(curr_note0 + 3, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note: ");
-        Serial.println(curr_note1);
+        DEBUG_PRINT("INFO: Sent MIDI note: ");
+        DEBUG_PRINTLN(curr_note1);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec1  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
@@ -195,8 +205,8 @@ void loop()
       if (millis() > update_midi_msec2) 
       {
         curr_note2 = min(curr_note0 + 5, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note2);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note2);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec2  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
@@ -209,8 +219,8 @@ void loop()
       if (millis() > update_midi_msec3) 
       {
         curr_note3 = min(curr_note0 + 7, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note3);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note3);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec3  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
@@ -223,8 +233,8 @@ void loop()
   {
     if (capTouch0.GetReading() && (millis() > update_midi_msec0))
     {
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note0);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note0);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note0], 0, MIDI_CHANNEL_2);
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note0], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec0  = millis() + hyper_delay;
@@ -234,8 +244,8 @@ void loop()
     if (capTouch1.GetReading() && (millis() > update_midi_msec1))
     {
         curr_note1 = min(curr_note0 + 3, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note1);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note1);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_2);
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec1  = millis() + hyper_delay;
@@ -245,8 +255,8 @@ void loop()
     if (capTouch2.GetReading() && (millis() > update_midi_msec2))
     {
         curr_note2 = min(curr_note0 + 5, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note2);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note2);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec2  = millis() + hyper_delay;
@@ -256,8 +266,8 @@ void loop()
     if (capTouch3.GetReading() && (millis() > update_midi_msec3))
     {
         curr_note3 = min(curr_note0 + 7, SCALE_LEN-1);
-        Serial.print("INFO: Sent MIDI note ");
-        Serial.println(curr_note3);
+        DEBUG_PRINT("INFO: Sent MIDI note ");
+        DEBUG_PRINTLN(curr_note3);
         usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_2);   
         usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], analog_volume, MIDI_CHANNEL_2);
         update_midi_msec3  = millis() + hyper_delay;
@@ -291,15 +301,15 @@ void loop()
   range_in_cm = ultrasonic.microseconds_to_centimeters();
 
   /* Decide whether to update ultrasonic sensor */
-  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 50) : 0 ;
+  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 100) : 0 ;
   update_pitch_bend = (curr_bend_val != prev_bend_val);
   prev_bend_val = curr_bend_val;
   
   /* Update Pitch Bend and flush usbMIDI message */
   if (update_pitch_bend)
   {
-    Serial.print("INFO: Sent Pitch bend ");
-    Serial.println(curr_bend_val);
+    DEBUG_PRINT("INFO: Sent Pitch bend ");
+    DEBUG_PRINTLN(curr_bend_val);
     usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
     update_pitch_bend = false;
   }
@@ -321,11 +331,11 @@ void loop()
  */
 void print_banner(void)
 {
-  Serial.println();
-  Serial.println();
-  Serial.println();
-  Serial.println("****************************************");
-  Serial.println("*** Paddle of Theseus Serial Output  ***");
-  Serial.println("****************************************");
-  Serial.println();  
+  DEBUG_PRINTLN();
+  DEBUG_PRINTLN();
+  DEBUG_PRINTLN();
+  DEBUG_PRINTLN("****************************************");
+  DEBUG_PRINTLN("*** Paddle of Theseus Serial Output  ***");
+  DEBUG_PRINTLN("****************************************");
+  DEBUG_PRINTLN();  
 }
