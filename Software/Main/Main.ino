@@ -46,9 +46,10 @@ void print_banner(void);
 void pingCheck(void);
 
 /* Ultrasonic Pitch Bend variables */
-const unsigned long ping_period = 1;
+const unsigned long ping_period = 3;
 unsigned long ping_time;
-int range_in_cm        = PITCH_BEND_MAX_CM;
+unsigned long range_in_us        = PITCH_BEND_MAX_CM * US_ROUNDTRIP_CM;
+unsigned long range_in_cm;
 bool update_pitch_bend = false;
 
 /* Rotary Potentiometer variables */
@@ -69,7 +70,7 @@ int prev_rot_button = HIGH;
 bool update_rot_enc = false;
 
 /* Sensor class variables */
-NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, 100);
+NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, PITCH_BEND_MAX_CM+1);
 Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
 CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN);
 CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN);
@@ -93,7 +94,7 @@ void setup()
   pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
   pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
-  pinMode (TEENSY_ROT_POT_PIN, INPUT_PULLUP);
+  pinMode (TEENSY_ROT_POT_PIN, INPUT);
 
   /* The rotary switch is common anode with external pulldown, do not turn on pullup */
   pinMode(TEENSY_LED_PIN, OUTPUT);
@@ -219,21 +220,28 @@ void loop()
   /* Get Ultrasonic Distance sensor reading */
   if (micros() >= ping_time)
   {
-    /* NOTE: due to using newPing timer, this has to indirectly set range_in_cm */
+    /* NOTE: due to using newPing timer, this has to indirectly set range_in_us */
     ultrasonic.ping_timer(pingCheck);
+    range_in_cm = range_in_us / US_ROUNDTRIP_CM;
     ping_time += ping_period;
   }
 
-  if (range_in_cm == 0 || range_in_cm > PITCH_BEND_MAX_CM)
+  /*constrain range_in_us, but sufficiently low values are treated as high ones */
+  if (range_in_cm < PITCH_BEND_MIN_CM || range_in_cm > PITCH_BEND_MAX_CM)
   {
     range_in_cm = PITCH_BEND_MAX_CM;
   }
-  
+
   /* Decide whether to update ultrasonic sensor */
   curr_bend_val = SCALED_PITCH_BEND(range_in_cm);
 
   update_pitch_bend = false;
-  if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < 1000)
+  if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < 1700)
+  {
+    update_pitch_bend= true;
+    prev_bend_val = curr_bend_val;
+  }
+  else if (curr_bend_val == SCALED_PITCH_BEND(PITCH_BEND_MAX_CM))
   {
     update_pitch_bend= true;
     prev_bend_val = curr_bend_val;
@@ -284,7 +292,11 @@ void pingCheck(void)
 {
   if (ultrasonic.check_timer()) 
   {
-    range_in_cm = (ultrasonic.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM
+    range_in_us = ultrasonic.ping_result;
+  }
+  else
+  {
+    range_in_us += 2;  
   }
 }
 
@@ -307,7 +319,7 @@ void print_loop_time()
 {
   DEBUG_PRINT("\rLoop Time: ");
   DEBUG_PRINT(loop_micros);
-  DEBUG_PRINT("analog_volume: ");
-  DEBUG_PRINT(analogRead(TEENSY_ROT_POT_PIN));
+  DEBUG_PRINT(", pitch_bend: ");
+  DEBUG_PRINT(curr_bend_val);
   DEBUG_PRINT("     ");
 }

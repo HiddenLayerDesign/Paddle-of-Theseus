@@ -14,5 +14,6 @@
 #define __ULTRASONIC_H__
 
 #define PITCH_BEND_MAX_CM 30 // adjust this for sensitivity range of pitch bend
+#define PITCH_BEND_MIN_CM 2 // adjust this for sensitivity range of pitch bend
 
 #endif // __ULTRASONIC_H__
