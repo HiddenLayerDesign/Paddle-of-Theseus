@@ -36,6 +36,7 @@ const int MIDI_CHANNEL_16 = 15;
 const int MIDI_CTRL_CHG_MOD_WHEEL  = 0x01;
 const int MIDI_CTRL_CHG_MOD_BREATH = 0x02;
 const int MIDI_CTRL_CHG_PORTAMENTO = 0x05;
+const int MIDI_CTRL_CHG_CHAN_VOL   = 0x07;
 const int MIDI_CTRL_CHG_EXPRESSION = 0x0B;
 const int MIDI_CTRL_CHG_EFFECT_1   = 0x0C;
 const int MIDI_CTRL_CHG_EFFECT_2   = 0x0D;

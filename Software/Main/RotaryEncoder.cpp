@@ -15,7 +15,7 @@
 /**
  * Set the rotary encoder's built-in LED to one of the values defined at the top of the file 
  * 
- * @param color An enum of one of the possible RGB colors. 
+ * @param color A byte whose bits correspond to R/G/B. See the definitions in RotaryEncoder.h 
  */
 void set_rot_enc_led(uint8_t color)
 {

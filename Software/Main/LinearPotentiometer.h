@@ -18,7 +18,7 @@
 /**
  * Read the linear potentiometer and use it to get a note in the scale
  * 
- * @return MIDI note
+ * @return uint8_t Index of note within provided scale;
  */
 uint8_t note_from_lin_pot(void);
 

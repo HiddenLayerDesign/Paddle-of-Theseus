@@ -31,6 +31,7 @@ class MMA8452Q
     int8_t init(void);
     void accel_update(void);
     void print_accel(void);
+    bool is_lefty_flipped(void);
     float x;
     float y;
     float z;

@@ -36,10 +36,8 @@ enum rot_enc_state {
 #define LED_CYAN   0x1 //B001
 #define LED_WHITE  0x0 //B000
 
-
-const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_OFF, LED_GREEN, LED_BLUE, LED_RED, LED_WHITE};
+const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_YELLOW, LED_GREEN, LED_BLUE, LED_RED, LED_WHITE};
 const char rot_enc_ctrl_change[ROT_ENC_ENUM_SIZE] = {0x14, 0x15, 0x16, 0x17};
-
 
 void set_rot_enc_led(uint8_t color);
 

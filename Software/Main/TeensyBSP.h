@@ -12,7 +12,23 @@
 
 #include "Arduino.h"
 
-//#define DEBUG // uncomment to enable printing variables for debug
+#define DEBUG // uncomment to enable printing variables for debug
+
+#ifdef DEBUG
+#define DEBUG_PRINTLN(x)  Serial.println(x)
+#define DEBUG_PRINT(x)  Serial.print(x)
+#define DEBUG_PRINTLN_HEX(x) Serial.println (x, HEX)
+#define DEBUG_PRINT_HEX(x) Serial.print (x, HEX)
+#define DEBUG_PRINT_DEC4(x) Serial.print(x, 4)
+#else
+#define DEBUG_PRINTLN(x)
+#define DEBUG_PRINT(x)
+#define DEBUG_PRINTLN_HEX(x) 
+#define DEBUG_PRINT_HEX(x)
+#define DEBUG_PRINT_DEC4 
+#endif /* DEBUG */
+
+
 //#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way
 
@@ -29,8 +45,7 @@
 #else
 #define TEENSY_ULTRA_TRIG_PIN     11
 #define TEENSY_ULTRA_SENS_PIN     12
-#endif /* ULTRASONIC_PIN
-*/
+#endif /* ULTRASONIC_PING */
 
 #define TEENSY_CAP_TOUCH0_PIN     10
 #define TEENSY_CAP_TOUCH1_PIN     9
@@ -42,11 +57,5 @@
 #define TEENSY_ROT_ENC_BUTTON_PIN 3
 #define TEENSY_ROT_LEDG           2
 #define TEENSY_ROT_LEDR           1
-
-#ifdef INVERT_ROT_POT
-#define GET_VOLUME(pin) floor((1024 - analogRead(pin)) * 256.0/1024.0)
-#else 
-#define GET_VOLUME(pin) floor(analogRead(pin) * 256.0/1024.0)
-#endif /* INVERT_ROT_POT */
 
 #endif /* __TEENSY_BSP_H__ */

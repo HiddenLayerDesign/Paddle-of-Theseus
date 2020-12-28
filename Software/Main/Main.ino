@@ -5,6 +5,7 @@
  *  For Hidden Layer Design
  *  
  *  This design is built off of Teensy MIDI example code 
+ *     Sparkfun code for the accelerometer
  *     and Seeed studio code for the Ultrasonic Rangefinder
  *  
  *  Note: You must select "Serial + MIDI" from the "Tools > USB Type" menu
@@ -14,6 +15,7 @@
  *  
  *******************************************************/
 #include <Encoder.h>
+#include <NewPing.h>
 
 #include "Arduino.h"
 #include "MMA8452Q.h"
@@ -24,58 +26,50 @@
 #include "TeensyBSP.h"
 #include "Ultrasonic.h"
 
-#define PITCH_BEND_RESOLUTION 1
+/**
+ * Pitch bend accepts a 14-bit twos compliment value, 
+ * but we only want to detune like a whammy bar, so we use 13 bits and subtract 2/13 so max val is 0
+ */
 
-#ifdef DEBUG
-#define DEBUG_PRINTLN(x)  Serial.println(x)
-#define DEBUG_PRINT(x)  Serial.print(x)
-#else
-#define DEBUG_PRINTLN(x)
-#define DEBUG_PRINT(x)
-#endif /* DEBUG */
+// TODO FIXE pow(2,13 for full range!)
+#define SCALED_PITCH_BEND(x) (int) (pow(2,12) * x  / PITCH_BEND_MAX_CM) - pow(2,12)  // Do not adjust!
+
+#define GET_VOLUME(is_lefty_flipped) (is_lefty_flipped) ? \
+            floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) : \
+            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
+
+#define TEENSY_MIN_VOLUME 30
+
 
 /* Prototypes */
 void print_banner(void);
+void pingCheck(void);
 
 /* Ultrasonic Pitch Bend variables */
-int range_in_cm        = 100;
+const unsigned long ping_period = 1;
+unsigned long ping_time;
+int range_in_cm        = PITCH_BEND_MAX_CM;
 bool update_pitch_bend = false;
 
 /* Rotary Potentiometer variables */
 int analog_volume = 0;
+int prev_analog_volume = 0;
 
 /* MIDI variables */
-int curr_note0    = 0;
-int curr_note1    = 0;
-int curr_note2    = 0;
-int curr_note3    = 0;
-int prev_note0    = 0;
-int prev_note1    = 0;
-int prev_note2    = 0;
-int prev_note3    = 0;
+int current_note  = 0;
 int curr_bend_val = 1;
 int prev_bend_val = 0;
 
 /* Rotary Encoder Variables */
 char rot_enc_array[ROT_ENC_ENUM_SIZE];
-enum rot_enc_state encoder_state = 0;
+enum rot_enc_state encoder_state = (rot_enc_state) 0;
 int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 int curr_rot_button = HIGH;
 int prev_rot_button = HIGH;
 bool update_rot_enc = false;
 
-/* Capacitive Touch variables */
-unsigned int update_midi_msec0  = 0;
-unsigned int update_midi_msec1  = 0;
-unsigned int update_midi_msec2  = 0;
-unsigned int update_midi_msec3  = 0;
-bool midi_needs_update0  = true;
-bool midi_needs_update1  = true;
-bool midi_needs_update2  = true;
-bool midi_needs_update3  = true;
-
 /* Sensor class variables */
-Ultrasonic ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN);
+NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, 100);
 Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
 CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN);
 CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN);
@@ -83,25 +77,30 @@ CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN);
 CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN);
 MMA8452Q accel;
 
+/* General variables */
+bool is_lefty_flipped    = false;
+unsigned long start_micros = 0;
+unsigned long loop_micros = 0;
+
 /*
  * Setup PinModes and Serial port, Init digital sensors 
  */
 void setup() 
 {
-  pinMode(TEENSY_LED_PIN, OUTPUT);
+  /* Set input sensor pins */
   pinMode(TEENSY_CAP_TOUCH0_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
   pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
   pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
+  pinMode (TEENSY_ROT_POT_PIN, INPUT_PULLUP);
 
   /* The rotary switch is common anode with external pulldown, do not turn on pullup */
+  pinMode(TEENSY_LED_PIN, OUTPUT);
   pinMode(TEENSY_ROT_LEDB, OUTPUT);
   pinMode(TEENSY_ROT_LEDG, OUTPUT);
   pinMode(TEENSY_ROT_LEDR, OUTPUT);
-
- set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
- digitalWrite(TEENSY_LED_PIN, HIGH);
+  set_rot_enc_led(rot_enc_led_color_array[encoder_state]);  
 
   for (int i=0; i< ROT_ENC_ENUM_SIZE; i++)
   {
@@ -110,6 +109,7 @@ void setup()
 
 #ifdef DEBUG
   Serial.begin(9600);
+  while (!Serial);
   print_banner();
 #endif /* DEBUG */
 
@@ -124,9 +124,15 @@ void setup()
  */
 void loop() 
 {
-  analog_volume = GET_VOLUME(TEENSY_ROT_POT_PIN);  
+  start_micros = micros();
+ 
+  /* Check Lefty Flip status */
+  accel.accel_update();
+  is_lefty_flipped = accel.is_lefty_flipped();
+  set_rot_enc_led(is_lefty_flipped ? LED_RED : LED_GREEN);
 
-  update_rot_enc = false;
+  /* set volume */
+  analog_volume = GET_VOLUME(is_lefty_flipped);
   
   /* Sample Rotary Encoder Pushbutton */
   curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
@@ -135,32 +141,25 @@ void loop()
     encoder_state =  (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
     set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
     rot_enc.write((encoder_state == ROT_ENC_HYPER) ? CAP_TOUCH_HYPER_DELAY : rot_enc_array[encoder_state] );
-    DEBUG_PRINT("INFO: Encoder state is");
-    DEBUG_PRINTLN(encoder_state);    
   }
   prev_rot_button = curr_rot_button;
   
   /* Sample Rotary Encoder Twist Knob */
   long enc_reading;
   int constrained_enc_reading;
+  
   enc_reading = rot_enc.read();
   constrained_enc_reading = constrain(enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+
+  update_rot_enc = false;
   if (constrained_enc_reading != rot_enc_array[encoder_state])
   {
-    DEBUG_PRINT("INFO: Encoder value is");
-    DEBUG_PRINTLN(enc_reading);    
     rot_enc_array[encoder_state] = constrained_enc_reading;
     update_rot_enc = true;
   }
 
   /* Read MIDI note from potentiometer */
-  curr_note0 = note_from_lin_pot();
-
-  if (0 != curr_note0)
-  {
-    DEBUG_PRINT("INFO: Note is");
-    DEBUG_PRINTLN(curr_note0);        
-  }
+  current_note = note_from_lin_pot();
 
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
   capTouch0.Update();
@@ -168,119 +167,40 @@ void loop()
   capTouch2.Update();
   capTouch3.Update();
 
-  if (encoder_state != ROT_ENC_HYPER)
+  if (capTouch0.GetReading() && capTouch0.midi_needs_update)
   {
-    if (capTouch0.GetReading() && midi_needs_update0)
+    if (millis() > capTouch0.update_midi_msec) 
     {
-      if (millis() > update_midi_msec0) 
-      {
-        DEBUG_PRINT("INFO: Sent MIDI note: ");
-        DEBUG_PRINT(curr_note0);
-        DEBUG_PRINT("volume: ");
-        DEBUG_PRINTLN(analog_volume);    
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note0], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note0], analog_volume, MIDI_CHANNEL_2);
-        
-        update_midi_msec0  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-        midi_needs_update0 = false;
-        prev_note0 = curr_note0;
-      }
-    }
-    if (capTouch1.GetReading() && midi_needs_update1)
-    {
-      if (millis() > update_midi_msec1) 
-      {
-        curr_note1 = min(curr_note0 + 3, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note: ");
-        DEBUG_PRINTLN(curr_note1);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec1  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-        midi_needs_update1 = false;
-        prev_note1 = curr_note1;
-      }
-    }
-    if (capTouch2.GetReading() && midi_needs_update2)
-    {
-      if (millis() > update_midi_msec2) 
-      {
-        curr_note2 = min(curr_note0 + 5, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note2);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec2  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-        midi_needs_update2 = false;
-        prev_note2 = curr_note2;
-      }
-    }
-    if (capTouch3.GetReading() && midi_needs_update3)
-    {
-      if (millis() > update_midi_msec3) 
-      {
-        curr_note3 = min(curr_note0 + 7, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note3);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec3  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-        midi_needs_update3 = false;
-        prev_note3 = curr_note3;
-      }
+      capTouch0.SendNote(current_note, analog_volume);
     }
   }
-  else
+  if (capTouch1.GetReading() && capTouch1.midi_needs_update)
   {
-    if (capTouch0.GetReading() && (millis() > update_midi_msec0))
+    if (millis() > capTouch1.update_midi_msec) 
     {
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note0);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note0], 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note0], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec0  = millis() + hyper_delay;
-        midi_needs_update0 = false;
-        prev_note0 = curr_note0;
+      capTouch1.SendNote(min(current_note + 3, SCALE_LEN -1), analog_volume);
     }
-    if (capTouch1.GetReading() && (millis() > update_midi_msec1))
+  }
+  if (capTouch2.GetReading() && capTouch2.midi_needs_update)
+  {
+    if (millis() > capTouch2.update_midi_msec) 
     {
-        curr_note1 = min(curr_note0 + 3, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note1);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note1], 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note1], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec1  = millis() + hyper_delay;
-        midi_needs_update1 = false;
-        prev_note1 = curr_note1;
+      capTouch2.SendNote(min(current_note + 5, SCALE_LEN-1), analog_volume);
     }
-    if (capTouch2.GetReading() && (millis() > update_midi_msec2))
+  }
+  if (capTouch3.GetReading() && capTouch3.midi_needs_update)
+  {
+    if (millis() > capTouch3.update_midi_msec) 
     {
-        curr_note2 = min(curr_note0 + 5, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note2);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note2], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note2], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec2  = millis() + hyper_delay;
-        midi_needs_update2 = false;
-        prev_note2 = curr_note2;
-    }
-    if (capTouch3.GetReading() && (millis() > update_midi_msec3))
-    {
-        curr_note3 = min(curr_note0 + 7, SCALE_LEN-1);
-        DEBUG_PRINT("INFO: Sent MIDI note ");
-        DEBUG_PRINTLN(curr_note3);
-        usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[prev_note3], 0, MIDI_CHANNEL_2);   
-        usbMIDI.sendNoteOn(IONIAN_SHARP_5_SCALE[curr_note3], analog_volume, MIDI_CHANNEL_2);
-        update_midi_msec3  = millis() + hyper_delay;
-        midi_needs_update3 = false;
-        prev_note3 = curr_note3;
+      capTouch3.SendNote(min(current_note + 7, SCALE_LEN-1), analog_volume);
     }
   }
 
   /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
-  midi_needs_update0 = capTouch0.NewNote();
-  midi_needs_update1 = capTouch1.NewNote();
-  midi_needs_update2 = capTouch2.NewNote();
-  midi_needs_update3 = capTouch3.NewNote();
+  capTouch0.NewNote();
+  capTouch1.NewNote();
+  capTouch2.NewNote();
+  capTouch3.NewNote();
 
   /* Update MIDI settings based on RotEnc twist knob */
   if (update_rot_enc)
@@ -297,34 +217,77 @@ void loop()
   }
 
   /* Get Ultrasonic Distance sensor reading */
-  ultrasonic.distance_measure_blocking();
-  range_in_cm = ultrasonic.microseconds_to_centimeters();
+  if (micros() >= ping_time)
+  {
+    /* NOTE: due to using newPing timer, this has to indirectly set range_in_cm */
+    ultrasonic.ping_timer(pingCheck);
+    ping_time += ping_period;
+  }
 
+  if (range_in_cm == 0 || range_in_cm > PITCH_BEND_MAX_CM)
+  {
+    range_in_cm = PITCH_BEND_MAX_CM;
+  }
+  
   /* Decide whether to update ultrasonic sensor */
-  curr_bend_val = (range_in_cm < 30) ? (range_in_cm * 100) : 0 ;
-  update_pitch_bend = (curr_bend_val != prev_bend_val);
-  prev_bend_val = curr_bend_val;
+  curr_bend_val = SCALED_PITCH_BEND(range_in_cm);
+
+  update_pitch_bend = false;
+  if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < 1000)
+  {
+    update_pitch_bend= true;
+    prev_bend_val = curr_bend_val;
+  }
   
   /* Update Pitch Bend and flush usbMIDI message */
   if (update_pitch_bend)
   {
-    DEBUG_PRINT("INFO: Sent Pitch bend ");
-    DEBUG_PRINTLN(curr_bend_val);
     usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
     update_pitch_bend = false;
   }
-  
+
+  if ((analog_volume < TEENSY_MIN_VOLUME) && (prev_analog_volume >= TEENSY_MIN_VOLUME))
+  {
+    analog_volume = 0;
+    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch0.current_note], analog_volume, MIDI_CHANNEL_2);
+    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch1.current_note], analog_volume, MIDI_CHANNEL_2);
+    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch2.current_note], analog_volume, MIDI_CHANNEL_2);
+    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch3.current_note], analog_volume, MIDI_CHANNEL_2);
+  }
+  else
+  {
+    if (abs(prev_analog_volume - analog_volume) > 1)
+    {
+      usbMIDI.sendAfterTouch(analog_volume, MIDI_CHANNEL_2);
+    }
+  }
+  prev_analog_volume = analog_volume;
   usbMIDI.send_now();
 
-  /* 
+  /** 
+   *  ignore incoming MIDI messages;
+   *  
    *  MIDI Controllers should discard incoming MIDI messages.
    *  http://forum.pjrc.com/threads/24179-Teensy-3-Ableton-Analog-CC-causes-midi-crash
    */ 
-  while (usbMIDI.read()) 
+  while (usbMIDI.read()); 
+
+  loop_micros = micros() - start_micros;
+  
+#ifdef DEBUG
+  print_loop_time();
+#endif /* DEBUG*/
+}
+
+
+void pingCheck(void)
+{
+  if (ultrasonic.check_timer()) 
   {
-    /* ignore incoming messages */
+    range_in_cm = (ultrasonic.ping_result / US_ROUNDTRIP_CM); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM
   }
 }
+
 
 /**
  * Just print a quick serial banner- this is to de-clutter setup()
@@ -338,4 +301,13 @@ void print_banner(void)
   DEBUG_PRINTLN("*** Paddle of Theseus Serial Output  ***");
   DEBUG_PRINTLN("****************************************");
   DEBUG_PRINTLN();  
+}
+
+void print_loop_time()
+{
+  DEBUG_PRINT("\rLoop Time: ");
+  DEBUG_PRINT(loop_micros);
+  DEBUG_PRINT("analog_volume: ");
+  DEBUG_PRINT(analogRead(TEENSY_ROT_POT_PIN));
+  DEBUG_PRINT("     ");
 }

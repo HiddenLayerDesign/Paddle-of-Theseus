@@ -11,6 +11,11 @@
 #include "MIDIConstants.h"
 #include "TeensyBSP.h"
 
+/**
+ * Read the linear potentiometer and use it to get a note in the scale
+ * 
+ * @return uint8_t Index of note within provided scale;
+ */
 uint8_t note_from_lin_pot(void)
 {
   int lin_pot_voltage = analogRead(TEENSY_LIN_POT_PIN);
