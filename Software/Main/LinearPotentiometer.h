@@ -18,8 +18,8 @@
 /**
  * Read the linear potentiometer and use it to get a note in the scale
  * 
- * @return uint8_t Index of note within provided scale;
+ * @return uint8_t Index of un-scaled "fret" on potentiometer;
  */
-uint8_t note_from_lin_pot(void);
+uint8_t fret_from_lin_pot(void);
 
 #endif /* __LIN_POT_H__ */

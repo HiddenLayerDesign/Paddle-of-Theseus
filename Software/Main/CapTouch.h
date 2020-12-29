@@ -14,14 +14,21 @@
 #define CAP_TOUCH_HYPER_DELAY    75
 #define CAP_TOUCH_DEBOUNCE_DELAY 10
 
+enum cap_touch_id {
+  CAP_TOUCH_0 = 0,
+  CAP_TOUCH_1 = 1,
+  CAP_TOUCH_2 = 2,
+  CAP_TOUCH_3 = 3,
+  CAP_TOUCH_LIMIT = 3
+};
 
 class CapTouch
 {
   public:
-    CapTouch(int pin);
+    CapTouch(int pin, cap_touch_id id);
     void Update(void);
     bool GetReading(void);
-    void SendNote(int int_note, int analog_volume);
+    void SendNote(int int_note, int analog_volume, bool is_lefty_flipped);
     void NewNote(void);
     int previous_note;
     int current_note;
@@ -29,6 +36,7 @@ class CapTouch
     bool midi_needs_update;
     
   private:
+    cap_touch_id _id;
     int _pin; // pin number of Arduino that is connected with SIG pin of Ultrasonic Ranger.
     int cap_touch_array[CAP_TOUCH_ARRAY_LEN];
     int array_idx;

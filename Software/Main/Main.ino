@@ -28,18 +28,21 @@
 
 /**
  * Pitch bend accepts a 14-bit twos compliment value, 
- * but we only want to detune like a whammy bar, so we use 13 bits and subtract 2/13 so max val is 0
+ * but we only want to detune like a whammy bar, so we use 12 bits and subtract 2^12 
+ * such that max val is 0 and whammy goes to half of negative range
  */
-
-// TODO FIXE pow(2,13 for full range!)
+// NOTE: use pow(2,13) instead for full range!
 #define SCALED_PITCH_BEND(x) (int) (pow(2,12) * x  / PITCH_BEND_MAX_CM) - pow(2,12)  // Do not adjust!
 
+/**
+ * Easy macro to get volume from potentiometer
+ */
 #define GET_VOLUME(is_lefty_flipped) (is_lefty_flipped) ? \
             floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) : \
             floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
 
-#define TEENSY_MIN_VOLUME 30
-
+// TODO make a "Tuning.h"-type of file
+#define TEENSY_MIN_VOLUME 20
 
 /* Prototypes */
 void print_banner(void);
@@ -48,18 +51,18 @@ void pingCheck(void);
 /* Ultrasonic Pitch Bend variables */
 const unsigned long ping_period = 3;
 unsigned long ping_time;
-unsigned long range_in_us        = PITCH_BEND_MAX_CM * US_ROUNDTRIP_CM;
+unsigned long range_in_us = PITCH_BEND_MAX_CM * US_ROUNDTRIP_CM;
 unsigned long range_in_cm;
 bool update_pitch_bend = false;
+int curr_bend_val = 1;
+int prev_bend_val = 0;
 
 /* Rotary Potentiometer variables */
 int analog_volume = 0;
 int prev_analog_volume = 0;
 
 /* MIDI variables */
-int current_note  = 0;
-int curr_bend_val = 1;
-int prev_bend_val = 0;
+int current_fret  = 0;
 
 /* Rotary Encoder Variables */
 char rot_enc_array[ROT_ENC_ENUM_SIZE];
@@ -72,14 +75,14 @@ bool update_rot_enc = false;
 /* Sensor class variables */
 NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, PITCH_BEND_MAX_CM+1);
 Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
-CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN);
-CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN);
-CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN);
-CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN);
+CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN, CAP_TOUCH_0);
+CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN, CAP_TOUCH_1);
+CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN, CAP_TOUCH_2);
+CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN, CAP_TOUCH_3);
 MMA8452Q accel;
 
 /* General variables */
-bool is_lefty_flipped    = false;
+bool is_lefty_flipped = false;
 unsigned long start_micros = 0;
 unsigned long loop_micros = 0;
 
@@ -160,7 +163,7 @@ void loop()
   }
 
   /* Read MIDI note from potentiometer */
-  current_note = note_from_lin_pot();
+  current_fret = fret_from_lin_pot();
 
   /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
   capTouch0.Update();
@@ -168,33 +171,22 @@ void loop()
   capTouch2.Update();
   capTouch3.Update();
 
-  if (capTouch0.GetReading() && capTouch0.midi_needs_update)
+  /* send notes if needed */
+  if (capTouch0.GetReading() && capTouch0.midi_needs_update && millis() > capTouch0.update_midi_msec)
   {
-    if (millis() > capTouch0.update_midi_msec) 
-    {
-      capTouch0.SendNote(current_note, analog_volume);
-    }
+    capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped);
   }
-  if (capTouch1.GetReading() && capTouch1.midi_needs_update)
+  if (capTouch1.GetReading() && capTouch1.midi_needs_update && millis() > capTouch1.update_midi_msec)
   {
-    if (millis() > capTouch1.update_midi_msec) 
-    {
-      capTouch1.SendNote(min(current_note + 3, SCALE_LEN -1), analog_volume);
-    }
+    capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped);
   }
-  if (capTouch2.GetReading() && capTouch2.midi_needs_update)
+  if (capTouch2.GetReading() && capTouch2.midi_needs_update && millis() > capTouch2.update_midi_msec)
   {
-    if (millis() > capTouch2.update_midi_msec) 
-    {
-      capTouch2.SendNote(min(current_note + 5, SCALE_LEN-1), analog_volume);
-    }
+    capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped);
   }
-  if (capTouch3.GetReading() && capTouch3.midi_needs_update)
+  if (capTouch3.GetReading() && capTouch3.midi_needs_update && millis() > capTouch3.update_midi_msec)
   {
-    if (millis() > capTouch3.update_midi_msec) 
-    {
-      capTouch3.SendNote(min(current_note + 7, SCALE_LEN-1), analog_volume);
-    }
+    capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped);
   }
 
   /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
@@ -241,11 +233,7 @@ void loop()
     update_pitch_bend= true;
     prev_bend_val = curr_bend_val;
   }
-  else if (curr_bend_val == SCALED_PITCH_BEND(PITCH_BEND_MAX_CM))
-  {
-    update_pitch_bend= true;
-    prev_bend_val = curr_bend_val;
-  }
+
   
   /* Update Pitch Bend and flush usbMIDI message */
   if (update_pitch_bend)
@@ -254,13 +242,16 @@ void loop()
     update_pitch_bend = false;
   }
 
-  if ((analog_volume < TEENSY_MIN_VOLUME) && (prev_analog_volume >= TEENSY_MIN_VOLUME))
+  if (analog_volume < TEENSY_MIN_VOLUME)
   {
     analog_volume = 0;
-    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch0.current_note], analog_volume, MIDI_CHANNEL_2);
-    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch1.current_note], analog_volume, MIDI_CHANNEL_2);
-    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch2.current_note], analog_volume, MIDI_CHANNEL_2);
-    usbMIDI.sendNoteOff(IONIAN_SHARP_5_SCALE[capTouch3.current_note], analog_volume, MIDI_CHANNEL_2);
+    if ((prev_analog_volume >= TEENSY_MIN_VOLUME))
+    {
+      usbMIDI.sendNoteOff(capTouch0.current_note, 0, MIDI_CHANNEL_2);
+      usbMIDI.sendNoteOff(capTouch1.current_note, 0, MIDI_CHANNEL_2);
+      usbMIDI.sendNoteOff(capTouch2.current_note, 0, MIDI_CHANNEL_2);
+      usbMIDI.sendNoteOff(capTouch3.current_note, 0, MIDI_CHANNEL_2);
+    }
   }
   else
   {
@@ -319,7 +310,7 @@ void print_loop_time()
 {
   DEBUG_PRINT("\rLoop Time: ");
   DEBUG_PRINT(loop_micros);
-  DEBUG_PRINT(", pitch_bend: ");
-  DEBUG_PRINT(curr_bend_val);
+  DEBUG_PRINT(", volume: ");
+  DEBUG_PRINT(analog_volume);
   DEBUG_PRINT("     ");
 }
