@@ -16,6 +16,7 @@
  *******************************************************/
 #include <Encoder.h>
 #include <NewPing.h>
+//#include <SerialUI.h>
 
 #include "Arduino.h"
 #include "MMA8452Q.h"
@@ -25,35 +26,23 @@
 #include "RotaryEncoder.h"
 #include "TeensyBSP.h"
 #include "Ultrasonic.h"
-
-/**
- * Pitch bend accepts a 14-bit twos compliment value, 
- * but we only want to detune like a whammy bar, so we use 12 bits and subtract 2^12 
- * such that max val is 0 and whammy goes to half of negative range
- */
-// NOTE: use pow(2,13) instead for full range!
-#define SCALED_PITCH_BEND(x) (int) (pow(2,12) * x  / PITCH_BEND_MAX_CM) - pow(2,12)  // Do not adjust!
-
-/**
- * Easy macro to get volume from potentiometer
- */
-#define GET_VOLUME(is_lefty_flipped) (is_lefty_flipped) ? \
-            floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) : \
-            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
-
-// TODO make a "Tuning.h"-type of file
-#define TEENSY_MIN_VOLUME 20
+#include "NonVolatile.h"
+#include "Version.h"
+#include "Preferences.h"
 
 /* Prototypes */
-void print_banner(void);
+void printBanner(void);
 void pingCheck(void);
+void softRestart(void);
+void configurePins(void);
+void printLoopDebugInfo(void);
+int getVolume(bool is_lefty_flipped);
+
 
 /* Ultrasonic Pitch Bend variables */
-const unsigned long ping_period = 3;
 unsigned long ping_time;
-unsigned long range_in_us = PITCH_BEND_MAX_CM * US_ROUNDTRIP_CM;
+unsigned long range_in_us;
 unsigned long range_in_cm;
-bool update_pitch_bend = false;
 int curr_bend_val = 1;
 int prev_bend_val = 0;
 
@@ -62,19 +51,19 @@ int analog_volume = 0;
 int prev_analog_volume = 0;
 
 /* MIDI variables */
-int current_fret  = 0;
+int current_fret = 0;
 
 /* Rotary Encoder Variables */
-char rot_enc_array[ROT_ENC_ENUM_SIZE];
+int curr_enc_reading = 0;
+int prev_enc_reading = 1;
+int constrained_enc_reading = 0;
 enum rot_enc_state encoder_state = (rot_enc_state) 0;
-int hyper_delay = CAP_TOUCH_DEBOUNCE_DELAY;
 int curr_rot_button = HIGH;
 int prev_rot_button = HIGH;
-bool update_rot_enc = false;
 
 /* Sensor class variables */
 NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, PITCH_BEND_MAX_CM+1);
-Encoder rot_enc(TEENSY_ROT_ENC_PIN_1,TEENSY_ROT_ENC_PIN_2);
+Encoder rotEnc(TEENSY_ROT_ENC_PIN_1, TEENSY_ROT_ENC_PIN_2);
 CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN, CAP_TOUCH_0);
 CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN, CAP_TOUCH_1);
 CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN, CAP_TOUCH_2);
@@ -83,44 +72,46 @@ MMA8452Q accel;
 
 /* General variables */
 bool is_lefty_flipped = false;
-unsigned long start_micros = 0;
-unsigned long loop_micros = 0;
+bool is_config_mode = false;
 
 /*
  * Setup PinModes and Serial port, Init digital sensors 
  */
 void setup() 
 {
-  /* Set input sensor pins */
-  pinMode(TEENSY_CAP_TOUCH0_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
-  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
-  pinMode (TEENSY_ROT_POT_PIN, INPUT);
-
-  /* The rotary switch is common anode with external pulldown, do not turn on pullup */
-  pinMode(TEENSY_LED_PIN, OUTPUT);
-  pinMode(TEENSY_ROT_LEDB, OUTPUT);
-  pinMode(TEENSY_ROT_LEDG, OUTPUT);
-  pinMode(TEENSY_ROT_LEDR, OUTPUT);
-  set_rot_enc_led(rot_enc_led_color_array[encoder_state]);  
-
-  for (int i=0; i< ROT_ENC_ENUM_SIZE; i++)
+  configurePins();    
+  CheckUpdateVersionNumber();
+  
+  if (true == (is_config_mode = IsConfigModeEnabled()))
   {
-    rot_enc_array[i] = 100;
+    RotEncConfigPattern();
   }
+  else
+  {
+    RotEncStandardPattern();
 
 #ifdef DEBUG
-  Serial.begin(9600);
-  while (!Serial);
-  print_banner();
+    unsigned long flip_time = millis() + 500;
+    bool is_green_not_yellow = true;
+
+    Serial.begin(9600);
+    while (!Serial)
+    {
+        if (PollForSerial())
+        {
+          is_green_not_yellow = !is_green_not_yellow;
+          flip_time = millis() + 500;
+        }
+      }
+    }
+    printBanner();
 #endif /* DEBUG */
 
-  if (!accel.init())
-  {
-     DEBUG_PRINTLN("WARNING: Failed to init accelerometer!");  
+    RotEncSetLED(rot_enc_led_color_array[encoder_state]);
   }
+  
+  accel.init();
+  WriteConfigMode(false);
 }
 
 /*
@@ -128,39 +119,35 @@ void setup()
  */
 void loop() 
 {
-  start_micros = micros();
- 
   /* Check Lefty Flip status */
   accel.accel_update();
   is_lefty_flipped = accel.is_lefty_flipped();
-  set_rot_enc_led(is_lefty_flipped ? LED_RED : LED_GREEN);
 
-  /* set volume */
-  analog_volume = GET_VOLUME(is_lefty_flipped);
-  
   /* Sample Rotary Encoder Pushbutton */
   curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
   if (curr_rot_button == HIGH && prev_rot_button == LOW)  
   {
+    if (capTouch0.IsLongHold() && capTouch1.IsLongHold() && capTouch2.IsLongHold() && capTouch3.IsLongHold())
+    {
+        DEBUG_PRINT("Setting Config Mode!");
+        WriteConfigMode(true);
+        RotEncConfigPattern();
+        softRestart();  
+    }
     encoder_state =  (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
-    set_rot_enc_led(rot_enc_led_color_array[encoder_state]);
-    rot_enc.write((encoder_state == ROT_ENC_HYPER) ? CAP_TOUCH_HYPER_DELAY : rot_enc_array[encoder_state] );
+    RotEncSetLED(rot_enc_led_color_array[encoder_state]);
   }
   prev_rot_button = curr_rot_button;
   
   /* Sample Rotary Encoder Twist Knob */
-  long enc_reading;
-  int constrained_enc_reading;
+  curr_enc_reading = rotEnc.read();
+  constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
   
-  enc_reading = rot_enc.read();
-  constrained_enc_reading = constrain(enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
-
-  update_rot_enc = false;
-  if (constrained_enc_reading != rot_enc_array[encoder_state])
+  if (constrained_enc_reading != prev_enc_reading)
   {
-    rot_enc_array[encoder_state] = constrained_enc_reading;
-    update_rot_enc = true;
+    usbMIDI.sendControlChange(ROT_ENC_CTRL_CHANGE, constrained_enc_reading, MIDI_CHANNEL_2);
   }
+  prev_enc_reading = constrained_enc_reading;
 
   /* Read MIDI note from potentiometer */
   current_fret = fret_from_lin_pot();
@@ -172,42 +159,20 @@ void loop()
   capTouch3.Update();
 
   /* send notes if needed */
-  if (capTouch0.GetReading() && capTouch0.midi_needs_update && millis() > capTouch0.update_midi_msec)
-  {
+  if (capTouch0.ShouldSendNote()) 
     capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped);
-  }
-  if (capTouch1.GetReading() && capTouch1.midi_needs_update && millis() > capTouch1.update_midi_msec)
-  {
+  if (capTouch1.ShouldSendNote()) 
     capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped);
-  }
-  if (capTouch2.GetReading() && capTouch2.midi_needs_update && millis() > capTouch2.update_midi_msec)
-  {
+  if (capTouch2.ShouldSendNote())
     capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped);
-  }
-  if (capTouch3.GetReading() && capTouch3.midi_needs_update && millis() > capTouch3.update_midi_msec)
-  {
+  if (capTouch3.ShouldSendNote())
     capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped);
-  }
 
   /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
-  capTouch0.NewNote();
-  capTouch1.NewNote();
-  capTouch2.NewNote();
-  capTouch3.NewNote();
-
-  /* Update MIDI settings based on RotEnc twist knob */
-  if (update_rot_enc)
-  {
-    if (encoder_state == ROT_ENC_HYPER)
-    {
-      hyper_delay = rot_enc_array[encoder_state];
-    }
-    else
-    {
-      usbMIDI.sendControlChange(rot_enc_ctrl_change[encoder_state], rot_enc_array[encoder_state], MIDI_CHANNEL_2);
-      usbMIDI.send_now();
-    }
-  }
+  capTouch0.CheckMIDINeedsUpdate();
+  capTouch1.CheckMIDINeedsUpdate();
+  capTouch2.CheckMIDINeedsUpdate();
+  capTouch3.CheckMIDINeedsUpdate();
 
   /* Get Ultrasonic Distance sensor reading */
   if (micros() >= ping_time)
@@ -215,10 +180,10 @@ void loop()
     /* NOTE: due to using newPing timer, this has to indirectly set range_in_us */
     ultrasonic.ping_timer(pingCheck);
     range_in_cm = range_in_us / US_ROUNDTRIP_CM;
-    ping_time += ping_period;
+    ping_time += ULTRASONIC_PING_PERIOD;
   }
 
-  /*constrain range_in_us, but sufficiently low values are treated as high ones */
+  /* constrain range_in_cm, but sufficiently low values are treated as high ones */
   if (range_in_cm < PITCH_BEND_MIN_CM || range_in_cm > PITCH_BEND_MAX_CM)
   {
     range_in_cm = PITCH_BEND_MAX_CM;
@@ -227,21 +192,14 @@ void loop()
   /* Decide whether to update ultrasonic sensor */
   curr_bend_val = SCALED_PITCH_BEND(range_in_cm);
 
-  update_pitch_bend = false;
-  if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < 1700)
+  if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < MAX_PITCH_BEND_DELTA)
   {
-    update_pitch_bend= true;
+    usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
     prev_bend_val = curr_bend_val;
   }
 
-  
-  /* Update Pitch Bend and flush usbMIDI message */
-  if (update_pitch_bend)
-  {
-    usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
-    update_pitch_bend = false;
-  }
-
+  /* set volume */
+  analog_volume = getVolume(is_lefty_flipped);
   if (analog_volume < TEENSY_MIN_VOLUME)
   {
     analog_volume = 0;
@@ -270,47 +228,116 @@ void loop()
    *  http://forum.pjrc.com/threads/24179-Teensy-3-Ableton-Analog-CC-causes-midi-crash
    */ 
   while (usbMIDI.read()); 
-
-  loop_micros = micros() - start_micros;
   
-#ifdef DEBUG
-  print_loop_time();
-#endif /* DEBUG*/
+  printLoopDebugInfo();
 }
 
-
+/**
+ * Callback function to check whether ultrasonic sonar has returned data
+ */
 void pingCheck(void)
 {
-  if (ultrasonic.check_timer()) 
-  {
-    range_in_us = ultrasonic.ping_result;
-  }
-  else
-  {
-    range_in_us += 2;  
-  }
+  range_in_us = (ultrasonic.check_timer()) ? ultrasonic.ping_result : range_in_us +2;
 }
 
+/**
+ * Do static configuration of pins as INPUT or OUTPUT
+ */
+void configurePins(void)
+{
+  /* Set input sensor pins */
+  pinMode(TEENSY_CAP_TOUCH0_PIN, INPUT);
+  pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
+  pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
+  pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
+  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
+  pinMode(TEENSY_ROT_POT_PIN, INPUT);
+
+  /* The rotary switch is common anode with external pulldown, do not turn on pullup */
+  pinMode(TEENSY_LED_PIN, OUTPUT);
+  pinMode(TEENSY_ROT_LEDB, OUTPUT);
+  pinMode(TEENSY_ROT_LEDG, OUTPUT);
+  pinMode(TEENSY_ROT_LEDR, OUTPUT);  
+}
+
+/**
+ * Return the instrument volume, taking into account whether a left- or right-handed person is using the paddle
+ * 
+ * @param is_lefty_flipped [in] True == the paddle is currently lefty-flipped, else False
+ * @return int Volume between 0-255 where 255 is MAX volume
+ */
+int getVolume(bool is_lefty_flipped)
+{
+  return (is_lefty_flipped) ?
+            floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) :
+            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
+}
 
 /**
  * Just print a quick serial banner- this is to de-clutter setup()
  */
-void print_banner(void)
+void printBanner(void)
 {
+  version_t s_version = GetVersionFromEEPROM();
+#ifndef DEBUG
+  (void) s_version; // remove warning
+#endif /* !DEBUG */
+
   DEBUG_PRINTLN();
   DEBUG_PRINTLN();
+  DEBUG_PRINTLN("***********************************************");
+  DEBUG_PRINTLN("*               Paddle of Theseus             *");
+  DEBUG_PRINTLN("*                                             *");
+  DEBUG_PRINTLN("* By Chase E. Stewart for Hidden Layer Design *");
+  DEBUG_PRINTLN("***********************************************");
+  DEBUG_PRINT("Version ");
+  DEBUG_PRINT(s_version.version_major);
+  DEBUG_PRINT(".");
+  DEBUG_PRINT(s_version.version_minor);
+  DEBUG_PRINT(".");
+  DEBUG_PRINT(s_version.version_bugfix);
   DEBUG_PRINTLN();
-  DEBUG_PRINTLN("****************************************");
-  DEBUG_PRINTLN("*** Paddle of Theseus Serial Output  ***");
-  DEBUG_PRINTLN("****************************************");
-  DEBUG_PRINTLN();  
+  DEBUG_PRINT("Config Mode enabled: ");
+  DEBUG_PRINT((IsConfigModeEnabled()) ? "True " : "False");
+  DEBUG_PRINTLN();
+  DEBUG_PRINTLN();
 }
 
-void print_loop_time()
+/**
+ * Use Carriage return to print a constantly-updating variable(s) once-per-loop
+ */
+void printLoopDebugInfo()
 {
   DEBUG_PRINT("\rLoop Time: ");
   DEBUG_PRINT(loop_micros);
   DEBUG_PRINT(", volume: ");
   DEBUG_PRINT(analog_volume);
   DEBUG_PRINT("     ");
+}
+
+/**
+ * Reset the Teensy in software
+ */
+void softRestart() 
+{
+  Serial.end();  //clears the serial monitor  if used
+  SCB_AIRCR = 0x05FA0004;  //write value for restart
+}
+
+/**
+ * Non-blocking function to check whether it's time to flip the LED, return whether LED was flipped
+ * just a way to unclutter setup()
+ * 
+ * @param flip_time [in] timestamp in msec after which to flip the LED
+ * @param is_green_not_yellow [in] True == set LED to green, else False == yellow
+ * @return bool True == LED was flipped on this call, False == nothing happened
+ */
+bool PollForSerial(unsigned long flip_time, bool is_green_not_yellow)
+{
+  if (millis() > flip_time)
+  {      
+    RotEncSetLED((is_green_not_yellow) ? LED_GREEN : LED_YELLOW);
+    return true;
+  }
+  return false;
 }

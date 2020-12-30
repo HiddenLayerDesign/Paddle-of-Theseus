@@ -1,6 +1,7 @@
 /******************************************************************************
 NOTE: this code has been edited from the below, original Sparkfun header starts from
-asterisks!
+ second set of asterisks!
+******************************************************************************/
 
 /******************************************************************************
 SparkFun_MMA8452Q.cpp
@@ -127,6 +128,7 @@ int8_t MMA8452Q::init(void)
   {
     DEBUG_PRINT("WARNING: Could not connect to MMA8452Q: 0x");
     DEBUG_PRINTLN_HEX(c);
+    DEBUG_PRINTLN("WARNING: Failed to init accelerometer!");  
     return 0;
   }
   

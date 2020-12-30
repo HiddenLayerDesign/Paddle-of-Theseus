@@ -12,22 +12,25 @@
 
 #include "Arduino.h"
 
-#define DEBUG // uncomment to enable printing variables for debug
+//#define DEBUG // uncomment to enable printing variables for debug
 
 #ifdef DEBUG
 #define DEBUG_PRINTLN(x)  Serial.println(x)
 #define DEBUG_PRINT(x)  Serial.print(x)
 #define DEBUG_PRINTLN_HEX(x) Serial.println (x, HEX)
 #define DEBUG_PRINT_HEX(x) Serial.print (x, HEX)
-#define DEBUG_PRINT_DEC4(x) Serial.print(x, 4)
+#define DEBUG_PRINT_DEC4(x) Serial.print((float) x, 4)
+#define DEBUG_PRINT_DEC3(x) Serial.print((float )x, 3)
 #else
 #define DEBUG_PRINTLN(x)
 #define DEBUG_PRINT(x)
 #define DEBUG_PRINTLN_HEX(x) 
 #define DEBUG_PRINT_HEX(x)
-#define DEBUG_PRINT_DEC4 
+#define DEBUG_PRINT_DEC4(x) 
+#define DEBUG_PRINT_DEC3(x)
 #endif /* DEBUG */
 
+#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C) // Application Interrupt and Reset Control location
 
 //#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way

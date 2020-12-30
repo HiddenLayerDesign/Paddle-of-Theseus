@@ -16,29 +16,50 @@
 #define ROT_ENC_MAX 255
 #define ROT_ENC_MIN 0
 
+#define ROT_ENC_CTRL_CHANGE 0x16
+
 /* Enumeration of Settings that can be controlled by the rotary encoder */
 enum rot_enc_state {
-  ROT_ENC_EFFECT_1,
-  ROT_ENC_EFFECT_2,
-  ROT_ENC_EFFECT_3,
-  ROT_ENC_EFFECT_4,
-  ROT_ENC_HYPER,
+  ROT_ENC_BLUE,
+  ROT_ENC_CYAN,
+  ROT_ENC_GREEN,
+  ROT_ENC_PURPLE,
+  ROT_ENC_RED,
+  ROT_ENC_YELLOW,
+  ROT_ENC_WHITE,  
   ROT_ENC_ENUM_SIZE
 };
 
-/* LED RGB colors (assumes common anode, as for Sparkfun COM-10982) */
+/** 
+ * LED RGB colors (assumes common anode, as for Sparkfun COM-10982) 
+ * Set a given bit to zero to light the LED- so OFF is 0x7 and WHITE is 0x0
+ */
 #define LED_OFF    0x7 //B111
 #define LED_RED    0x6 //B110
 #define LED_GREEN  0x5 //B101
-#define LED_YELLOW 0x4 //B100
 #define LED_BLUE   0x3 //B011
+#define LED_YELLOW 0x4 //B100
 #define LED_PURPLE 0x2 //B010
 #define LED_CYAN   0x1 //B001
 #define LED_WHITE  0x0 //B000
 
-const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_YELLOW, LED_GREEN, LED_BLUE, LED_RED, LED_WHITE};
-const char rot_enc_ctrl_change[ROT_ENC_ENUM_SIZE] = {0x14, 0x15, 0x16, 0x17};
+const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_BLUE, LED_CYAN, LED_GREEN, LED_PURPLE, LED_RED, LED_YELLOW, LED_WHITE};
 
-void set_rot_enc_led(uint8_t color);
+/**
+ * Set the rotary encoder's built-in LED to one of the values defined at the top of the file 
+ * 
+ * @param color A byte whose bits correspond to R/G/B. See the definitions in RotaryEncoder.h 
+ */
+void RotEncSetLED(uint8_t color);
+
+/**
+ * Flash the pattern for standard paddle behavior
+ */
+void RotEncStandardPattern(void);
+
+/**
+ * Flash the pattern for paddle config mode
+ */
+void RotEncConfigPattern(void);
 
 #endif // __ROT_ENC_H__

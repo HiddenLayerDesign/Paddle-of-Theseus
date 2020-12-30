@@ -10,9 +10,9 @@
 #ifndef __CAP_TOUCH_H__
 #define __CAP_TOUCH_H__
 
+#include "Preferences.h"
+
 #define CAP_TOUCH_ARRAY_LEN      2
-#define CAP_TOUCH_HYPER_DELAY    75
-#define CAP_TOUCH_DEBOUNCE_DELAY 10
 
 enum cap_touch_id {
   CAP_TOUCH_0 = 0,
@@ -29,11 +29,16 @@ class CapTouch
     void Update(void);
     bool GetReading(void);
     void SendNote(int int_note, int analog_volume, bool is_lefty_flipped);
-    void NewNote(void);
+    void CheckMIDINeedsUpdate(void);
+
+    bool ShouldSendNote(void);
+    bool IsLongHold(void);
+    
     int previous_note;
     int current_note;
     unsigned long update_midi_msec;
     bool midi_needs_update;
+    unsigned long press_time;
     
   private:
     cap_touch_id _id;

@@ -1,4 +1,4 @@
-/******************************************************* 
+/******************************************************* Pr
  *  File: CapTouch.cpp
  *    
  *  Author: Chase E. Stewart
@@ -62,6 +62,11 @@ CapTouch::CapTouch(int pin, cap_touch_id id)
 void CapTouch::Update(void)
 {
   current_reading = digitalRead(_pin);
+  if (current_reading && midi_needs_update)
+  {
+    press_time = millis();
+  }
+  
   cap_touch_array[array_idx] = current_reading;
   array_idx = (array_idx + 1) % CAP_TOUCH_ARRAY_LEN;
 }
@@ -77,7 +82,7 @@ bool CapTouch::GetReading(void)
 /**
  * Return whether this reading is new 
  */
-void CapTouch::NewNote(void)
+void CapTouch::CheckMIDINeedsUpdate(void)
 {
   int sum = 0;
   for (int i=0; i < CAP_TOUCH_ARRAY_LEN; i++)
@@ -95,4 +100,21 @@ void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped)
   update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
   midi_needs_update = false;
   previous_note = current_note;  
+}
+
+bool CapTouch::ShouldSendNote(void)
+{
+  return (GetReading() && midi_needs_update && millis() > update_midi_msec);
+}
+
+bool CapTouch::IsLongHold(void)
+{
+  /* if capTouch is not currently being held, then false */
+  if (midi_needs_update)
+  {
+    return false;
+  }  
+
+  /* return whether capTouch has been held for more than CONFIG_HOLD_DURATION_MILLIS msec */
+  return ((millis() - press_time) > CONFIG_HOLD_DURATION_MILLIS);
 }
