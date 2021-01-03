@@ -11,6 +11,7 @@
 #include "Arduino.h"
 #include "RotaryEncoder.h"
 #include "TeensyBSP.h"
+#include "Preferences.h"
 
 void RotEncSetLED(uint8_t color)
 {
@@ -39,7 +40,7 @@ void RotEncStandardPattern(void)
 
 void RotEncConfigPattern(void)
 {
-  for (int i=0; i<4; i++)
+  for (int i=0; i < LED_PATTERN_NUM_REPEATS; i++)
   {
     RotEncSetLED(LED_GREEN);
     delay(250);  
@@ -52,7 +53,7 @@ void RotEncConfigPattern(void)
 
 void RotEncErrorPattern(void)
 {
-  for (int i=0; i<4; i++)
+  for (int i=0; i < LED_PATTERN_NUM_REPEATS; i++)
   {
     RotEncSetLED(LED_RED);
     delay(250);  

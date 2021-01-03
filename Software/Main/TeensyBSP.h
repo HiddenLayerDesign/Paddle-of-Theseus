@@ -11,9 +11,13 @@
 #define __TEENSY_BSP_H__
 
 #include "Arduino.h"
+#include "Preferences.h"
 
-//#define DEBUG // uncomment to enable printing variables for debug
-
+/**
+ * Silence all printouts if not in DEBUG
+ * 
+ * NOTE: Set DEBUG definition in Preferences.h
+ */
 #ifdef DEBUG
 #define DEBUG_PRINTLN(x)  Serial.println(x)
 #define DEBUG_PRINT(x)  Serial.print(x)
@@ -30,7 +34,7 @@
 #define DEBUG_PRINT_DEC3(x)
 #endif /* DEBUG */
 
-#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C) // Application Interrupt and Reset Control location
+#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C) // Application Interrupt and Reset Control location for Teensy
 
 //#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way

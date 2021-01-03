@@ -12,48 +12,74 @@
 #include "MIDIConstants.h"
 #include "TeensyBSP.h"
 
-static int getScaledNote(int fret, cap_touch_id id, bool is_lefty_flipped)
+static int getScaledNote(int fret, cap_touch_id id, bool is_lefty_flipped, config_t in_config)
 {
+  int delta;
   
   if (is_lefty_flipped)
   {
       id = (cap_touch_id) ((int) CAP_TOUCH_LIMIT - (int) id);
   }
 
-  int note = fret + MIDI_SCALE_MIN;
-
   switch(id)
   {
     case CAP_TOUCH_0:
-      return note;
-
+      delta = fret;
+      break;
+      
     case CAP_TOUCH_1:
-      return note + 5;
+      delta = fret + in_config.button1_offset;
+      break;
     
     case CAP_TOUCH_2:
-      return note + 7;
+      delta = fret + in_config.button2_offset;
+      break;
 
     case CAP_TOUCH_3:
-      return note + 12;
+      delta = fret + in_config.button3_offset;
+      break;
       
     default:
       digitalWrite(TEENSY_LED_PIN, HIGH);
-      return note; 
-  }  
+      return in_config.root_note; 
+  }
+  
+  if (in_config.modifier == MOD_MAJOR)
+  {
+    return in_config.root_note + MAJOR_DELTAS[delta];
+  }
+  else if (in_config.modifier == MOD_MINOR)
+  {
+    return in_config.root_note + MINOR_DELTAS[delta];
+  }
+  else if (in_config.modifier == MOD_MIXOLYTIAN)
+  {
+    return in_config.root_note + MIXOLYTIAN_DELTAS[delta];
+  }
+  else if (in_config.modifier == MOD_DORIAN)
+  {
+    return in_config.root_note + DORIAN_DELTAS[delta];
+  }
+  else 
+  {  
+    return in_config.root_note;
+  }
 }
 
-/**
- * Initialize CapTouch member variables
- */
 CapTouch::CapTouch(int pin, cap_touch_id id)
 {
   _id = id;
   _pin = pin;
-  cap_touch_array[CAP_TOUCH_ARRAY_LEN] = {0};
   array_idx = 0;
   current_reading = LOW;
   midi_needs_update= true;
   update_midi_msec = 0;
+
+  for (int i=0; i<CAP_TOUCH_ARRAY_LEN; i++)
+  {
+    cap_touch_array[i] = 0;
+  }
+
 }
 
 /**
@@ -92,9 +118,9 @@ void CapTouch::CheckMIDINeedsUpdate(void)
   midi_needs_update= (!sum);
 }
 
-void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped)
+void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped, config_t in_config)
 {
-  current_note = getScaledNote(fret, _id, is_lefty_flipped);
+  current_note = getScaledNote(fret, _id, is_lefty_flipped, in_config);
   usbMIDI.sendNoteOff(previous_note, 0, MIDI_CHANNEL_2);   
   usbMIDI.sendNoteOn(current_note, analog_volume, MIDI_CHANNEL_2);
   update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
@@ -104,7 +130,9 @@ void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped)
 
 bool CapTouch::ShouldSendNote(void)
 {
-  return (GetReading() && midi_needs_update && millis() > update_midi_msec);
+  return (GetReading() && 
+          midi_needs_update && 
+          millis() > update_midi_msec);
 }
 
 bool CapTouch::IsLongHold(void)

@@ -7,7 +7,6 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
- 
 #ifndef __ROT_ENC_H__
 #define __ROT_ENC_H__
 
@@ -16,10 +15,10 @@
 #define ROT_ENC_MAX 255
 #define ROT_ENC_MIN 0
 
-#define ROT_ENC_CTRL_CHANGE 0x16
 
 /* Enumeration of Settings that can be controlled by the rotary encoder */
-enum rot_enc_state {
+enum rot_enc_state 
+{
   ROT_ENC_BLUE,
   ROT_ENC_CYAN,
   ROT_ENC_GREEN,
@@ -53,12 +52,12 @@ const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_BLUE, LED_CYAN, LED_
 void RotEncSetLED(uint8_t color);
 
 /**
- * Flash the pattern for standard paddle behavior
+ * Flash the pattern for standard paddle behavior (BLOCKING)
  */
 void RotEncStandardPattern(void);
 
 /**
- * Flash the pattern for paddle config mode
+ * Flash the pattern for paddle config mode (BLOCKING)
  */
 void RotEncConfigPattern(void);
 

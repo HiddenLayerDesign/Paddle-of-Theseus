@@ -15,6 +15,26 @@
 #include "TeensyBSP.h"
 
 
+int config_addr_array[ROT_ENC_ENUM_SIZE] = {EEPROM_BLUE_BASE_ADDR, 
+                                            EEPROM_CYAN_BASE_ADDR, 
+                                            EEPROM_GREEN_BASE_ADDR, 
+                                            EEPROM_PURPLE_BASE_ADDR, 
+                                            EEPROM_RED_BASE_ADDR, 
+                                            EEPROM_YELLOW_BASE_ADDR, 
+                                            EEPROM_WHITE_BASE_ADDR};
+
+const char *color_str_array[ROT_ENC_ENUM_SIZE] = {"BLUE", 
+                                                      "CYAN", 
+                                                      "GREEN", 
+                                                      "PURPLE", 
+                                                      "RED", 
+                                                      "YELLOW", 
+                                                      "WHITE"};
+
+const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
+                                             "MINOR",
+                                             "MIXOLYTIAN",
+                                             "DORIAN"};
 void CheckUpdateVersionNumber(void)
 {
   uint8_t eeprom_version_major  = EEPROM.read(EEPROM_VERSION_MAJOR_ADDRESS);
@@ -63,4 +83,93 @@ void WriteConfigMode(bool is_config_mode_enabled)
     DEBUG_PRINTLN((is_config_mode_enabled) ? "True " : "False");
     EEPROM.write(EEPROM_CONFIG_MODE_ADDRESS, (int) is_config_mode_enabled);  
   }
+}
+
+config_t loadConfigFromEEPROM(rot_enc_state state)
+{
+  config_t return_config;
+  int base_addr = config_addr_array[(int) state];
+
+  /* fill out config_t */
+  return_config.is_enabled      = (bool) (0 == EEPROM.read(base_addr + MODE_ENABLED_ADDR)) ? false : true;
+  return_config.button1_offset  = (int) EEPROM.read(base_addr + CT1_DELTA_ADDR);
+  return_config.button2_offset  = (int) EEPROM.read(base_addr + CT2_DELTA_ADDR);
+  return_config.button3_offset  = (int) EEPROM.read(base_addr + CT3_DELTA_ADDR);
+  return_config.root_note       = (int) EEPROM.read(base_addr + ROOT_NOTE_ADDR);
+  return_config.control_channel = (int) EEPROM.read(base_addr + CTRL_CHAN_ADDR);
+  return_config.modifier        = (modifier_t) EEPROM.read(base_addr + SCALE_MOD_ADDR);
+  
+  return return_config;
+}
+
+bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
+{    
+  int base_addr = config_addr_array[(int) state];
+  const char *color_str = color_str_array[(int) state];
+  (void) color_str;
+  bool retval = false;
+  
+  if (in_config.is_enabled != EEPROM.read(base_addr + MODE_ENABLED_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing mode enabled = ");
+    DEBUG_PRINTLN((in_config.is_enabled) ? "True " : "False");
+    EEPROM.write(base_addr + MODE_ENABLED_ADDR, (int) in_config.is_enabled);  
+    retval = true;
+  } 
+
+  if (in_config.root_note != EEPROM.read(base_addr + ROOT_NOTE_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing root note = ");
+    DEBUG_PRINTLN(in_config.root_note);
+    EEPROM.write(base_addr + ROOT_NOTE_ADDR, in_config.root_note);  
+    retval = true;
+  } 
+
+  if (in_config.modifier != EEPROM.read(base_addr + SCALE_MOD_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing root note = ");
+    DEBUG_PRINTLN(in_config.modifier);
+    EEPROM.write(base_addr + SCALE_MOD_ADDR, (int) in_config.modifier);  
+    retval = true;
+  } 
+
+  if (in_config.button1_offset != EEPROM.read(base_addr + CT1_DELTA_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing button1 delta = ");
+    DEBUG_PRINTLN(in_config.button1_offset);
+    EEPROM.write(base_addr + CT1_DELTA_ADDR, (int) in_config.button1_offset);  
+    retval = true;
+  }
+  
+  if (in_config.button2_offset != EEPROM.read(base_addr + CT2_DELTA_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing button2 delta = ");
+    DEBUG_PRINTLN(in_config.button2_offset);
+    EEPROM.write(base_addr + CT2_DELTA_ADDR, (int) in_config.button2_offset);  
+    retval = true;
+  }
+  
+  if (in_config.button3_offset != EEPROM.read(base_addr + CT3_DELTA_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing button3 delta = ");
+    DEBUG_PRINTLN(in_config.button3_offset);
+    EEPROM.write(base_addr + CT3_DELTA_ADDR, (int) in_config.button3_offset);  
+    retval = true;
+  }
+
+  if (in_config.control_channel != EEPROM.read(base_addr + CTRL_CHAN_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing MIDI control channel = ");
+    DEBUG_PRINTLN(in_config.control_channel);
+    EEPROM.write(base_addr + CTRL_CHAN_ADDR, (int) in_config.control_channel);  
+    retval = true;
+  }
+  return retval;  
 }

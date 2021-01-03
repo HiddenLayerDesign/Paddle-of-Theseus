@@ -11,8 +11,9 @@
 #define __CAP_TOUCH_H__
 
 #include "Preferences.h"
+#include "NonVolatile.h"
 
-#define CAP_TOUCH_ARRAY_LEN      2
+#define CAP_TOUCH_ARRAY_LEN 2
 
 enum cap_touch_id {
   CAP_TOUCH_0 = 0,
@@ -28,12 +29,10 @@ class CapTouch
     CapTouch(int pin, cap_touch_id id);
     void Update(void);
     bool GetReading(void);
-    void SendNote(int int_note, int analog_volume, bool is_lefty_flipped);
+    void SendNote(int int_note, int analog_volume, bool is_lefty_flipped, config_t in_config);
     void CheckMIDINeedsUpdate(void);
-
     bool ShouldSendNote(void);
     bool IsLongHold(void);
-    
     int previous_note;
     int current_note;
     unsigned long update_midi_msec;
