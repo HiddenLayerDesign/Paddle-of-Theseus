@@ -1,16 +1,16 @@
 # Paddle-of-Theseus
 This Repository holds the design work for Hidden Layer Design's "Paddle of Theseus" project.
 
-### Hardware Diagram
-![Fritzing Diagram of "Paddle of Theseus" Hardware](https://github.com/ChaseStewart/Paddle-of-Theseus/blob/master/Hardware/Diagrams/Paddle_of_Theseus_bb.png)
+Please take a look at the [currently-in-progress-wiki](https://github.com/ChaseStewart/Paddle-of-Theseus/wiki) for in-depth information.
 
 ## Author
 [Chase E Stewart](https://chasestewart.co) for [Hidden Layer Design](https://hiddenlayerdesign.com)
 
 ## Repository Contents
 * **/Software/Main** - Software Arduino Project to program the Teensy LC/4.0. This Teensy is the main microcontroller for this project, and uses input sensor data to output MIDI commands to an external controller.
-* **/Hardware/Fritzing**  - Fritzing file for project Hardware _NOTE: HW Diagram uses a Teensy3.1 but I have verified proper function on Teensy4.0 and TeensyLC_
-* **/Hardware/Diagrams**  - HW diagrams generated from the Fritzing file; currently I have a schematic and breadboard diagram
+* **/Hardware/Fritzing**   - Fritzing file for project Hardware _NOTE: HW Diagram uses a Teensy3.1 but I have verified proper function on Teensy4.0 and TeensyLC_
+* **/Hardware/Diagrams**   - HW diagrams generated from the Fritzing file; currently these include a schematic, PCB image, and breadboard diagram
+* **/Hardware/Components** - This contains the bill-of-materials for the relevant *electronics only* for this product. 
 
 ## Features
 This project will create a bass-guitar-like skeumorphic MIDI instrument out of a standard rowing paddle (or arbitrary instrument body) and sensors. The Teensy microcontroller will take in sensor values and provide MIDI output to an external Audio DAW (In our case, we use Ableton Live and https://midi.city).
