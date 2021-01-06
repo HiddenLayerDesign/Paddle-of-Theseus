@@ -1,7 +1,7 @@
 # Paddle-of-Theseus
 This Repository holds the design work for Hidden Layer Design's "Paddle of Theseus" project.
 
-Please take a look at the [currently-in-progress-wiki](https://github.com/ChaseStewart/Paddle-of-Theseus/wiki) for in-depth information.
+Please take a look at the [wiki](https://github.com/ChaseStewart/Paddle-of-Theseus/wiki) for in-depth information.
 
 ## Author
 [Chase E Stewart](https://chasestewart.co) for [Hidden Layer Design](https://hiddenlayerdesign.com)
@@ -15,7 +15,7 @@ Please take a look at the [currently-in-progress-wiki](https://github.com/ChaseS
 ## Features
 This project will create a bass-guitar-like skeumorphic MIDI instrument out of a standard rowing paddle (or arbitrary instrument body) and sensors. The Teensy microcontroller will take in sensor values and provide MIDI output to an external Audio DAW (In our case, we use Ableton Live and https://midi.city).
 
-## Requirements
+## Implementation Requirements
 Implementing this project will require some knowledge of electronics, prototyping, and potentially physical fabrication. 
 
 ### Software Requirements
@@ -24,7 +24,7 @@ Implementing this project will require some knowledge of electronics, prototypin
 - [Arduino Teensy Loader](https://www.pjrc.com/teensy/loader.html)
 
 ### Hardware
-You will need the following to run this project
+The following is required to build this project.
 - EITHER 1x [Teensy 4.0](https://www.pjrc.com/teensy-4-0/) OR
 - 1x [Teensy LC](https://www.pjrc.com/teensy/teensyLC.html)
 - 1x USB Micro cable
