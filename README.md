@@ -1,7 +1,7 @@
 # Paddle-of-Theseus
 This Repository holds the design work for Hidden Layer Design's "Paddle of Theseus" project.
 
-Please take a look at the [wiki](https://github.com/ChaseStewart/Paddle-of-Theseus/wiki) for in-depth information.
+Please take a look at [the Wiki](https://github.com/ChaseStewart/Paddle-of-Theseus/wiki) for in-depth information.
 
 ## Author
 [Chase E Stewart](https://chasestewart.co) for [Hidden Layer Design](https://hiddenlayerdesign.com)
