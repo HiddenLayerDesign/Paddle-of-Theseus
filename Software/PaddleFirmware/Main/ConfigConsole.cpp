@@ -24,7 +24,7 @@ void initializeCommander()
   cmd.begin(&Serial, masterCommands, sizeof(masterCommands));
   cmd.endOfLineChar(CHAR_CR);
   cmd.commandPrompt(ON); //enable the command prompt
-  cmd.echo(true);     //Echo incoming characters to theoutput port
+  cmd.echo(false);     //Echo incoming characters to theoutput port
   cmd.autoChain(ON); 
   cmd.stripCR(OFF);
   cmd.transferTo(masterCommands, sizeof(masterCommands), "Paddle");
@@ -267,9 +267,9 @@ bool modifierHandler(Commander &Cmdr)
   {
     current_config.modifier = MOD_MINOR;
   }
-  else if (!strncmp(compare, modifier_str_array[MOD_MIXOLYTIAN], strlen(modifier_str_array[MOD_MIXOLYTIAN])))
+  else if (!strncmp(compare, modifier_str_array[MOD_MIXOLYDIAN], strlen(modifier_str_array[MOD_MIXOLYDIAN])))
   {
-    current_config.modifier = MOD_MIXOLYTIAN;
+    current_config.modifier = MOD_MIXOLYDIAN;
   }
   else if (!strncmp(compare, modifier_str_array[MOD_DORIAN], strlen(modifier_str_array[MOD_DORIAN])))
   {
@@ -277,13 +277,19 @@ bool modifierHandler(Commander &Cmdr)
   }
   else
   {
-    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYTIAN\", \"DORIAN\"!");
+    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\"!");
     return false;
   }
   Cmdr.print(color_str);
   Cmdr.print(": Setting modifier to ");
   Cmdr.println(modifier_str_array[current_config.modifier]);
   saveConfigToEEPROM(current_config, config_state);
+  return true;
+}
+
+bool paddlePingHandler(Commander &Cmdr)
+{
+  Cmdr.println("paddlePong");
   return true;
 }
 

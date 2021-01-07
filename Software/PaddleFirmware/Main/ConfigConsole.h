@@ -104,23 +104,29 @@ bool rootNoteHandler(Commander &Cmdr);
 bool modifierHandler(Commander &Cmdr);
 
 /**
+ * Send the heartbeat/ ID message
+ */
+bool paddlePingHandler(Commander &Cmdr);
+
+/**
  * Exit the menu and reboot
  */
 bool exitHandler(Commander &Cmdr);
 
 const commandList_t masterCommands[] = {
-  {"about",       infoHandler,       "get information about the paddle"},
-  {"all_config", printConfigHandler, "print all stored configuration"},
+  {"about",       infoHandler,       "get information about the paddle, format is `about`"},
+  {"all_config", printConfigHandler, "print all stored configuration, format is `all_config`"},
   {"enable",     colorEnableHandler,  "enable or disable this color, format is `enable=TRUE`"},
-  {"color",      selectColorHandler, "select color, command format is `color=CYAN`"},
+  {"color",      selectColorHandler, "select current config color, format is `color=CYAN`"},
   {"root",       rootNoteHandler,    "set root note of scale, format is `root=A`"},
   {"mode",       modifierHandler,    "set mode, format is `mode=MAJOR`"},
-  {"offset1",    button1Handler,     "set button1 offset for this color"},
-  {"offset2",    button2Handler,     "set button2 offset for this color"},
-  {"offset3",    button3Handler,     "set button3 offset for this color"},
-  {"control",    ctrlChanHandler,    "set MIDI control change idx for this color"},
-  {"defaults",   defaultsHandler,    "reset all MIDI configs to default"},
-  {"exit",       exitHandler,        "exit this menu and reboot (all settings are saved right when they are changed)"}
+  {"offset1",    button1Handler,     "set button1 offset for this color, format is `offset1=3`"},
+  {"offset2",    button2Handler,     "set button2 offset for this color, format is `offset2=5`"},
+  {"offset3",    button3Handler,     "set button3 offset for this color, format is `offset3=7`"},
+  {"control",    ctrlChanHandler,    "set MIDI control change idx for this color, format is `control=20`"},
+  {"defaults",   defaultsHandler,    "reset all MIDI configs to default, format is `defaults`"},
+  {"paddlePing", paddlePingHandler,  "return `paddlePong`"},
+  {"exit",       exitHandler,        "exit this menu and reboot, saving all settings. Format is `exit`"}
 };
 
 #endif /* __CONFIG_CONSOLE_H__ */

@@ -33,7 +33,7 @@ const char *color_str_array[ROT_ENC_ENUM_SIZE] = {"BLUE",
 
 const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
                                              "MINOR",
-                                             "MIXOLYTIAN",
+                                             "MIXOLYDIAN",
                                              "DORIAN"};
 void CheckUpdateVersionNumber(void)
 {

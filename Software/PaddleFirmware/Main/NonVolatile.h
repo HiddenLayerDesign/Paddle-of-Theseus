@@ -56,7 +56,7 @@ enum modifier_t
 {
   MOD_MAJOR,  
   MOD_MINOR,
-  MOD_MIXOLYTIAN,
+  MOD_MIXOLYDIAN,
   MOD_DORIAN,
   MOD_LIMIT
 };

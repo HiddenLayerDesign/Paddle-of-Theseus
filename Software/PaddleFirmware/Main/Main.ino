@@ -108,12 +108,20 @@ void setup()
         is_green_not_yellow = !is_green_not_yellow;
         flip_time = millis() + 500;
       }
-    }    
-    
+    }        
     RotEncSetLED(LED_YELLOW);
     initializeConfig();
-    Serial.println("Paddle of Theseus Config: Type 'help' to get help");
-    Serial.println("For all commands that take values, type command=VALUE and then `Enter`");
+    version_t s_version = GetVersionFromEEPROM();
+
+    Serial.print("*** Paddle of Theseus Configuration Mode, Version ");
+    Serial.print(s_version.version_major);
+    Serial.print(".");
+    Serial.print(s_version.version_minor);
+    Serial.print(".");
+    Serial.print(s_version.version_bugfix);
+    Serial.println(" ***");
+    Serial.println("Usage: Type \"help\" and then `Enter` key to get help");
+    Serial.println("For all commands that take values, type \"command=VALUE\" and then `Enter` key");
     cmd.printCommandPrompt(); 
   }
   else
