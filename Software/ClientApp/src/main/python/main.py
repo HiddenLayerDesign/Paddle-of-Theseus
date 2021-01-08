@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QMainWindow
 from serialInterpreter import serialInterpreter
 
 import PyQt5
-import requests
 import sys
 
 

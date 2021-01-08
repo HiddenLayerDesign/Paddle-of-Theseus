@@ -1,10 +1,9 @@
 import time
-
+import glob
+import sys
 
 from serial import Serial
 from serial.tools import list_ports
-
-import wexpect
 
 
 class serialInterpreter:
@@ -86,8 +85,17 @@ class serialInterpreter:
 
         :return:
         """
-        for comport_struct in list_ports.comports():
-            if self.testSerialConnection(comport_struct.name):
-                return comport_struct.name
+        if sys.platform.startswith('win'):
+            for comport_struct in list_ports.comports():
+                if self.testSerialConnection(comport_struct.name):
+                    return comport_struct.name
 
+        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+            # this excludes your current terminal "/dev/tty"
+            for port_str in glob.glob('/dev/tty?*'):
+                if self.testSerialConnection(port_str):
+                    return port_str
+
+        else:
+            raise RuntimeError('Only Windows, Linux, and Cygwin are supported!')
         return None
