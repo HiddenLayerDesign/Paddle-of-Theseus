@@ -1,0 +1,3 @@
+[submodule "Software/ClientApp/src/main/python/pyqtsa"]
+	path = Software/ClientApp/src/main/python/pyqtsa
+	url = https://github.com/ChaseStewart/PyQtSA
