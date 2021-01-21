@@ -35,8 +35,9 @@ void initializeConfig(void);
  * 
  * @param Cmdr [in] Commander object to use for printing
  * @param state [in] Config state to print
+ * @param is_last_config [in] True == this is the last config, don't put a comma after this object
  */
-void printConfig(Commander &Cmdr, rot_enc_state state);
+void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config);
 
 /**
  * Clobber all config settings and go back to a default version 

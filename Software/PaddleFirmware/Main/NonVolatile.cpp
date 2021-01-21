@@ -98,6 +98,10 @@ config_t loadConfigFromEEPROM(rot_enc_state state)
   return_config.root_note       = (int) EEPROM.read(base_addr + ROOT_NOTE_ADDR);
   return_config.control_channel = (int) EEPROM.read(base_addr + CTRL_CHAN_ADDR);
   return_config.modifier        = (modifier_t) EEPROM.read(base_addr + SCALE_MOD_ADDR);
+  if (return_config.modifier > MOD_LIMIT)
+  {
+    return_config.modifier = MOD_MAJOR;
+  }
   
   return return_config;
 }
@@ -130,7 +134,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
   if (in_config.modifier != EEPROM.read(base_addr + SCALE_MOD_ADDR))
   {
     DEBUG_PRINT(color_str);
-    DEBUG_PRINT(": Writing root note = ");
+    DEBUG_PRINT(": Writing modifier = ");
     DEBUG_PRINTLN(in_config.modifier);
     EEPROM.write(base_addr + SCALE_MOD_ADDR, (int) in_config.modifier);  
     retval = true;

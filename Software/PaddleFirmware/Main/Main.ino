@@ -155,7 +155,7 @@ void setup()
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
   }  
   accel.init();
-  WriteConfigMode(false);
+  //WriteConfigMode(false);
 }
 
 /*
