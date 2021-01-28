@@ -46,28 +46,31 @@ class PoTConfigApp(ApplicationContext):
         # set up custom tabs
         tabs = [
             ColorConfigTab(master=self, protocol=self.proto["BLUE"], title="Blue",
-                           icon='images/tabIcon_Blue.png', index=0),
+                           icon='images/tabIcon_Blue.png', index=0, color="BLUE"),
             ColorConfigTab(master=self, protocol=self.proto["GREEN"], title="Green",
-                           icon='images/tabIcon_Green.png', index=1),
+                           icon='images/tabIcon_Green.png', index=1, color="GREEN"),
             ColorConfigTab(master=self, protocol=self.proto["RED"], title="Red",
-                           icon='images/tabIcon_Red.png', index=2),
+                           icon='images/tabIcon_Red.png', index=2, color="RED"),
             ColorConfigTab(master=self, protocol=self.proto["CYAN"], title="Cyan",
-                           icon='images/tabIcon_Cyan.png', index=3),
+                           icon='images/tabIcon_Cyan.png', index=3, color="CYAN"),
             ColorConfigTab(master=self, protocol=self.proto["YELLOW"], title="Yellow",
-                           icon='images/tabIcon_Yellow.png', index=4),
+                           icon='images/tabIcon_Yellow.png', index=4, color="YELLOW"),
             ColorConfigTab(master=self, protocol=self.proto["PURPLE"], title="Purple",
-                           icon='images/tabIcon_Purple.png', index=5),
+                           icon='images/tabIcon_Purple.png', index=5, color="PURPLE"),
             ColorConfigTab(master=self, protocol=self.proto["WHITE"], title="White",
-                           icon='images/tabIcon_White.png', index=6),
+                           icon='images/tabIcon_White.png', index=6, color="WHITE"),
         ]
 
         self.si = SerialInterpreter()
         self.si.set_gui_config_from_serial(self.proto)
-        self.proto["BLUE"].set_all_serial_callbacks()
 
         self.tabs = QSATabWidget(pages=tabs)
+        self.tabs.setCurrentIndex(0);
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
+        self.tabs.pages[0].fullReload()
+
+        self.tabs.currentChanged.connect(self.configureTab)
 
         self.tabs.setStyleSheet(widgetStyle_tabBar)
 
@@ -86,6 +89,16 @@ class PoTConfigApp(ApplicationContext):
         self.window.setCentralWidget(self.frame)
         self.window.show()
 
+    def configureTab(self):
+        """Update polled loop timers and hidden protected parameters when changing between tabs"""
+        self.window.repaint()
+        self.tabs.tabBar().setTabButton(self.tabs.index_previous, QTabBar.LeftSide,
+                                        self.tabs.pages[self.tabs.index_previous].button_inactive)
+        self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
+                                        self.tabs.pages[self.tabs.currentIndex()].button_active)
+
+        self.tabs.pages[self.tabs.currentIndex()].fullReload()
+        self.tabs.index_previous = self.tabs.currentIndex()
 
 if __name__ == '__main__':
     appctxt = PoTConfigApp()  # 1. Instantiate ApplicationContext

@@ -3,7 +3,6 @@ from enum import Enum
 
 from pyqtsa.GUIParameter import GUIParameter
 from pyqtsa.Protocol import Protocol
-from serialInterpreter import *
 
 """ Enumeration of musical modes """
 modeDict = {
@@ -115,30 +114,3 @@ class PoTProtocol(Protocol):
         self.parameters["root_note"].variable.value = root_note
         self.parameters["offset3"].variable.value = offset3
         self.parameters["control"].variable.value = control
-
-    def set_serial_callback(self, parameter, func):
-        self.parameters[parameter].command = func(parameter)
-
-    def serial_callback(self, parameter):
-        self.parameters[parameter].variable.valueprev = self.parameters[parameter].variable.value
-
-        self.master.si.send_serial_command(cmd="color", argument=self.color)
-
-        if "BOOL" == self.parameters[parameter].param_type:
-            self.master.si.send_serial_command(cmd=parameter, argument="TRUE" if
-                                               1 == self.parameters[parameter].variable.value else "FALSE")
-        elif "mode" == parameter:
-            val = self.parameters[parameter].variable.value
-            self.master.si.send_serial_command(cmd=parameter, argument=list(modeDict.keys())[val])
-        else:
-            self.master.si.send_serial_command(cmd=parameter, argument=self.parameters[
-                parameter].variable.value)
-
-    def set_all_serial_callbacks(self):
-        self.set_serial_callback("enable", self.serial_callback)
-        self.set_serial_callback("root_note", self.serial_callback)
-        self.set_serial_callback("mode", self.serial_callback)
-        self.set_serial_callback("control", self.serial_callback)
-        self.set_serial_callback("offset1", self.serial_callback)
-        self.set_serial_callback("offset2", self.serial_callback)
-        self.set_serial_callback("offset3", self.serial_callback)
