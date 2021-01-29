@@ -10,6 +10,7 @@
 #include "ConfigConsole.h"
 #include "NonVolatile.h"
 #include "RotaryEncoder.h"
+#include "MIDIConstants.h"
 
 #define CHAR_CR 13
 #define TRUE_STR "TRUE"
@@ -24,8 +25,9 @@ void initializeCommander()
   cmd.begin(&Serial, masterCommands, sizeof(masterCommands));
   cmd.endOfLineChar(CHAR_CR);
   cmd.commandPrompt(ON); //enable the command prompt
-  cmd.echo(true);     //Echo incoming characters to theoutput port
-  cmd.autoChain(ON); 
+  cmd.echo(false);     //Echo incoming characters to theoutput port
+  cmd.errorMessages(false);
+  cmd.autoChain(OFF); // TODO FIXME test
   cmd.stripCR(OFF);
   cmd.transferTo(masterCommands, sizeof(masterCommands), "Paddle");
 }
@@ -57,22 +59,25 @@ bool infoHandler(Commander &Cmdr)
 bool printConfigHandler(Commander &Cmdr)
 {
   Cmdr.println();
-  Cmdr.print("*** Current Config: ");
+  Cmdr.print("{\"current_config\": \"");
   Cmdr.print(color_str_array[(int) config_state]);
-  Cmdr.println(" ***");
-  Cmdr.println();
+  Cmdr.print("\",");
+  Cmdr.print(" \"all_configs\": {");
 
   for (int i=0; i<ROT_ENC_ENUM_SIZE; i++)
   {
-    printConfig(Cmdr, i);
+    Cmdr.print("\"");
+    Cmdr.print(color_str_array[i]);
+    Cmdr.print("\": ");
+    printConfig(Cmdr, i, (i == ROT_ENC_ENUM_SIZE-1));
   }
-  
+  Cmdr.println("}}");
   return 0;
 }
 
 bool selectColorHandler(Commander &Cmdr)
 {
-  char *compare = NULL;
+  String compare = NULL;
 
   if (!Cmdr.hasPayload())
   {
@@ -80,36 +85,38 @@ bool selectColorHandler(Commander &Cmdr)
     return false;
   }
 
-  if (NULL == (compare = Cmdr.getPayloadString().c_str()))
+  compare = Cmdr.getPayloadString();
+  if ("" == compare.c_str())
   {
+    Cmdr.println("ERROR: This command needs a payload. Example: `color=BLUE`!");
     return false;  
   }
   
-  if (!strncmp(compare, color_str_array[ROT_ENC_BLUE], strlen(color_str_array[ROT_ENC_BLUE])))
+  if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_BLUE], strlen(color_str_array[ROT_ENC_BLUE])))
   {
     config_state = ROT_ENC_BLUE;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_CYAN], strlen(color_str_array[ROT_ENC_CYAN])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_CYAN], strlen(color_str_array[ROT_ENC_CYAN])))
   {
     config_state = ROT_ENC_CYAN;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_GREEN], strlen(color_str_array[ROT_ENC_GREEN])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_GREEN], strlen(color_str_array[ROT_ENC_GREEN])))
   {
     config_state = ROT_ENC_GREEN;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_PURPLE], strlen(color_str_array[ROT_ENC_PURPLE])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_PURPLE], strlen(color_str_array[ROT_ENC_PURPLE])))
   {
     config_state = ROT_ENC_PURPLE;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_RED], strlen(color_str_array[ROT_ENC_RED])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_RED], strlen(color_str_array[ROT_ENC_RED])))
   {
     config_state = ROT_ENC_RED;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_YELLOW], strlen(color_str_array[ROT_ENC_WHITE])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_YELLOW], strlen(color_str_array[ROT_ENC_WHITE])))
   {
     config_state = ROT_ENC_YELLOW;
   }
-  else if (!strncmp(compare, color_str_array[ROT_ENC_WHITE], strlen(color_str_array[ROT_ENC_WHITE])))
+  else if (!strncmp(compare.c_str(), color_str_array[ROT_ENC_WHITE], strlen(color_str_array[ROT_ENC_WHITE])))
   {
     config_state = ROT_ENC_WHITE;
   }
@@ -119,14 +126,14 @@ bool selectColorHandler(Commander &Cmdr)
     return false;  
   }
   
-  Cmdr.print("Paddle: Changed current config to ");
+  Cmdr.print("SUCCESS: Changed current config to ");
   Cmdr.println(color_str_array[(int) config_state]);
   return true;
 }
 
 bool colorEnableHandler(Commander &Cmdr)
 {
-  char *compare = NULL;
+  String compare = NULL;
   const char *color_str = color_str_array[(int) config_state];
 
   if (!Cmdr.hasPayload())
@@ -135,12 +142,14 @@ bool colorEnableHandler(Commander &Cmdr)
     return false;
   }
 
-  if (NULL == (compare = Cmdr.getPayloadString().c_str()))
+  compare = Cmdr.getPayloadString();
+  if ("" == compare.c_str())
   {
+    Cmdr.println("ERROR: This command needs a payload. Example: `enable=TRUE`!");
     return false;  
   }
 
-  if (!strncmp(compare, TRUE_STR, strlen(TRUE_STR)))
+  if (!strncmp(compare.c_str(), TRUE_STR, strlen(TRUE_STR)))
   {
     Cmdr.print(color_str);
     Cmdr.println(": Enabled = TRUE");
@@ -148,10 +157,9 @@ bool colorEnableHandler(Commander &Cmdr)
     saveConfigToEEPROM(current_config, config_state);
     return true;
   }
-  else if (!strncmp(compare, FALSE_STR, strlen(FALSE_STR)))
+  else if (!strncmp(compare.c_str(), FALSE_STR, strlen(FALSE_STR)))
   {
-    Cmdr.print(color_str);
-    Cmdr.println(": Enabled = FALSE");
+    Cmdr.println("SUCCESS: Enabled = FALSE");
     current_config.is_enabled = false;
     saveConfigToEEPROM(current_config, config_state);
     return true;
@@ -167,7 +175,7 @@ bool rootNoteHandler(Commander &Cmdr)
 {
   int myInt;
   const char *color_str = color_str_array[(int) config_state];
-  char *compare = NULL;
+  String compare = NULL;
 
   if (!Cmdr.hasPayload())
   {
@@ -175,67 +183,67 @@ bool rootNoteHandler(Commander &Cmdr)
     return false;
   }
 
-  if (NULL == (compare = Cmdr.getPayloadString().c_str()))
+  compare = Cmdr.getPayloadString();
+  if ("" == compare.c_str())
   {
-    Cmdr.println("ERROR: only accepted values are \"A\", \"B\", \"C\", \"D\", \"E\", \"F\", \"G\"!");
+    Cmdr.println("ERROR: This command needs a payload. Example: `root=C#`!");
     return false;  
   }
 
-  if (!strncmp(compare, "C#", strlen("C#")))
+  if (!strncmp(compare.c_str(), "C#", strlen("C#")))
   {
-    myInt = 25;
+    myInt = ROOT_NOTE_CSHARP;
   }
-  else if (!strncmp(compare, "C", strlen("C")))
+  else if (!strncmp(compare.c_str(), "C", strlen("C")))
   {
-    myInt = 24;
+    myInt = ROOT_NOTE_C;
   }
-  else if (!strncmp(compare, "D#", strlen("D#")))
+  else if (!strncmp(compare.c_str(), "D#", strlen("D#")))
   {
-    myInt = 27;
+    myInt = ROOT_NOTE_DSHARP;
   }
-  else if (!strncmp(compare, "D", strlen("D")))
+  else if (!strncmp(compare.c_str(), "D", strlen("D")))
   {
-    myInt = 26;
+    myInt = ROOT_NOTE_D;
   }
-  else if (!strncmp(compare, "E", strlen("E")))
+  else if (!strncmp(compare.c_str(), "E", strlen("E")))
   {
-    myInt = 28;
+    myInt = ROOT_NOTE_E;
   }
-  else if (!strncmp(compare, "F#", strlen("F#")))
+  else if (!strncmp(compare.c_str(), "F#", strlen("F#")))
   {
-    myInt = 30;
+    myInt = ROOT_NOTE_FSHARP;
   }
-  else if (!strncmp(compare, "F", strlen("F")))
+  else if (!strncmp(compare.c_str(), "F", strlen("F")))
   {
-    myInt = 29;
+    myInt = ROOT_NOTE_F;
   }
-  else if (!strncmp(compare, "G#", strlen("G#")))
+  else if (!strncmp(compare.c_str(), "G#", strlen("G#")))
   {
-    myInt = 32;
+    myInt = ROOT_NOTE_GSHARP;
   }
-  else if (!strncmp(compare, "G", strlen("G")))
+  else if (!strncmp(compare.c_str(), "G", strlen("G")))
   {
-    myInt = 31;
+    myInt = ROOT_NOTE_G;
   }
-  else if (!strncmp(compare, "A#", strlen("A#")))
+  else if (!strncmp(compare.c_str(), "A#", strlen("A#")))
   {
-    myInt = 34;
+    myInt = ROOT_NOTE_ASHARP;
   }
-  else if (!strncmp(compare, "A", strlen("A")))
+  else if (!strncmp(compare.c_str(), "A", strlen("A")))
   {
-    myInt = 33;
+    myInt = ROOT_NOTE_A;
   }
-  else if (!strncmp(compare, "B", strlen("B")))
+  else if (!strncmp(compare.c_str(), "B", strlen("B")))
   {
-    myInt = 35;
+    myInt = ROOT_NOTE_B;
   }
   else
   {
     Cmdr.println("ERROR: only accepted values are \"C\", \"C#\", \"D\", \"D#\", \"E\", \"F\", \"G\", \"G#\", \"A\", \"A#\", \"B\"!");
     return false;
   }
-  Cmdr.print(color_str);
-  Cmdr.print(": Setting root note to ");
+  Cmdr.print("SUCCESS: Setting root note to ");
   Cmdr.println(myInt);
   current_config.root_note = myInt;
   saveConfigToEEPROM(current_config, config_state);
@@ -244,7 +252,7 @@ bool rootNoteHandler(Commander &Cmdr)
 
 bool modifierHandler(Commander &Cmdr)
 {
-  char *compare = NULL;
+  String compare = NULL;
   const char *color_str = color_str_array[(int) config_state];
   
   if (!Cmdr.hasPayload())
@@ -253,37 +261,43 @@ bool modifierHandler(Commander &Cmdr)
     return false;
   }
 
-  if (NULL == (compare = Cmdr.getPayloadString().c_str()))
+  compare = Cmdr.getPayloadString();
+  if ("" == compare.c_str())
   {
     Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"PENT_MAJOR\", \"PENT_MINOR\"!");
     return false;  
   }
 
-  if (!strncmp(compare, modifier_str_array[MOD_MAJOR], strlen(modifier_str_array[MOD_MAJOR])))
+  if (!strncmp(compare.c_str(), modifier_str_array[MOD_MAJOR], strlen(modifier_str_array[MOD_MAJOR])))
   {
     current_config.modifier = MOD_MAJOR;
   }
-  else if (!strncmp(compare, modifier_str_array[MOD_MINOR], strlen(modifier_str_array[MOD_MINOR])))
+  else if (!strncmp(compare.c_str(), modifier_str_array[MOD_MINOR], strlen(modifier_str_array[MOD_MINOR])))
   {
     current_config.modifier = MOD_MINOR;
   }
-  else if (!strncmp(compare, modifier_str_array[MOD_MIXOLYTIAN], strlen(modifier_str_array[MOD_MIXOLYTIAN])))
+  else if (!strncmp(compare.c_str(), modifier_str_array[MOD_MIXOLYDIAN], strlen(modifier_str_array[MOD_MIXOLYDIAN])))
   {
-    current_config.modifier = MOD_MIXOLYTIAN;
+    current_config.modifier = MOD_MIXOLYDIAN;
   }
-  else if (!strncmp(compare, modifier_str_array[MOD_DORIAN], strlen(modifier_str_array[MOD_DORIAN])))
+  else if (!strncmp(compare.c_str(), modifier_str_array[MOD_DORIAN], strlen(modifier_str_array[MOD_DORIAN])))
   {
     current_config.modifier = MOD_DORIAN;
   }
   else
   {
-    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYTIAN\", \"DORIAN\"!");
+    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\"!");
     return false;
   }
-  Cmdr.print(color_str);
-  Cmdr.print(": Setting modifier to ");
+  Cmdr.print("SUCCESS: Setting modifier to ");
   Cmdr.println(modifier_str_array[current_config.modifier]);
   saveConfigToEEPROM(current_config, config_state);
+  return true;
+}
+
+bool paddlePingHandler(Commander &Cmdr)
+{
+  Cmdr.println("paddlePong");
   return true;
 }
 
@@ -292,8 +306,7 @@ bool button1Handler(Commander &Cmdr)
   if (Cmdr.getInt(myInt))
   {
     const char *color_str = color_str_array[(int) config_state];
-    Cmdr.print(color_str);
-    Cmdr.print(": Setting button 1 offset to ");
+    Cmdr.print("SUCCESS: Setting button 1 offset to ");
     Cmdr.println(myInt);
     current_config.button1_offset = myInt;
     saveConfigToEEPROM(current_config, config_state);
@@ -306,8 +319,7 @@ bool button2Handler(Commander &Cmdr)
   if (Cmdr.getInt(myInt))
   {
     const char *color_str = color_str_array[(int) config_state];
-    Cmdr.print(color_str);
-    Cmdr.print(": Setting button 2 offset to ");
+    Cmdr.print("SUCCESS: Setting button 2 offset to ");
     Cmdr.println(myInt);
     current_config.button2_offset = myInt;
     saveConfigToEEPROM(current_config, config_state);
@@ -320,8 +332,7 @@ bool button3Handler(Commander &Cmdr)
   if (Cmdr.getInt(myInt))
   {
     const char *color_str = color_str_array[(int) config_state];
-    Cmdr.print(color_str);
-    Cmdr.print(": Setting button 3 offset to ");
+    Cmdr.print("SUCCESS: Setting button 3 offset to ");
     Cmdr.println(myInt);
     current_config.button3_offset = myInt;
     saveConfigToEEPROM(current_config, config_state);
@@ -334,8 +345,7 @@ bool ctrlChanHandler(Commander &Cmdr)
   if (Cmdr.getInt(myInt))
   {
     const char *color_str = color_str_array[(int) config_state];
-    Cmdr.print(color_str);
-    Cmdr.print(": Setting MIDI control channel to ");
+    Cmdr.print("SUCCESS: Setting MIDI control channel to ");
     Cmdr.println(myInt);
     current_config.control_channel = myInt;
     saveConfigToEEPROM(current_config, config_state);
@@ -347,8 +357,7 @@ bool saveColorHandler(Commander &Cmdr)
 {
   saveConfigToEEPROM(current_config, config_state);
   const char *color_str = color_str_array[(int) config_state];
-  Cmdr.print(color_str);
-  Cmdr.println(": Saved color handler");
+  Cmdr.println("SUCCESS: Saved color handler");
   return true;
 }
 
@@ -361,35 +370,6 @@ bool exitHandler(Commander &Cmdr)
   
   /* Will likely never get here, but harmless anyways */
   return true;
-}
-
-void printConfig(Commander &Cmdr, rot_enc_state state)
-{
-  config_t print_config = loadConfigFromEEPROM(state);
-  
-  Cmdr.print("Color=");
-  Cmdr.println(color_str_array[(int) state]);
-
-  Cmdr.print("\tEnable=");
-  Cmdr.println((print_config.is_enabled) ? "True " : "False");
-
-  if (print_config.is_enabled)
-  {
-    Cmdr.print("\tButton_1=");
-    Cmdr.print(print_config.button1_offset);
-    Cmdr.print(", Button_2=");
-    Cmdr.print(print_config.button2_offset);
-    Cmdr.print(", Button_3=");
-    Cmdr.println(print_config.button3_offset);
-  
-    Cmdr.print("\tRoot_Note=");
-    Cmdr.println(print_config.root_note);
-    Cmdr.print("\tModifier=");
-    Cmdr.println(modifier_str_array[print_config.modifier]);
-    
-    Cmdr.print("\tMIDI_Control_channel=0x");
-    Cmdr.println(print_config.control_channel, HEX);  
-  }
 }
 
 bool defaultsHandler(Commander &Cmdr)
@@ -408,6 +388,29 @@ bool defaultsHandler(Commander &Cmdr)
   {
     saveConfigToEEPROM(default_config, i);
   }
-  Cmdr.println("INFO: Reset ALL configs to default values");
+  Cmdr.println("SUCCESS: Reset ALL configs to default values");
   return true;
+}
+
+void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
+{
+  config_t print_config = loadConfigFromEEPROM(state);
+  
+  Cmdr.print("{\"enable\": ");
+  Cmdr.print((print_config.is_enabled) ? "\"True\" " : "\"False\"");
+  Cmdr.print(", \"offset1\": ");
+  Cmdr.print(print_config.button1_offset);
+  Cmdr.print(", \"offset2\": ");
+  Cmdr.print(print_config.button2_offset);
+  Cmdr.print(", \"offset3\": ");
+  Cmdr.print(print_config.button3_offset);
+
+  Cmdr.print(",\"root\": ");
+  Cmdr.print(print_config.root_note);
+  Cmdr.print(", \"mode\": \"");
+  Cmdr.print(modifier_str_array[print_config.modifier]);
+  
+  Cmdr.print("\", \"control\": ");
+  Cmdr.print(print_config.control_channel);  
+  Cmdr.print((is_last_config) ? "}" : "},");
 }

@@ -52,9 +52,9 @@ static int getScaledNote(int fret, cap_touch_id id, bool is_lefty_flipped, confi
   {
     return in_config.root_note + MINOR_DELTAS[delta];
   }
-  else if (in_config.modifier == MOD_MIXOLYTIAN)
+  else if (in_config.modifier == MOD_MIXOLYDIAN)
   {
-    return in_config.root_note + MIXOLYTIAN_DELTAS[delta];
+    return in_config.root_note + MIXOLYDIAN_DELTAS[delta];
   }
   else if (in_config.modifier == MOD_DORIAN)
   {

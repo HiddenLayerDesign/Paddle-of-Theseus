@@ -14,7 +14,7 @@
  * Set these to set the SW version
  */
 #define VERSION_MAJOR  (uint8_t) 0
-#define VERSION_MINOR  (uint8_t) 10
+#define VERSION_MINOR  (uint8_t) 99
 #define VERSION_BUGFIX (uint8_t) 0
 
 typedef struct {
