@@ -1,7 +1,8 @@
 from PyQt5.QtCore import pyqtSlot
 
 from pyqtsa.PyQtSA import *
-from serialInterpreter import modeDict
+from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
+from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
 
 
 class ColorConfigTab(QSATab):
@@ -19,6 +20,7 @@ class ColorConfigTab(QSATab):
             WidgetNoteAndMode(master=master, protocol=protocol, text="Scale:", color=color),
             WidgetCCValue(master=master, protocol=protocol, text="MIDI Control Code:", color=color),
             WidgetOffsets(master=master, protocol=protocol, text="Offsets:", color=color),
+            WidgetQuit(master=master, protocol=protocol, text="Danger Section:", color=color)
         ]
 
         super().__init__(
@@ -33,19 +35,89 @@ class ColorConfigTab(QSATab):
 
     def disableAllWidgets(self):
         for widget in self.widgets:
-            if not isinstance(widget, WidgetEnable):
+            if not isinstance(widget, WidgetEnable) and not isinstance(widget, WidgetQuit):
                 widget.setEnabled(False)
 
     def enableAllWidgets(self):
         for widget in self.widgets:
-            if not isinstance(widget, WidgetEnable):
+            if not isinstance(widget, WidgetEnable) and not isinstance(widget, WidgetQuit):
                 widget.setEnabled(True)
 
     def fullReload(self):
         self.widgets[0].widgets[0].reload()
 
 
-class EnableButton(QSAToggleButton):
+class PoTComboBox(QSAVariableFrame):
+    def __init__(self, master=None, text=None, parameter=None, color=None, keys=[], values=[]):
+        super().__init__(master=master, parameter=parameter)
+        self.master = master
+        self.text = text
+        self.parameter = parameter
+        self.color = color
+        self.values = list(values)
+        self.keys = list(keys)
+
+        self.combo_box = QComboBox()
+        self.combo_box.activated[str].connect(self.onChanged)
+        for key in keys:
+            self.combo_box.addItem(key)
+
+        self.combo_box.setStyleSheet(widgetStyle_spinboxActual)
+
+        self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
+        self.combo_box.setFixedWidth(90)
+
+    def onChanged(self, text):
+        self.combo_box.adjustSize()
+        self.master.si.send_serial_command(cmd="color", argument=self.color)
+        my_argument = self.values[self.keys.index(text)]
+        self.master.si.send_serial_command(cmd=self.parameter.name, argument=my_argument)
+
+
+class PoTRestoreDefaultsButton(QSAPushbutton):
+    def __init__(self, master=None,
+                 parameter=None,
+                 text="Restore Defaults"):
+        super().__init__(master=master, parameter=parameter, text=text)
+        self.button.text = text
+
+    def onClick(self):
+        reply = QMessageBox.question(
+            self, "Message",
+            "Are you sure you want to restore defaults?\nThis cannot be undone!",
+            QMessageBox.Cancel | QMessageBox.RestoreDefaults,
+            QMessageBox.Cancel
+        )
+
+        if reply == QMessageBox.RestoreDefaults:
+            self.master.si.send_serial_command(cmd=CMD_RESTORE_DEFAULTS, argument=None)
+            self.master.si.set_gui_config_from_serial(self.master.proto)
+        else:
+            pass
+
+
+class PoTQuitButton(QSAPushbutton):
+    def __init__(self, master=None,
+                 parameter=None,
+                 text="Quit"):
+        super().__init__(master=master, parameter=parameter, text=text)
+        self.button.text = text
+
+    def onClick(self):
+        reply = QMessageBox.question(
+            self, "Message",
+            "Are you sure you want to quit? \nNOTE: All config changes are saved when changed.",
+            QMessageBox.Cancel | QMessageBox.Close,
+            QMessageBox.Cancel)
+
+        if reply == QMessageBox.Close:
+            self.master.si.send_serial_command(cmd=CMD_EXIT, argument=None)
+            QApplication.quit()
+        else:
+            pass
+
+
+class PoTEnableButton(QSAToggleButton):
     def __init__(self, master=None, text=None, parameter=None, color=None):
         super().__init__(master=master, text=text, parameter=parameter)
         self.master = master
@@ -93,14 +165,12 @@ class PoTSerialEntry(QSAEntry):
     def onEditingFinished(self):
         self.parameter.variable.value = int(self.spinbox_set.value())
         self.master.si.send_serial_command(cmd="color", argument=self.color)
-        if self.parameter.name is "root":
-            my_argument = self.parameter.variable.value
-        elif self.parameter.name is "mode":
-            my_argument = list(modeDict.keys())[self.parameter.variable.value]
-        elif self.parameter.name is "offset1" or "offset2" or "offset3" or "control":
-            my_argument = self.parameter.variable.value
+        self.master.si.send_serial_command(cmd=self.parameter.name, argument=self.parameter.variable.value)
 
-        self.master.si.send_serial_command(cmd=self.parameter.name, argument=my_argument)
+
+class PoTReadout(QSAReadout):
+    def __init__(self, master=None, text=None, parameter=None, color=None):
+        super().__init__(master=master, text=text, parameter=parameter)
 
 
 class WidgetEnable(QSAWidgetCluster):
@@ -108,7 +178,7 @@ class WidgetEnable(QSAWidgetCluster):
         super().__init__(master=master,
                          text=text,
                          widgets=[
-                             EnableButton(
+                             PoTEnableButton(
                                  master=master,
                                  text="Enable:",
                                  parameter=protocol.parameters["enable"],
@@ -123,16 +193,20 @@ class WidgetNoteAndMode(QSAWidgetCluster):
         super().__init__(master=master,
                          text=text,
                          widgets=[
-                             PoTSerialEntry(
+                             PoTComboBox(
                                  master=master,
                                  text="Root: ",
                                  parameter=protocol.parameters["root_note"],
+                                 keys=rootNoteDict.keys(),
+                                 values=rootNoteDict.values(),
                                  color=color
                              ),
-                             PoTSerialEntry(
+                             PoTComboBox(
                                  master=master,
                                  text="Mode: ",
                                  parameter=protocol.parameters["mode"],
+                                 keys=modeDict.keys(),
+                                 values=modeDict.keys(),
                                  color=color
                              )
                          ],
@@ -159,3 +233,15 @@ class WidgetOffsets(QSAWidgetCluster):
                              PoTSerialEntry(master=master, text="Offset3:", parameter=protocol.parameters["offset3"], color=color),
                          ],
                          )
+
+
+class WidgetQuit(QSAWidgetCluster):
+    def __init__(self, master=None, text=None, protocol=None, color=None):
+        super().__init__(master=master,
+                         text=text,
+                         widgets=[
+                             PoTQuitButton(master=master, text="Exit Program"),
+                             PoTRestoreDefaultsButton(master=master, text="Restore Defaults")
+                         ],
+        )
+

@@ -12,21 +12,20 @@ modeDict = {
     "DORIAN": 3
 }
 
-
-class RootNoteEnum(Enum):
-    """ Enumeration of root notes """
-    A = 0
-    A_SHARP = 1
-    B = 2
-    C = 3
-    C_SHARP = 4
-    D = 5
-    D_SHARP = 6
-    E = 7
-    F = 8
-    F_SHARP = 9
-    G = 10
-    G_SHARP = 11
+rootNoteDict = {
+    "A": 33,
+    "A#": 34,
+    "B": 35,
+    "C": 36,
+    "C#": 25,
+    "D": 26,
+    "D#": 27,
+    "E": 28,
+    "F": 29,
+    "F#": 30,
+    "G": 31,
+    "G#": 32
+}
 
 
 class PoTProtocol(Protocol):
@@ -83,7 +82,7 @@ class PoTProtocol(Protocol):
         self.parameters["offset1"].scale = 1
         self.parameters["offset1"].precision = 0
         self.parameters["offset1"].value_min = 0
-        self.parameters["offset1"].value_max = 255
+        self.parameters["offset1"].value_max = 60
 
         # Setup scale-offset between capTouch buttons 0 & 2
         self.parameters["offset2"].name = "offset2"
@@ -93,7 +92,7 @@ class PoTProtocol(Protocol):
         self.parameters["offset2"].scale = 1
         self.parameters["offset2"].precision = 0
         self.parameters["offset2"].value_min = 0
-        self.parameters["offset2"].value_max = 255
+        self.parameters["offset2"].value_max = 60
 
         # Setup scale-offset between capTouch buttons 0 & 3
         self.parameters["offset3"].name = "offset3"
@@ -103,7 +102,7 @@ class PoTProtocol(Protocol):
         self.parameters["offset3"].scale = 1
         self.parameters["offset3"].precision = 0
         self.parameters["offset3"].value_min = 0
-        self.parameters["offset3"].value_max = 255
+        self.parameters["offset3"].value_max = 60
 
     def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control):
         """ use function args to set params """

@@ -1,6 +1,6 @@
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets, Qt
 
 from serialInterpreter import *
 
@@ -60,9 +60,14 @@ class PoTConfigApp(ApplicationContext):
             ColorConfigTab(master=self, protocol=self.proto["WHITE"], title="White",
                            icon='images/tabIcon_White.png', index=6, color="WHITE"),
         ]
+        self.splash = QSplashScreen(QPixmap(self.get_resource("images/splash_screen.jpg")))
+        self.splash.setStyleSheet("QSplashScreen {font: 32pt Segoe UI;}")
+        self.splash.showMessage("Waiting for serial connection...", Qt.AlignCenter | Qt.AlignBottom, color=Qt.white)
+        self.splash.show()
 
-        self.si = SerialInterpreter()
+        self.si = SerialInterpreter(self)
         self.si.set_gui_config_from_serial(self.proto)
+        self.splash.close()
 
         self.tabs = QSATabWidget(pages=tabs)
         self.tabs.setCurrentIndex(0);

@@ -6,29 +6,33 @@ from serial import Serial
 from serial.tools import list_ports
 from time import sleep
 from gui_elements.protocol.PoTProtocol import modeDict
+from PyQt5 import QtCore, QtWidgets, Qt
 
 CMD_ABOUT = b"about\r"
 CMD_ALL_CONFIG = b"all_config\r"
+CMD_RESTORE_DEFAULTS = b"defaults\r"
+CMD_EXIT = b"exit\r"
 STR_ALL_CONFIGS = "all_configs"
 STR_CURR_CONFIG = "current_config"
 
 
 class SerialInterpreter:
 
-    def __init__(self):
+    def __init__(self, master=None):
         """Initialize class vars and find Serial connection if possible"""
         self.serialPrompt = b"Paddle>"
         self.testMessage = b"paddlePing\r"
         self.testResponse = b"paddlePong\r\n"
 
         self.serial = Serial(baudrate=9600, timeout=2)
-
+        self.master = master
         self.serialConn = None
 
         while self.serialConn is None:
             self.serialConn = self.find_serial_connection()
             sleep(1)
 
+        self.master.splash.showMessage(f"Connecting to {self.serialConn}", QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom,  color=QtCore.Qt.white)
         print("Found serial connection at {0}".format(self.serialConn))
         self.serial.open()
 
@@ -80,9 +84,10 @@ class SerialInterpreter:
         message = ""
         latest = b""
         # return message one line at a time until we get the prompt
-        while latest != self.serialPrompt:
-            message += latest.decode(encoding="UTF-8")
-            latest = self.serial.read_until()
+        if cmd is not CMD_EXIT:
+            while latest != self.serialPrompt:
+                message += latest.decode(encoding="UTF-8")
+                latest = self.serial.read_until()
 
         if message == "":
             message = None

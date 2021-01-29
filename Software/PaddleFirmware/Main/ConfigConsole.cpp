@@ -10,6 +10,7 @@
 #include "ConfigConsole.h"
 #include "NonVolatile.h"
 #include "RotaryEncoder.h"
+#include "MIDIConstants.h"
 
 #define CHAR_CR 13
 #define TRUE_STR "TRUE"
@@ -191,51 +192,51 @@ bool rootNoteHandler(Commander &Cmdr)
 
   if (!strncmp(compare.c_str(), "C#", strlen("C#")))
   {
-    myInt = 25;
+    myInt = ROOT_NOTE_CSHARP;
   }
   else if (!strncmp(compare.c_str(), "C", strlen("C")))
   {
-    myInt = 24;
+    myInt = ROOT_NOTE_C;
   }
   else if (!strncmp(compare.c_str(), "D#", strlen("D#")))
   {
-    myInt = 27;
+    myInt = ROOT_NOTE_DSHARP;
   }
   else if (!strncmp(compare.c_str(), "D", strlen("D")))
   {
-    myInt = 26;
+    myInt = ROOT_NOTE_D;
   }
   else if (!strncmp(compare.c_str(), "E", strlen("E")))
   {
-    myInt = 28;
+    myInt = ROOT_NOTE_E;
   }
   else if (!strncmp(compare.c_str(), "F#", strlen("F#")))
   {
-    myInt = 30;
+    myInt = ROOT_NOTE_FSHARP;
   }
   else if (!strncmp(compare.c_str(), "F", strlen("F")))
   {
-    myInt = 29;
+    myInt = ROOT_NOTE_F;
   }
   else if (!strncmp(compare.c_str(), "G#", strlen("G#")))
   {
-    myInt = 32;
+    myInt = ROOT_NOTE_GSHARP;
   }
   else if (!strncmp(compare.c_str(), "G", strlen("G")))
   {
-    myInt = 31;
+    myInt = ROOT_NOTE_G;
   }
   else if (!strncmp(compare.c_str(), "A#", strlen("A#")))
   {
-    myInt = 34;
+    myInt = ROOT_NOTE_ASHARP;
   }
   else if (!strncmp(compare.c_str(), "A", strlen("A")))
   {
-    myInt = 33;
+    myInt = ROOT_NOTE_A;
   }
   else if (!strncmp(compare.c_str(), "B", strlen("B")))
   {
-    myInt = 35;
+    myInt = ROOT_NOTE_B;
   }
   else
   {
