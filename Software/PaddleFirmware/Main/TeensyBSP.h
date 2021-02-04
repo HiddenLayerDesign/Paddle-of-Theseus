@@ -43,9 +43,16 @@
 #define TEENSY_ROT_POT_PIN        1 // Analog A1
 #define TEENSY_LIN_POT_PIN        0 // Analog A0
 
+/** 
+ * Teensy SDA and SCL pins are just assumed + used by the Wire library, so these #defines are unused
+ * However, as a reference, the SDA will always be pin D18 and SCL will always be pin D19 for TeensyLC and Teensy 3/4
+ */
+#define TEENSY_SDA_PIN            18
+#define TEENSY_SCL_PIN            19
+
 #define TEENSY_LED_PIN            13
 
-/* the Parallax Ping sensor only has 3 pins, so TRIG_PIN == SENS_PIN */
+/* the Parallax Ping sensor only has 1 I/O pin, so TRIG_PIN == SENS_PIN */
 #ifdef ULTRASONIC_PING
 #define TEENSY_ULTRA_TRIG_PIN     12
 #define TEENSY_ULTRA_SENS_PIN     12
