@@ -216,8 +216,22 @@ void loop()
     prev_rot_button = curr_rot_button;
     
     /* Sample Rotary Encoder Twist Knob */
-    curr_enc_reading = rotEnc.read();
-    constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+    if (!is_lefty_flipped)
+    {
+      curr_enc_reading =  prev_enc_reading + (-1 * (rotEnc.read() - prev_enc_reading));
+      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+      rotEnc.write(constrained_enc_reading);
+    }
+    else
+    {
+      curr_enc_reading = rotEnc.read();
+      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+      if (constrained_enc_reading != curr_enc_reading)
+      {
+        rotEnc.write(constrained_enc_reading);
+      }
+    }
+    
     
     if (constrained_enc_reading != prev_enc_reading)
     {
