@@ -115,8 +115,6 @@ class PoTQuitButton(QSAPushbutton):
             QMessageBox.Cancel)
 
         if reply == QMessageBox.Close:
-            print(self.master.si.send_serial_command(cmd=CMD_ALL_CONFIG, argument=None))
-
             self.master.si.send_serial_command(cmd=CMD_EXIT, argument=None)
             QApplication.quit()
         else:

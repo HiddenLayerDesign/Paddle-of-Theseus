@@ -114,8 +114,6 @@ class SerialInterpreter:
         if not response_str:
             raise RuntimeError('Got no response from paddle')
 
-        print(response_str)
-
         result_obj = json.loads(response_str)
         for key in result_obj[STR_ALL_CONFIGS].keys():
             this_config = result_obj[STR_ALL_CONFIGS][key]
