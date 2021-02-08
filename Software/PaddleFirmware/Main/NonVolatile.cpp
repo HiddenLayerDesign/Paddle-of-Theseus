@@ -34,7 +34,8 @@ const char *color_str_array[ROT_ENC_ENUM_SIZE] = {"BLUE",
 const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
                                              "MINOR",
                                              "MIXOLYDIAN",
-                                             "DORIAN"};
+                                             "DORIAN",
+                                             "CHROMATIC"};
 void CheckUpdateVersionNumber(void)
 {
   uint8_t eeprom_version_major  = EEPROM.read(EEPROM_VERSION_MAJOR_ADDRESS);

@@ -60,6 +60,10 @@ static int getScaledNote(int fret, cap_touch_id id, bool is_lefty_flipped, confi
   {
     return in_config.root_note + DORIAN_DELTAS[delta];
   }
+  else if (in_config.modifier == MOD_CHROMATIC)
+  {
+    return in_config.root_note + CHROMATIC_DELTAS[delta];
+  }
   else 
   {  
     return in_config.root_note;

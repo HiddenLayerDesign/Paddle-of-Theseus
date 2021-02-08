@@ -58,6 +58,7 @@ enum modifier_t
   MOD_MINOR,
   MOD_MIXOLYDIAN,
   MOD_DORIAN,
+  MOD_CHROMATIC,
   MOD_LIMIT
 };
 
