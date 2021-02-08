@@ -69,6 +69,8 @@ int prev_analog_volume = 0;
 
 /* MIDI variables */
 int current_fret = 0;
+int prev_fret = 1;
+unsigned long hammer_on_time = 0;
 
 /* Rotary Encoder Variables */
 int curr_enc_reading = 0;
@@ -240,7 +242,28 @@ void loop()
     prev_enc_reading = constrained_enc_reading;
   
     /* Read MIDI note from potentiometer */
+    hammer_on_time = millis();
     current_fret = fret_from_lin_pot();
+    if (prev_fret != current_fret)
+    {
+      if (!capTouch0.is_note_playing && hammer_on_time > capTouch0.update_midi_msec)
+      {
+        capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
+      }
+      if (!capTouch1.is_note_playing && hammer_on_time > capTouch1.update_midi_msec)
+      {
+        capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
+      }
+      if (!capTouch2.is_note_playing && hammer_on_time > capTouch0.update_midi_msec)
+      {
+        capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
+      }
+      if (!capTouch3.is_note_playing && hammer_on_time > capTouch0.update_midi_msec)
+      {
+        capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
+      }
+    }
+    prev_fret = current_fret;
   
     /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
     capTouch0.Update();
@@ -250,13 +273,13 @@ void loop()
   
     /* send notes if needed */
     if (capTouch0.ShouldSendNote()) 
-      capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+      capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
     if (capTouch1.ShouldSendNote()) 
-      capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+      capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
     if (capTouch2.ShouldSendNote())
-      capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+      capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
     if (capTouch3.ShouldSendNote())
-      capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+      capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped, running_config);
   
     /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
     capTouch0.CheckMIDINeedsUpdate();

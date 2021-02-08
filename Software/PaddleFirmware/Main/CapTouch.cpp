@@ -76,7 +76,7 @@ CapTouch::CapTouch(int pin, cap_touch_id id)
   _pin = pin;
   array_idx = 0;
   current_reading = LOW;
-  midi_needs_update= true;
+  is_note_playing= true;
   update_midi_msec = 0;
 
   for (int i=0; i<CAP_TOUCH_ARRAY_LEN; i++)
@@ -92,7 +92,7 @@ CapTouch::CapTouch(int pin, cap_touch_id id)
 void CapTouch::Update(void)
 {
   current_reading = digitalRead(_pin);
-  if (current_reading && midi_needs_update)
+  if (current_reading && is_note_playing)
   {
     press_time = millis();
   }
@@ -119,7 +119,7 @@ void CapTouch::CheckMIDINeedsUpdate(void)
   {
     sum += cap_touch_array[i]; 
   }
-  midi_needs_update= (!sum);
+  is_note_playing= (!sum);
 }
 
 void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped, config_t in_config)
@@ -128,21 +128,21 @@ void CapTouch::SendNote(int fret, int analog_volume, bool is_lefty_flipped, conf
   usbMIDI.sendNoteOff(previous_note, 0, MIDI_CHANNEL_2);   
   usbMIDI.sendNoteOn(current_note, analog_volume, MIDI_CHANNEL_2);
   update_midi_msec  = millis() + CAP_TOUCH_DEBOUNCE_DELAY;
-  midi_needs_update = false;
+  is_note_playing = false;
   previous_note = current_note;  
 }
 
 bool CapTouch::ShouldSendNote(void)
 {
   return (GetReading() && 
-          midi_needs_update && 
+          is_note_playing && 
           millis() > update_midi_msec);
 }
 
 bool CapTouch::IsLongHold(void)
 {
   /* if capTouch is not currently being held, then false */
-  if (midi_needs_update)
+  if (is_note_playing)
   {
     return false;
   }  

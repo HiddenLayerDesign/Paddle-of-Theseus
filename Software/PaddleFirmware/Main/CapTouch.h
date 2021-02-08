@@ -36,7 +36,7 @@ class CapTouch
     int previous_note;
     int current_note;
     unsigned long update_midi_msec;
-    bool midi_needs_update;
+    bool is_note_playing;
     unsigned long press_time;
     
   private:
