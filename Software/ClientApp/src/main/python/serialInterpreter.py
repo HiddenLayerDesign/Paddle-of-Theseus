@@ -5,7 +5,7 @@ import json
 from serial import Serial
 from serial.tools import list_ports
 from time import sleep
-from gui_elements.protocol.PoTProtocol import modeDict
+from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
 from PyQt5 import QtCore, QtWidgets, Qt
 
 CMD_ABOUT = b"about\r"
@@ -114,6 +114,8 @@ class SerialInterpreter:
         if not response_str:
             raise RuntimeError('Got no response from paddle')
 
+        print(response_str)
+
         result_obj = json.loads(response_str)
         for key in result_obj[STR_ALL_CONFIGS].keys():
             this_config = result_obj[STR_ALL_CONFIGS][key]
@@ -123,7 +125,7 @@ class SerialInterpreter:
                 offset1=this_config["offset1"],
                 offset2=this_config["offset2"],
                 offset3=this_config["offset3"],
-                root_note=this_config["root"],
+                root_note=this_config["root_note"] - rootNoteDict["C"],
                 mode=modeDict[this_config["mode"]],
                 enable=1 if this_config["enable"] == "True" else 0
             )

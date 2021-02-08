@@ -284,9 +284,13 @@ bool modifierHandler(Commander &Cmdr)
   {
     current_config.modifier = MOD_DORIAN;
   }
+  else if (!strncmp(compare.c_str(), modifier_str_array[MOD_CHROMATIC], strlen(modifier_str_array[MOD_CHROMATIC])))
+  {
+    current_config.modifier = MOD_CHROMATIC;
+  }
   else
   {
-    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\"!");
+    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\", \"CHROMATIC\"!");
     return false;
   }
   Cmdr.print("SUCCESS: Setting modifier to ");
@@ -366,6 +370,7 @@ bool exitHandler(Commander &Cmdr)
   Cmdr.println("Saving settings!");
   Cmdr.println("Going down for reboot now!");
   delay(5000);
+  WriteConfigMode(false);
   softRestart();
   
   /* Will likely never get here, but harmless anyways */
@@ -405,7 +410,7 @@ void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
   Cmdr.print(", \"offset3\": ");
   Cmdr.print(print_config.button3_offset);
 
-  Cmdr.print(",\"root\": ");
+  Cmdr.print(",\"root_note\": ");
   Cmdr.print(print_config.root_note);
   Cmdr.print(", \"mode\": \"");
   Cmdr.print(modifier_str_array[print_config.modifier]);

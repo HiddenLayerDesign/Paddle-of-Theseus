@@ -2,7 +2,7 @@ from PyQt5.QtCore import pyqtSlot
 
 from pyqtsa.PyQtSA import *
 from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
-from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
+from serialInterpreter import CMD_EXIT, CMD_ALL_CONFIG, CMD_RESTORE_DEFAULTS
 
 
 class ColorConfigTab(QSATab):
@@ -63,6 +63,7 @@ class PoTComboBox(QSAVariableFrame):
             self.combo_box.addItem(key)
 
         self.combo_box.setStyleSheet(widgetStyle_spinboxActual)
+        self.parameter.variable.bind_to(self.updateValue)
 
         self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
         self.combo_box.setFixedWidth(90)
@@ -72,6 +73,9 @@ class PoTComboBox(QSAVariableFrame):
         self.master.si.send_serial_command(cmd="color", argument=self.color)
         my_argument = self.values[self.keys.index(text)]
         self.master.si.send_serial_command(cmd=self.parameter.name, argument=my_argument)
+
+    def updateValue(self, value=None):
+        self.combo_box.setCurrentIndex(self.parameter.variable.value)
 
 
 class PoTRestoreDefaultsButton(QSAPushbutton):
@@ -111,6 +115,8 @@ class PoTQuitButton(QSAPushbutton):
             QMessageBox.Cancel)
 
         if reply == QMessageBox.Close:
+            print(self.master.si.send_serial_command(cmd=CMD_ALL_CONFIG, argument=None))
+
             self.master.si.send_serial_command(cmd=CMD_EXIT, argument=None)
             QApplication.quit()
         else:
@@ -198,7 +204,7 @@ class WidgetNoteAndMode(QSAWidgetCluster):
                                  text="Root: ",
                                  parameter=protocol.parameters["root_note"],
                                  keys=rootNoteDict.keys(),
-                                 values=rootNoteDict.values(),
+                                 values=rootNoteDict.keys(),
                                  color=color
                              ),
                              PoTComboBox(

@@ -9,14 +9,12 @@ modeDict = {
     "MAJOR": 0,
     "MINOR": 1,
     "MIXOLYDIAN": 2,
-    "DORIAN": 3
+    "DORIAN": 3,
+    "CHROMATIC": 4
 }
 
 rootNoteDict = {
-    "A": 33,
-    "A#": 34,
-    "B": 35,
-    "C": 36,
+    "C": 24,
     "C#": 25,
     "D": 26,
     "D#": 27,
@@ -24,7 +22,10 @@ rootNoteDict = {
     "F": 29,
     "F#": 30,
     "G": 31,
-    "G#": 32
+    "G#": 32,
+    "A": 33,
+    "A#": 34,
+    "B": 35,
 }
 
 
