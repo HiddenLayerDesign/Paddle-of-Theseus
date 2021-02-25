@@ -146,7 +146,9 @@ void setup()
 
     int num_disabled_configs = 0;
     /* Select the next enabled configuration */
-    do
+    encoder_state = (rot_enc_state) encoder_state;
+    
+    while (!running_config.is_enabled)
     {
       encoder_state = (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
       num_disabled_configs += 1;
@@ -157,15 +159,13 @@ void setup()
         running_config = loadConfigFromEEPROM(encoder_state);
         running_config.is_enabled = true;
         saveConfigToEEPROM(running_config, encoder_state);
-
         break;
       }
-    } while (!running_config.is_enabled);
-
+    }
+    
     running_config = loadConfigFromEEPROM(encoder_state);
-
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
-  }  
+  }
   accel.init();
   WriteConfigMode(false);
 }
