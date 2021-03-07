@@ -4,10 +4,6 @@
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
  *  
- *  This design is built off of Teensy MIDI example code 
- *     Sparkfun code for the accelerometer
- *     and Seeed studio code for the Ultrasonic Rangefinder
- *  
  *  Note: You must select "Serial + MIDI" from the "Tools > USB Type" menu
  *  http://www.pjrc.com/teensy/td_midi.html
  *  
@@ -289,6 +285,7 @@ void loop()
   
     /* set volume */
     analog_volume = getVolume(is_lefty_flipped);
+    constrain(analog_volume, 0, 127);
     if (analog_volume < TEENSY_MIN_VOLUME)
     {
       analog_volume = 0;
@@ -354,13 +351,13 @@ static void configurePins(void)
  * Return the instrument volume, taking into account whether a left- or right-handed person is using the paddle
  * 
  * @param is_lefty_flipped [in] True == the paddle is currently lefty-flipped, else False
- * @return int Volume between 0-255 where 255 is MAX volume
+ * @return int Volume between 0-127 where 127 is MAX volume
  */
 int getVolume(bool is_lefty_flipped)
 {
   return (is_lefty_flipped) ?
-            floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) :
-            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
+            floor(analogRead(TEENSY_ROT_POT_PIN) * 128.0/1024.0) :
+            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 128.0/1024.0);
 }
 
 /**
