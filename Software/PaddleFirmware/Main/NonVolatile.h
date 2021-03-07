@@ -40,14 +40,13 @@
 /**
  * Check this bit to know whether to go to config menu or regular operation
  */
-#define EEPROM_CONFIG_MODE_ADDRESS    (uint8_t) 100
-
+#define EEPROM_CONFIG_MODE_ADDRESS    (uint8_t) 0
 /**
  * Store the Paddle FW version in EEPROM
  */
-#define EEPROM_VERSION_MAJOR_ADDRESS  (uint8_t) 125
-#define EEPROM_VERSION_MINOR_ADDRESS  (uint8_t) 126
-#define EEPROM_VERSION_BUGFIX_ADDRESS (uint8_t) 127
+#define EEPROM_VERSION_MAJOR_ADDRESS  (uint8_t) 1
+#define EEPROM_VERSION_MINOR_ADDRESS  (uint8_t) 2
+#define EEPROM_VERSION_BUGFIX_ADDRESS (uint8_t) 3
 
 /**
  * 
