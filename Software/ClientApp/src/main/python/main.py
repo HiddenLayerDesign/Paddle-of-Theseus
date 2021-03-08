@@ -70,7 +70,7 @@ class PoTConfigApp(ApplicationContext):
         self.splash.close()
 
         self.tabs = QSATabWidget(pages=tabs)
-        self.tabs.setCurrentIndex(0);
+        self.tabs.setCurrentIndex(0)
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
         self.tabs.pages[0].fullReload()
@@ -104,6 +104,7 @@ class PoTConfigApp(ApplicationContext):
 
         self.tabs.pages[self.tabs.currentIndex()].fullReload()
         self.tabs.index_previous = self.tabs.currentIndex()
+
 
 if __name__ == '__main__':
     appctxt = PoTConfigApp()  # 1. Instantiate ApplicationContext
