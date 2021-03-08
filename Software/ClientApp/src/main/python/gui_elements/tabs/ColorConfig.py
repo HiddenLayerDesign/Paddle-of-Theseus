@@ -1,8 +1,10 @@
+import json
+
 from PyQt5.QtCore import pyqtSlot
 
 from pyqtsa.PyQtSA import *
 from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
-from serialInterpreter import CMD_EXIT, CMD_ALL_CONFIG, CMD_RESTORE_DEFAULTS
+from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
 
 
 class ColorConfigTab(QSATab):
@@ -15,10 +17,14 @@ class ColorConfigTab(QSATab):
             index=0,
             color=""
     ):
+
+        with open(master.get_resource("config/midi_control_codes.json")) as f:
+            self.MIDI_descriptions = json.loads(f.read())
+
         self.widgets = [
             WidgetEnable(master=master, protocol=protocol, text="Color is Currently:", color=color),
             WidgetNoteAndMode(master=master, protocol=protocol, text="Scale:", color=color),
-            WidgetCCValue(master=master, protocol=protocol, text="MIDI Control Code:", color=color),
+            WidgetCCValue(master=master, protocol=protocol, text="MIDI Control Code:", color=color, serial_dict=self.MIDI_descriptions),
             WidgetOffsets(master=master, protocol=protocol, text="Offsets:", color=color),
             WidgetQuit(master=master, protocol=protocol, text="Danger Section:", color=color)
         ]
@@ -144,7 +150,7 @@ class PoTEnableButton(QSAToggleButton):
         if self.master is not None:
             self.master.si.send_serial_command(cmd="color", argument=self.color)
             self.master.si.send_serial_command(cmd=self.parameter.name, argument="TRUE" if
-                                               0 == self.state.value else "FALSE")
+            0 == self.state.value else "FALSE")
 
             if 1 == self.state.value:
                 self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
@@ -172,9 +178,24 @@ class PoTSerialEntry(QSAEntry):
         self.master.si.send_serial_command(cmd=self.parameter.name, argument=self.parameter.variable.value)
 
 
-class PoTReadout(QSAReadout):
-    def __init__(self, master=None, text=None, parameter=None, color=None):
+class PoTControlCodeEntry(QSAEntry):
+    def __init__(self, master=None, text=None, parameter=None, color=None, helpText=None, configDict=None):
         super().__init__(master=master, text=text, parameter=parameter)
+        self.master = master
+        self.text = text
+        self.parameter = parameter
+        self.color = color
+        self.helpText = helpText
+        self.configDict = configDict
+        self.parameter.variable.value = int(self.spinbox_set.value())
+        self.helpText.updateValue(self.configDict[str(self.parameter.variable.value)])
+
+    def onEditingFinished(self):
+        self.parameter.variable.value = int(self.spinbox_set.value())
+        self.master.si.send_serial_command(cmd="color", argument=self.color)
+        self.master.si.send_serial_command(cmd=self.parameter.name, argument=self.parameter.variable.value)
+
+        self.helpText.updateValue(self.configDict[str(self.parameter.variable.value)])
 
 
 class WidgetEnable(QSAWidgetCluster):
@@ -218,13 +239,38 @@ class WidgetNoteAndMode(QSAWidgetCluster):
 
 
 class WidgetCCValue(QSAWidgetCluster):
-    def __init__(self, master=None, text=None, protocol=None, color=None):
+    def __init__(self, master=None, text=None, protocol=None, color=None, serial_dict=None):
+        self.info_frame = QSAInfoFrame(master=None,
+                                       row=0,
+                                       column=0,
+                                       index=0,
+                                       parameter=protocol.parameters["control"],
+                                       text="",
+                                       interval=0,
+                                       constants=[]
+                            )
+
         super().__init__(master=master,
                          text=text,
                          widgets=[
-                             PoTSerialEntry(master=master, text="CC_Idx:", parameter=protocol.parameters["control"], color=color)
+                             PoTControlCodeEntry(
+                                 master=master,
+                                 text="CC_Idx:",
+                                 parameter=protocol.parameters["control"],
+                                 color=color,
+                                 configDict=serial_dict,
+                                 helpText=self.info_frame
+                             ),
+                             self.info_frame  # see above, needed variable handle for helpText below
                          ],
                          )
+        self.info_frame.setFixedWidth(450)
+        self.info_frame.label.setFixedWidth(60)
+        self.info_frame.label.setText("INFO: ")
+
+        self.info_frame.label_info.setFixedWidth(450)
+        self.info_frame.label_info.setStyleSheet("QLabel {font: 11pt Segoe UI;}")
+        self.info_frame.label_info.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
 
 class WidgetOffsets(QSAWidgetCluster):
@@ -232,9 +278,12 @@ class WidgetOffsets(QSAWidgetCluster):
         super().__init__(master=master,
                          text=text,
                          widgets=[
-                             PoTSerialEntry(master=master, text="Offset1:", parameter=protocol.parameters["offset1"], color=color),
-                             PoTSerialEntry(master=master, text="Offset2:", parameter=protocol.parameters["offset2"], color=color),
-                             PoTSerialEntry(master=master, text="Offset3:", parameter=protocol.parameters["offset3"], color=color),
+                             PoTSerialEntry(master=master, text="Offset1:", parameter=protocol.parameters["offset1"],
+                                            color=color),
+                             PoTSerialEntry(master=master, text="Offset2:", parameter=protocol.parameters["offset2"],
+                                            color=color),
+                             PoTSerialEntry(master=master, text="Offset3:", parameter=protocol.parameters["offset3"],
+                                            color=color),
                          ],
                          )
 
@@ -247,5 +296,4 @@ class WidgetQuit(QSAWidgetCluster):
                              PoTQuitButton(master=master, text="Exit Program"),
                              PoTRestoreDefaultsButton(master=master, text="Restore Defaults")
                          ],
-        )
-
+                         )
