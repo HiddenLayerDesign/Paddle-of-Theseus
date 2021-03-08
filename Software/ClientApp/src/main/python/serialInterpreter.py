@@ -24,7 +24,7 @@ class SerialInterpreter:
         self.testMessage = b"paddlePing\r"
         self.testResponse = b"paddlePong\r\n"
 
-        self.serial = Serial(baudrate=9600, timeout=2)
+        self.serial = Serial(baudrate=9600, timeout=0.05)
         self.master = master
         self.serialConn = None
 
