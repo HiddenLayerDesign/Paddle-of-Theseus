@@ -130,11 +130,10 @@ void setup()
     Serial.begin(9600);
     while (!Serial)
     {
-        if (PollForSerial(flip_time, is_green_not_yellow))
-        {
-          is_green_not_yellow = !is_green_not_yellow;
-          flip_time = millis() + 500;
-        }
+      if (PollForSerial(flip_time, is_green_not_yellow))
+      {
+        is_green_not_yellow = !is_green_not_yellow;
+        flip_time = millis() + 500;
       }
     }
     printBanner();
@@ -395,8 +394,8 @@ void printBanner(void)
  */
 void printLoopDebugInfo()
 {
-  DEBUG_PRINT("\rLoop Time: ");
-  DEBUG_PRINT(loop_micros);
+  DEBUG_PRINT("\rFret reading: ");
+  DEBUG_PRINT(analogRead(TEENSY_LIN_POT_PIN));
   DEBUG_PRINT(", volume: ");
   DEBUG_PRINT(analog_volume);
   DEBUG_PRINT("     ");

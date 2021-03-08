@@ -80,11 +80,6 @@ bool button3Handler(Commander &Cmdr);
 bool selectColorHandler (Commander &Cmdr);
 
 /**
- * Save the current config to EEPROM
- */
-bool saveColorHandler(Commander &Cmdr);
-
-/**
  * Enable or disable the current config
  */
 bool colorEnableHandler(Commander &Cmdr);
@@ -119,7 +114,7 @@ const commandList_t masterCommands[] = {
   {"all_config", printConfigHandler, "print all stored configuration, format is `all_config`"},
   {"enable",     colorEnableHandler,  "enable or disable this color, format is `enable=TRUE`"},
   {"color",      selectColorHandler, "select current config color, format is `color=CYAN`"},
-  {"root_note",       rootNoteHandler,    "set root note of scale, format is `root=A`"},
+  {"root_note",  rootNoteHandler,    "set root note of scale, format is `root=A`"},
   {"mode",       modifierHandler,    "set mode, format is `mode=MAJOR`"},
   {"offset1",    button1Handler,     "set button1 offset for this color, format is `offset1=3`"},
   {"offset2",    button2Handler,     "set button2 offset for this color, format is `offset2=5`"},
