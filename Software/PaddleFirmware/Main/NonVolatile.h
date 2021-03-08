@@ -67,12 +67,12 @@ enum modifier_t
 typedef struct 
 {
   bool is_enabled;
-  int root_note;
+  uint8_t root_note;
   modifier_t modifier;
-  int button1_offset;
-  int button2_offset;
-  int button3_offset;
-  int control_channel;
+  uint8_t button1_offset;
+  uint8_t button2_offset;
+  uint8_t button3_offset;
+  uint8_t control_channel;
 } config_t;
 
 /**

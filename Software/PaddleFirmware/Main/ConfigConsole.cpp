@@ -125,7 +125,8 @@ bool selectColorHandler(Commander &Cmdr)
     Cmdr.println("ERROR: only accepted values are \"BLUE\", \"CYAN\", \"GREEN\", \"PURPLE\", \"RED\",  \"YELLOW\", \"WHITE\"!");
     return false;  
   }
-  
+
+  current_config = loadConfigFromEEPROM(config_state);
   Cmdr.print("SUCCESS: Changed current config to ");
   Cmdr.println(color_str_array[(int) config_state]);
   return true;
@@ -357,19 +358,11 @@ bool ctrlChanHandler(Commander &Cmdr)
   return true;
 }
 
-bool saveColorHandler(Commander &Cmdr)
-{
-  saveConfigToEEPROM(current_config, config_state);
-  const char *color_str = color_str_array[(int) config_state];
-  Cmdr.println("SUCCESS: Saved color handler");
-  return true;
-}
-
 bool exitHandler(Commander &Cmdr)
 {
   Cmdr.println("Saving settings!");
   Cmdr.println("Going down for reboot now!");
-  delay(5000);
+  delay(1000);
   WriteConfigMode(false);
   softRestart();
   
