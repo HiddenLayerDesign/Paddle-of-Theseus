@@ -14,18 +14,27 @@ modeDict = {
 }
 
 rootNoteDict = {
-    "C": 24,
-    "C#": 25,
-    "D": 26,
-    "D#": 27,
-    "E": 28,
-    "F": 29,
-    "F#": 30,
-    "G": 31,
-    "G#": 32,
-    "A": 33,
-    "A#": 34,
-    "B": 35,
+    "C": 0,
+    "C#": 1,
+    "D": 2,
+    "D#": 3,
+    "E": 4,
+    "F": 5,
+    "F#": 6,
+    "G": 7,
+    "G#": 8,
+    "A": 9,
+    "A#": 10,
+    "B": 11,
+}
+
+octaveDict = {
+    "-1": 0,
+    "0": 12,
+    "1": 24,
+    "2": 36,
+    "3": 48,
+    "4": 60,
 }
 
 
@@ -42,6 +51,7 @@ class PoTProtocol(Protocol):
         self.parameters = {
             "enable": GUIParameter(),
             "root_note": GUIParameter(),
+            "octave": GUIParameter(),
             "mode": GUIParameter(),
             "offset1": GUIParameter(),
             "offset2": GUIParameter(),
@@ -59,6 +69,11 @@ class PoTProtocol(Protocol):
         self.parameters["root_note"].permission = "RW"
         self.parameters["root_note"].param_type = "U8"
         self.parameters["root_note"].description = "Which note is the root note"
+
+        self.parameters["octave"].name = "octave"
+        self.parameters["octave"].permission = "RW"
+        self.parameters["octave"].param_type = "U8"
+        self.parameters["octave"].description = "Which octave is the root for the instrument"
 
         self.parameters["mode"].name = "mode"
         self.parameters["mode"].permission = "RW"
@@ -105,12 +120,13 @@ class PoTProtocol(Protocol):
         self.parameters["offset3"].value_min = 0
         self.parameters["offset3"].value_max = 60
 
-    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control):
+    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave):
         """ use function args to set params """
         self.parameters["offset1"].variable.value = offset1
         self.parameters["offset2"].variable.value = offset2
         self.parameters["mode"].variable.value = mode
         self.parameters["enable"].variable.value = enable
+        self.parameters["octave"].variable.value = octave
         self.parameters["root_note"].variable.value = root_note
         self.parameters["offset3"].variable.value = offset3
         self.parameters["control"].variable.value = control

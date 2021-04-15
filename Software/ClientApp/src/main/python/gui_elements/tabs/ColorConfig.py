@@ -3,7 +3,7 @@ import json
 from PyQt5.QtCore import pyqtSlot
 
 from pyqtsa.PyQtSA import *
-from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
+from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict, octaveDict
 from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
 
 
@@ -218,6 +218,14 @@ class WidgetNoteAndMode(QSAWidgetCluster):
         super().__init__(master=master,
                          text=text,
                          widgets=[
+                             PoTComboBox(
+                                 master=master,
+                                 text="Octave: ",
+                                 parameter=protocol.parameters["octave"],
+                                 keys=octaveDict.keys(),
+                                 values=octaveDict.values(),
+                                 color=color
+                             ),
                              PoTComboBox(
                                  master=master,
                                  text="Root: ",

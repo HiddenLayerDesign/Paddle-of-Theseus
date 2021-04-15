@@ -47,18 +47,18 @@ const int MIDI_OCTAVE_LEN  = 7;
 const int MIDI_NUM_OCTAVES = 4;
 const int MIDI_SCALE_LEN = 128;
 
-const int ROOT_NOTE_C = 24;
-const int ROOT_NOTE_CSHARP = 25;
-const int ROOT_NOTE_D = 26;
-const int ROOT_NOTE_DSHARP = 27;
-const int ROOT_NOTE_E = 28;
-const int ROOT_NOTE_F = 29;
-const int ROOT_NOTE_FSHARP = 30;
-const int ROOT_NOTE_G = 31;
-const int ROOT_NOTE_GSHARP = 32;
-const int ROOT_NOTE_A = 33;
-const int ROOT_NOTE_ASHARP = 34;
-const int ROOT_NOTE_B = 35;
+const int ROOT_NOTE_C = 0;
+const int ROOT_NOTE_CSHARP = 1;
+const int ROOT_NOTE_D = 2;
+const int ROOT_NOTE_DSHARP = 3;
+const int ROOT_NOTE_E = 4;
+const int ROOT_NOTE_F = 5;
+const int ROOT_NOTE_FSHARP = 6;
+const int ROOT_NOTE_G = 7;
+const int ROOT_NOTE_GSHARP = 8;
+const int ROOT_NOTE_A = 9;
+const int ROOT_NOTE_ASHARP = 10;
+const int ROOT_NOTE_B = 11;
 
 /* Various MIDI Scales- thanks to http://lawriecape.co.uk/theblog/index.php/archives/881 for writing these out */
 

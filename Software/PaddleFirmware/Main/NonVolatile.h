@@ -28,6 +28,7 @@
 #define SCALE_MOD_ADDR    (uint8_t) 4
 #define MODE_ENABLED_ADDR (uint8_t) 5
 #define CTRL_CHAN_ADDR    (uint8_t) 6
+#define OCTAVE_ADDR       (uint8_t) 7
 
 #define EEPROM_RED_BASE_ADDR (uint8_t) 0x70
 #define EEPROM_GREEN_BASE_ADDR (uint8_t) 0x60
@@ -36,6 +37,8 @@
 #define EEPROM_PURPLE_BASE_ADDR (uint8_t) 0x30
 #define EEPROM_CYAN_BASE_ADDR (uint8_t) 0x20
 #define EEPROM_WHITE_BASE_ADDR (uint8_t) 0x10
+
+#define EEPROM_LIMIT EEPROM_RED_BASE_ADDR
 
 /**
  * Check this bit to know whether to go to config menu or regular operation
@@ -73,6 +76,7 @@ typedef struct
   uint8_t button2_offset;
   uint8_t button3_offset;
   uint8_t control_channel;
+  uint8_t octave;
 } config_t;
 
 /**
@@ -115,6 +119,11 @@ void WriteConfigMode(bool is_config_mode_enabled);
  * @return config_t Struct filled out with the values from EEPROM
  */
 config_t loadConfigFromEEPROM(rot_enc_state state);
+
+/**
+ * print all EEPROM values
+ */
+void memdumpEEPROM(void);
 
 /**
  * Compare fields of `in_config` to values in EEPROM, overwrite EEPROM where they don't match

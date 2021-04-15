@@ -123,6 +123,7 @@ class SerialInterpreter:
                 offset1=this_config["offset1"],
                 offset2=this_config["offset2"],
                 offset3=this_config["offset3"],
+                octave=this_config["octave"],
                 root_note=this_config["root_note"] - rootNoteDict["C"],
                 mode=modeDict[this_config["mode"]],
                 enable=1 if this_config["enable"] == "True" else 0
