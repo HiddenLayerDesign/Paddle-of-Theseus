@@ -95,6 +95,11 @@ bool defaultsHandler(Commander &Cmdr);
 bool rootNoteHandler(Commander &Cmdr);
 
 /**
+ * Set the octave for the current config
+ */
+bool octaveHandler(Commander &Cmdr);
+
+/**
  * Set the modifer for the current config
  */
 bool modifierHandler(Commander &Cmdr);
@@ -103,6 +108,11 @@ bool modifierHandler(Commander &Cmdr);
  * Send the heartbeat/ ID message
  */
 bool paddlePingHandler(Commander &Cmdr);
+
+/**
+ * memDump the EEPROM
+ */
+bool memDumpHandler(Commander &Cmdr);
 
 /**
  * Exit the menu and reboot
@@ -115,12 +125,14 @@ const commandList_t masterCommands[] = {
   {"enable",     colorEnableHandler,  "enable or disable this color, format is `enable=TRUE`"},
   {"color",      selectColorHandler, "select current config color, format is `color=CYAN`"},
   {"root_note",  rootNoteHandler,    "set root note of scale, format is `root=A`"},
+  {"octave",     octaveHandler,      "set root octave of scale, format is `octave=1`"},
   {"mode",       modifierHandler,    "set mode, format is `mode=MAJOR`"},
   {"offset1",    button1Handler,     "set button1 offset for this color, format is `offset1=3`"},
   {"offset2",    button2Handler,     "set button2 offset for this color, format is `offset2=5`"},
   {"offset3",    button3Handler,     "set button3 offset for this color, format is `offset3=7`"},
   {"control",    ctrlChanHandler,    "set MIDI control change idx for this color, format is `control=20`"},
   {"defaults",   defaultsHandler,    "reset all MIDI configs to default, format is `defaults`"},
+  {"memDump",    memDumpHandler,     "dump all memory in EEPROM"},
   {"paddlePing", paddlePingHandler,  "return `paddlePong`"},
   {"exit",       exitHandler,        "exit this menu and reboot, saving all settings. Format is `exit`"}
 };

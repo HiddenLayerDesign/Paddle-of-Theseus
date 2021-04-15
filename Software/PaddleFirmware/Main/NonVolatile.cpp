@@ -97,12 +97,13 @@ config_t loadConfigFromEEPROM(rot_enc_state state)
   return_config.button2_offset  = (int) EEPROM.read(base_addr + CT2_DELTA_ADDR);
   return_config.button3_offset  = (int) EEPROM.read(base_addr + CT3_DELTA_ADDR);
   return_config.root_note       = (int) EEPROM.read(base_addr + ROOT_NOTE_ADDR);
+  return_config.octave          = (int) EEPROM.read(base_addr + OCTAVE_ADDR);
   return_config.control_channel = (int) EEPROM.read(base_addr + CTRL_CHAN_ADDR);
   return_config.modifier        = (modifier_t) EEPROM.read(base_addr + SCALE_MOD_ADDR);
   if (return_config.modifier > MOD_LIMIT)
   {
     return_config.modifier = MOD_MAJOR;
-  }
+  }  
   
   return return_config;
 }
@@ -129,6 +130,15 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(": Writing root note = ");
     DEBUG_PRINTLN(in_config.root_note);
     EEPROM.write(base_addr + ROOT_NOTE_ADDR, in_config.root_note);  
+    retval = true;
+  } 
+
+  if (in_config.octave != EEPROM.read(base_addr + OCTAVE_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing octave = ");
+    DEBUG_PRINTLN(in_config.octave);
+    EEPROM.write(base_addr + OCTAVE_ADDR, in_config.octave);  
     retval = true;
   } 
 
@@ -177,4 +187,36 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     retval = true;
   }
   return retval;  
+}
+
+void memdumpEEPROM(void)
+{
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("*** DUMPING EEPROM ***");
+  uint8_t value;
+
+  for (int i=0; i <= EEPROM_LIMIT; i += 0x10 )
+  {
+    DEBUG_PRINT("0x");
+    DEBUG_PRINT_HEX(i);
+    if (i<0x10)
+    {
+      DEBUG_PRINT("0");
+    }
+    DEBUG_PRINT(": ");
+    for (int j=0; j < 0x10; j++)
+    {
+      value = EEPROM.read(i+j);
+      DEBUG_PRINT(" ");
+      if (value < 0x10)
+      {
+        DEBUG_PRINT("0");
+      }
+      DEBUG_PRINT_HEX(value);      
+    }
+    DEBUG_PRINTLN("");
+  }
+  DEBUG_PRINTLN("*** DONE ***");
+  DEBUG_PRINTLN("");
 }
