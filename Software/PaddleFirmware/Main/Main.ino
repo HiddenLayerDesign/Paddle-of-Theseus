@@ -226,8 +226,7 @@ void loop()
         rotEnc.write(constrained_enc_reading);
       }
     }
-    
-    
+       
     if (constrained_enc_reading != prev_enc_reading)
     {
       usbMIDI.sendControlChange(running_config.control_channel, constrained_enc_reading, MIDI_CHANNEL_2);
@@ -278,7 +277,23 @@ void loop()
     curr_bend_val = SCALED_PITCH_BEND(range_in_cm);
     if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < MAX_PITCH_BEND_DELTA)
     {
-      usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
+      if (running_config.pitchbend_channel == MIDI_CTRL_CHG_PITCHBEND)
+      {
+        usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
+      }
+      else if (running_config.pitchbend_channel < MIDI_CTRL_CHG_MAX)
+      {        
+        usbMIDI.sendControlChange(running_config.pitchbend_channel, ONEBYTE_SCALED_PITCH_BEND(range_in_cm), MIDI_CHANNEL_2);
+      }
+      else if (running_config.pitchbend_channel == MIDI_CTRL_CHG_INVAL)
+      {
+        // don't send pitchbend            
+      }
+      else // any invalid Control Change input value should be ignored
+      {
+        // also don't send pitchbend                    
+      }
+      
       prev_bend_val = curr_bend_val;
     }
   

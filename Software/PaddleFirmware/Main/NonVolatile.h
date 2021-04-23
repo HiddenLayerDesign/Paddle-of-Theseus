@@ -29,6 +29,7 @@
 #define MODE_ENABLED_ADDR (uint8_t) 5
 #define CTRL_CHAN_ADDR    (uint8_t) 6
 #define OCTAVE_ADDR       (uint8_t) 7
+#define PB_CHAN_ADDR      (uint8_t) 8
 
 #define EEPROM_RED_BASE_ADDR (uint8_t) 0x70
 #define EEPROM_GREEN_BASE_ADDR (uint8_t) 0x60
@@ -77,6 +78,7 @@ typedef struct
   uint8_t button3_offset;
   uint8_t control_channel;
   uint8_t octave;
+  uint8_t pitchbend_channel;
 } config_t;
 
 /**

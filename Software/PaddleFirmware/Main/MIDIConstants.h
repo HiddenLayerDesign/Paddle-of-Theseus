@@ -41,6 +41,9 @@ const int MIDI_CTRL_CHG_EXPRESSION = 0x0B;
 const int MIDI_CTRL_CHG_EFFECT_1   = 0x0C;
 const int MIDI_CTRL_CHG_EFFECT_2   = 0x0D;
 const int MIDI_CTRL_CHG_LEGATO_FSW = 0x44;
+const int MIDI_CTRL_CHG_PITCHBEND  = 0xE0;
+const int MIDI_CTRL_CHG_MAX        = 0x7F;
+const int MIDI_CTRL_CHG_INVAL      = 0xFF;
 
 const int FRET_LEN = 29;
 const int MIDI_OCTAVE_LEN  = 7;

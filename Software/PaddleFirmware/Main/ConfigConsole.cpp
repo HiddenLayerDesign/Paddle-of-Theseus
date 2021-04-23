@@ -373,6 +373,18 @@ bool ctrlChanHandler(Commander &Cmdr)
   return true;
 }
 
+bool pbChanHandler(Commander &Cmdr)
+{
+  if (Cmdr.getInt(myInt))
+  {
+    Cmdr.print("SUCCESS: Setting Pitchbend control channel to ");
+    Cmdr.println(myInt);
+    current_config.pitchbend_channel = myInt;
+    saveConfigToEEPROM(current_config, config_state);
+  }
+  return true;
+}
+
 bool exitHandler(Commander &Cmdr)
 {
   Cmdr.println("Saving settings!");
@@ -435,5 +447,7 @@ void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
   
   Cmdr.print("\", \"control\": ");
   Cmdr.print(print_config.control_channel);  
+  Cmdr.print("\", \"pitchbend\": ");
+  Cmdr.print(print_config.pitchbend_channel);
   Cmdr.print((is_last_config) ? "}" : "},");
 }

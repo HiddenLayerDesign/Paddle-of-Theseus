@@ -55,22 +55,22 @@ bool infoHandler(Commander &Cmdr);
 bool printConfigHandler(Commander &Cmdr);
 
 /**
- * Set the MIDI control channel
+ * Set the MIDI control channel for the current config
  */
 bool ctrlChanHandler(Commander &Cmdr);
 
 /**
- * Set the button1 delta
- */
+ * Set the button1 delta for the current config
+ */ 
 bool button1Handler(Commander &Cmdr);
 
 /**
- * Set the button2 delta
+ * Set the button2 delta for the current config
  */
 bool button2Handler(Commander &Cmdr);
 
 /**
- * Set the button3 delta
+ * Set the button3 delta for the current config
  */
 bool button3Handler(Commander &Cmdr);
 
@@ -105,6 +105,11 @@ bool octaveHandler(Commander &Cmdr);
 bool modifierHandler(Commander &Cmdr);
 
 /**
+ * Set the channel controlled by pitchbend for the current config
+ */
+bool pbChanHandler(Commander &Cmdr);
+
+/**
  * Send the heartbeat/ ID message
  */
 bool paddlePingHandler(Commander &Cmdr);
@@ -131,6 +136,7 @@ const commandList_t masterCommands[] = {
   {"offset2",    button2Handler,     "set button2 offset for this color, format is `offset2=5`"},
   {"offset3",    button3Handler,     "set button3 offset for this color, format is `offset3=7`"},
   {"control",    ctrlChanHandler,    "set MIDI control change idx for this color, format is `control=20`"},
+  {"pitchbend",  pbChanHandler,      "set Pitchbend control change idx for this color, format is `pitchbend=20`"},
   {"defaults",   defaultsHandler,    "reset all MIDI configs to default, format is `defaults`"},
   {"memDump",    memDumpHandler,     "dump all memory in EEPROM"},
   {"paddlePing", paddlePingHandler,  "return `paddlePong`"},
