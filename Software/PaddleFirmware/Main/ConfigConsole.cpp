@@ -402,8 +402,9 @@ bool defaultsHandler(Commander &Cmdr)
   config_t default_config;
 
   default_config.is_enabled = true;
-  default_config.root_note=0;
-  default_config.octave=24;
+  default_config.root_note = 0;
+  default_config.octave = 24;
+  default_config.pitchbend_channel = MIDI_CTRL_CHG_PITCHBEND;
   default_config.modifier = MOD_MAJOR;
   default_config.button1_offset = 3;
   default_config.button2_offset = 5;
