@@ -37,6 +37,11 @@ octaveDict = {
     "4": 60,
 }
 
+pitchbendDict = {
+    "Pitch Bend": 0,
+    "Control Code": 1,
+}
+
 
 class PoTProtocol(Protocol):
     """
@@ -57,6 +62,9 @@ class PoTProtocol(Protocol):
             "offset2": GUIParameter(),
             "offset3": GUIParameter(),
             "control": GUIParameter(),
+            "pitchbend_enable": GUIParameter(),
+            "pitchbend_is_CC": GUIParameter(),
+            "pitchbend": GUIParameter()
         }
 
         # Setup enable variable
@@ -74,6 +82,21 @@ class PoTProtocol(Protocol):
         self.parameters["octave"].permission = "RW"
         self.parameters["octave"].param_type = "U8"
         self.parameters["octave"].description = "Which octave is the root for the instrument"
+
+        self.parameters["pitchbend_enable"].name = "pitchbend Enabled"
+        self.parameters["pitchbend_enable"].permission = "RW"
+        self.parameters["pitchbend_enable"].param_type = "BOOL"
+        self.parameters["pitchbend_enable"].description = "Is pitch-bend enabled?"
+
+        self.parameters["pitchbend_is_CC"].name = "pitchbend is Control Code"
+        self.parameters["pitchbend_is_CC"].permission = "RW"
+        self.parameters["pitchbend_is_CC"].param_type = "BOOL"
+        self.parameters["pitchbend_is_CC"].description = "Does pitchbend control pitch or ControlCode"
+
+        self.parameters["pitchbend"].name = "pitchbend"
+        self.parameters["pitchbend"].permission = "RW"
+        self.parameters["pitchbend"].param_type = "U8"
+        self.parameters["pitchbend"].description = "What control code does the pitch-bend affect?"
 
         self.parameters["mode"].name = "mode"
         self.parameters["mode"].permission = "RW"
@@ -120,7 +143,8 @@ class PoTProtocol(Protocol):
         self.parameters["offset3"].value_min = 0
         self.parameters["offset3"].value_max = 60
 
-    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave):
+    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave,
+                       pb_enable, pb_is_cc, pb_value):
         """ use function args to set params """
         self.parameters["offset1"].variable.value = offset1
         self.parameters["offset2"].variable.value = offset2
@@ -130,3 +154,6 @@ class PoTProtocol(Protocol):
         self.parameters["root_note"].variable.value = root_note
         self.parameters["offset3"].variable.value = offset3
         self.parameters["control"].variable.value = control
+        self.parameters["pitchbend_enable"].variable.value = pb_enable
+        self.parameters["pitchbend_is_CC"].variable.value = pb_is_cc
+        self.parameters["pitchbend"].variable.value = pb_value

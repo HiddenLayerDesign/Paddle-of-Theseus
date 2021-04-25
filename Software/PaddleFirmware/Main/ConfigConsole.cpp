@@ -373,6 +373,18 @@ bool ctrlChanHandler(Commander &Cmdr)
   return true;
 }
 
+bool pbChanHandler(Commander &Cmdr)
+{
+  if (Cmdr.getInt(myInt))
+  {
+    Cmdr.print("SUCCESS: Setting Pitchbend control channel to ");
+    Cmdr.println(myInt);
+    current_config.pitchbend_channel = myInt;
+    saveConfigToEEPROM(current_config, config_state);
+  }
+  return true;
+}
+
 bool exitHandler(Commander &Cmdr)
 {
   Cmdr.println("Saving settings!");
@@ -390,8 +402,9 @@ bool defaultsHandler(Commander &Cmdr)
   config_t default_config;
 
   default_config.is_enabled = true;
-  default_config.root_note=0;
-  default_config.octave=24;
+  default_config.root_note = 0;
+  default_config.octave = 24;
+  default_config.pitchbend_channel = MIDI_CTRL_CHG_PITCHBEND;
   default_config.modifier = MOD_MAJOR;
   default_config.button1_offset = 3;
   default_config.button2_offset = 5;
@@ -435,5 +448,7 @@ void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
   
   Cmdr.print("\", \"control\": ");
   Cmdr.print(print_config.control_channel);  
+  Cmdr.print(", \"pitchbend\": ");
+  Cmdr.print(print_config.pitchbend_channel);
   Cmdr.print((is_last_config) ? "}" : "},");
 }
