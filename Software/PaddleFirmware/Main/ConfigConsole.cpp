@@ -448,7 +448,7 @@ void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
   
   Cmdr.print("\", \"control\": ");
   Cmdr.print(print_config.control_channel);  
-  Cmdr.print("\", \"pitchbend\": ");
+  Cmdr.print(", \"pitchbend\": ");
   Cmdr.print(print_config.pitchbend_channel);
   Cmdr.print((is_last_config) ? "}" : "},");
 }
