@@ -28,7 +28,7 @@
 /**
  * If using pitch bend for another MIDI control code, the range is only 0-127
  */
-#define ONEBYTE_SCALED_PITCH_BEND(x) (int) (pow(2,7) * x  / PITCH_BEND_MAX_CM)  // Do not adjust!
+#define ONEBYTE_SCALED_PITCH_BEND(x) (int) (pow(2,7) * (PITCH_BEND_MAX_CM - x)  / PITCH_BEND_MAX_CM)  // Do not adjust!
 
 
 #endif // __ULTRASONIC_H__

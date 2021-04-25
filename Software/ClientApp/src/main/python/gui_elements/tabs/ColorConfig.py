@@ -24,9 +24,9 @@ class ColorConfigTab(QSATab):
         self.widgets = [
             WidgetEnable(master=master, protocol=protocol, text="Color is Currently:", color=color),
             WidgetNoteAndMode(master=master, protocol=protocol, text="Scale:", color=color),
-            WidgetPitchBendValue(master=master, protocol=protocol, text="Pitch Bend:", color=color),
             WidgetCCValue(master=master, protocol=protocol, text="MIDI Control Code:", color=color,
                           serial_dict=self.MIDI_descriptions),
+            WidgetPitchBendValue(master=master, protocol=protocol, text="Pitch Bend:", color=color),
             WidgetOffsets(master=master, protocol=protocol, text="Offsets:", color=color),
             WidgetQuit(master=master, protocol=protocol, text="Danger Section:", color=color)
         ]
