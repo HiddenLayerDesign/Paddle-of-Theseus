@@ -344,11 +344,12 @@ class WidgetOffsets(QSAWidgetCluster):
 
 
 class PitchbendEnableButton(QSAToggleButton):
-    def __init__(self, master=None, text=None, parameter=None, color=None):
+    def __init__(self, master=None, text=None, parameter=None, enabled_parameter=None, color=None):
         super().__init__(master=master, text=text, parameter=parameter)
         self.master = master
         self.color = color
         self.parameter = parameter
+        self.enabledParameter = enabled_parameter
 
     def reload(self):
         if 1 == self.state.value:
@@ -372,6 +373,7 @@ class PitchbendEnableButton(QSAToggleButton):
                     page.disablePitchbendWidget()
                 self.master.si.send_serial_command(cmd="color", argument=self.color)
                 self.master.si.send_serial_command(cmd="pitchbend", argument=255)
+                self.enabledParameter.variable.value = 255
             else:
                 self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
                 self.buttonText = self.offText
@@ -406,7 +408,7 @@ class PitchbendComboBox(QSAVariableFrame):
             for page in self.master.tabs.pages:
                 page.disablePitchbendCC()
         else:
-            if self.enabledParameter.variable.value:
+            if self.enabledParameter.variable.value < 128:
                 for page in self.master.tabs.pages:
                     page.enablePitchbendCC()
 
@@ -415,6 +417,7 @@ class PitchbendComboBox(QSAVariableFrame):
         if text == "Pitch Bend":
             self.master.si.send_serial_command(cmd="color", argument=self.color)
             self.master.si.send_serial_command(cmd="pitchbend", argument=0xE0)
+            self.enabledParameter.variable.value = 224
             for page in self.master.tabs.pages:
                 page.disablePitchbendCC()
 
@@ -436,13 +439,14 @@ class WidgetPitchBendValue(QSAWidgetCluster):
                                  master=master,
                                  text="Enable:",
                                  parameter=protocol.parameters["pitchbend_enable"],
+                                 enabled_parameter=protocol.parameters["pitchbend"],
                                  color=color
                              ),
                              PitchbendComboBox(
                                  master=master,
                                  text="Type:",
                                  parameter=protocol.parameters["pitchbend_is_CC"],
-                                 enabled_parameter=protocol.parameters["pitchbend_enable"],
+                                 enabled_parameter=protocol.parameters["pitchbend"],
                                  keys=pitchbendDict.keys(),
                                  values=pitchbendDict.values(),
                                  color=color
