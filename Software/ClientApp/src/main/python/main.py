@@ -1,14 +1,8 @@
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5 import QtGui, QtWidgets, Qt
+from PyQt5 import QtGui
 
 from serialInterpreter import *
-
-
-import sys
-
-from pyqtsa.PyQtSA import *
-from pyqtsa.widgetStyles import *
 
 from gui_elements.tabs.ColorConfig import *
 from gui_elements import version
@@ -43,7 +37,7 @@ class PoTConfigApp(ApplicationContext):
             "WHITE": PoTProtocol(color="WHITE", master=self),
         }
 
-        # set up custom tabs
+        # set up custom tabs for each possible ColorConfig
         tabs = [
             ColorConfigTab(master=self, protocol=self.proto["BLUE"], title="Blue",
                            icon='images/tabIcon_Blue.png', index=0, color="BLUE"),
@@ -60,6 +54,8 @@ class PoTConfigApp(ApplicationContext):
             ColorConfigTab(master=self, protocol=self.proto["WHITE"], title="White",
                            icon='images/tabIcon_White.png', index=6, color="WHITE"),
         ]
+
+        # Set up splash screen for until the COM port connects
         self.splash = QSplashScreen(QPixmap(self.get_resource("images/splash_screen.jpg")))
         self.splash.setStyleSheet("QSplashScreen {font: 32pt Segoe UI;}")
         self.splash.showMessage("Waiting for serial connection...", Qt.AlignCenter | Qt.AlignBottom, color=Qt.white)
@@ -69,14 +65,13 @@ class PoTConfigApp(ApplicationContext):
         self.si.set_gui_config_from_serial(self.proto)
         self.splash.close()
 
+        # Set up tabs widget
         self.tabs = QSATabWidget(pages=tabs)
         self.tabs.setCurrentIndex(0)
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
         self.tabs.pages[0].fullReload()
-
         self.tabs.currentChanged.connect(self.configureTab)
-
         self.tabs.setStyleSheet(widgetStyle_tabBar)
 
         # set up layout
@@ -95,10 +90,15 @@ class PoTConfigApp(ApplicationContext):
         self.window.show()
 
     def configureTab(self):
-        """Update polled loop timers and hidden protected parameters when changing between tabs"""
+        """
+        Update polled loop timers and hidden protected parameters when changing between tabs
+        NOTE: I don't understand this but the library uses it and I found I needed to as well
+        """
         self.window.repaint()
+
         self.tabs.tabBar().setTabButton(self.tabs.index_previous, QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.index_previous].button_inactive)
+
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
 
@@ -106,6 +106,9 @@ class PoTConfigApp(ApplicationContext):
         self.tabs.index_previous = self.tabs.currentIndex()
 
 
+"""
+
+"""
 if __name__ == '__main__':
     appctxt = PoTConfigApp()  # 1. Instantiate ApplicationContext
     exit_code = appctxt.app.exec_()  # 2. Invoke appctxt.app.exec_()

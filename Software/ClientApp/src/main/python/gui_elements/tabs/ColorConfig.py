@@ -3,7 +3,7 @@ import json
 from PyQt5.QtCore import pyqtSlot
 
 from pyqtsa.PyQtSA import *
-from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict, octaveDict, pitchbendDict
+from gui_elements.protocol.PoTConstants import *
 from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
 
 
@@ -416,7 +416,7 @@ class PitchbendComboBox(QSAVariableFrame):
         self.combo_box.adjustSize()
         if text == "Pitch Bend":
             self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.master.si.send_serial_command(cmd="pitchbend", argument=0xE0)
+            self.master.si.send_serial_command(cmd="pitchbend", argument=MIDI_CC_P_BEND)
             self.enabledParameter.variable.value = 224
             for page in self.master.tabs.pages:
                 page.disablePitchbendCC()
@@ -454,7 +454,7 @@ class WidgetPitchBendValue(QSAWidgetCluster):
                              PoTSerialEntry(master=master, text="CC_Idx:",
                                             parameter=protocol.parameters["pitchbend"],
                                             color=color),
-                         ],
+                             ],
                          )
 
 
@@ -465,5 +465,5 @@ class WidgetQuit(QSAWidgetCluster):
                          widgets=[
                              PoTQuitButton(master=master, text="Exit Program"),
                              PoTRestoreDefaultsButton(master=master, text="Restore Defaults")
-                         ],
+                            ],
                          )
