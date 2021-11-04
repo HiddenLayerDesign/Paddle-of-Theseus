@@ -110,7 +110,6 @@ class SerialInterpreter:
         result_obj = json.loads(response_str)
         for key in result_obj[STR_ALL_CONFIGS].keys():
             this_config = result_obj[STR_ALL_CONFIGS][key]
-            print("{0}: {1}".format(key, this_config))
 
             config_dict[key].set_parameters(
                 control=this_config["control"],

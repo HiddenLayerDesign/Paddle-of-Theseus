@@ -55,12 +55,13 @@ class PoTConfigApp(ApplicationContext):
                            icon='images/tabIcon_White.png', index=6, color="WHITE"),
         ]
 
-        # Set up splash screen for until the COM port connects
+        # Set up splash screen for until the serial connection is established
         self.splash = QSplashScreen(QPixmap(self.get_resource("images/splash_screen.jpg")))
         self.splash.setStyleSheet("QSplashScreen {font: 32pt Segoe UI;}")
         self.splash.showMessage("Waiting for serial connection...", Qt.AlignCenter | Qt.AlignBottom, color=Qt.white)
         self.splash.show()
 
+        # When connection is finally made, close the splash screen and go to the regular GUI
         self.si = SerialInterpreter(self)
         self.si.set_gui_config_from_serial(self.proto)
         self.splash.close()
@@ -107,7 +108,7 @@ class PoTConfigApp(ApplicationContext):
 
 
 """
-
+Run the program when `main.py` is invoked
 """
 if __name__ == '__main__':
     appctxt = PoTConfigApp()  # 1. Instantiate ApplicationContext

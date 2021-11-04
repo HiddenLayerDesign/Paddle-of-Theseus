@@ -37,7 +37,7 @@ class PoTProtocol(Protocol):
         self.parameters["enable"].name = "enable"
         self.parameters["enable"].permission = "RW"
         self.parameters["enable"].param_type = "BOOL"
-        self.parameters["enable"].description = "Is this color config enabled or disabled?"
+        self.parameters["enable"].description = "Is this color config enabled or disabled"
 
         # Setup MIDI Root Note parameter
         self.parameters["root_note"].name = "root_note"
@@ -67,7 +67,7 @@ class PoTProtocol(Protocol):
         self.parameters["pitchbend"].name = "pitchbend"
         self.parameters["pitchbend"].permission = "RW"
         self.parameters["pitchbend"].param_type = "U8"
-        self.parameters["pitchbend"].description = "What control code does the pitch-bend affect?"
+        self.parameters["pitchbend"].description = "What control code does the pitch-bend affect"
 
         # Setup MIDI Scale mode parameter
         self.parameters["mode"].name = "mode"

@@ -8,6 +8,7 @@ from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
 
 
 class ColorConfigTab(QSATab):
+
     def __init__(
             self,
             master=None,
@@ -121,7 +122,7 @@ class PoTComboBox(QSAVariableFrame):
         my_argument = self.values[self.keys.index(text)]
         self.master.si.send_serial_command(cmd=self.parameter.name, argument=my_argument)
         self.parameter.variable.value = my_argument
-        self.combo_box.setCurrentIndex(self.values.index(self.parameter.variable.value))
+        self.combo_box.setCurrentIndex(self.parameter.variable.value)
 
     def updateValue(self, value=None):
         self.combo_box.setCurrentIndex(self.parameter.variable.value)
@@ -192,8 +193,8 @@ class PoTEnableButton(QSAToggleButton):
     def onClick(self):
         if self.master is not None:
             self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.master.si.send_serial_command(cmd=self.parameter.name, argument="TRUE" if
-            0 == self.state.value else "FALSE")
+            self.master.si.send_serial_command(cmd=self.parameter.name,
+                                               argument="TRUE" if self.state.value == 0 else "FALSE")
 
             if 1 == self.state.value:
                 self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
@@ -235,7 +236,6 @@ class PoTControlCodeEntry(QSAEntry):
 
     def reload(self):
         self.helpText.updateValue(self.configDict[str(self.parameter.variable.value)])
-
 
     def onEditingFinished(self):
         self.parameter.variable.value = int(self.spinbox_set.value())
@@ -303,7 +303,7 @@ class WidgetCCValue(QSAWidgetCluster):
                                        text="",
                                        interval=0,
                                        constants=[]
-                            )
+                                       )
 
         super().__init__(master=master,
                          text=text,
@@ -372,11 +372,13 @@ class PitchbendEnableButton(QSAToggleButton):
                 for page in self.master.tabs.pages:
                     page.disablePitchbendWidget()
                 self.master.si.send_serial_command(cmd="color", argument=self.color)
-                self.master.si.send_serial_command(cmd="pitchbend", argument=255)
                 self.enabledParameter.variable.value = 255
+                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
             else:
                 self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
                 self.buttonText = self.offText
+                self.master.si.send_serial_command(cmd="color", argument=self.color)
+                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
                 for page in self.master.tabs.pages:
                     page.enablePitchbendWidget()
 
@@ -416,15 +418,16 @@ class PitchbendComboBox(QSAVariableFrame):
         self.combo_box.adjustSize()
         if text == "Pitch Bend":
             self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.master.si.send_serial_command(cmd="pitchbend", argument=MIDI_CC_P_BEND)
-            self.enabledParameter.variable.value = 224
+            self.enabledParameter.variable.value = MIDI_CC_P_BEND
+            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
             for page in self.master.tabs.pages:
                 page.disablePitchbendCC()
 
         else:
-            if self.enabledParameter.variable.value:
-                for page in self.master.tabs.pages:
-                    page.enablePitchbendCC()
+            self.master.si.send_serial_command(cmd="color", argument=self.color)
+            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
+            for page in self.master.tabs.pages:
+                page.enablePitchbendCC()
 
     def updateValue(self, value=None):
         self.combo_box.setCurrentIndex(self.parameter.variable.value)
@@ -454,7 +457,7 @@ class WidgetPitchBendValue(QSAWidgetCluster):
                              PoTSerialEntry(master=master, text="CC_Idx:",
                                             parameter=protocol.parameters["pitchbend"],
                                             color=color),
-                             ],
+                         ],
                          )
 
 
@@ -465,5 +468,5 @@ class WidgetQuit(QSAWidgetCluster):
                          widgets=[
                              PoTQuitButton(master=master, text="Exit Program"),
                              PoTRestoreDefaultsButton(master=master, text="Restore Defaults")
-                            ],
+                         ],
                          )

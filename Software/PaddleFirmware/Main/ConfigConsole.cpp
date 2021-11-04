@@ -16,7 +16,6 @@
 #define TRUE_STR "TRUE"
 #define FALSE_STR "FALSE"
 
-const char *colorString = "TODO FIXME";
 rot_enc_state config_state;
 config_t current_config; 
 
