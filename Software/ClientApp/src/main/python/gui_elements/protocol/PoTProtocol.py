@@ -36,25 +36,25 @@ class PoTProtocol(Protocol):
         # Setup ColorConfig Enable variable
         self.parameters["enable"].name = "enable"
         self.parameters["enable"].permission = "RW"
-        self.parameters["enable"].param_type = "BOOL"
+        self.parameters["enable"].param_type = "STR"
         self.parameters["enable"].description = "Is this color config enabled or disabled"
 
         # Setup MIDI Root Note parameter
         self.parameters["root_note"].name = "root_note"
         self.parameters["root_note"].permission = "RW"
-        self.parameters["root_note"].param_type = "U8"
+        self.parameters["root_note"].param_type = "STR"
         self.parameters["root_note"].description = "Which note is the root note"
 
         # Setup MIDI Octave parameter
         self.parameters["octave"].name = "octave"
         self.parameters["octave"].permission = "RW"
-        self.parameters["octave"].param_type = "U8"
+        self.parameters["octave"].param_type = "STR"
         self.parameters["octave"].description = "Which octave is the root for the instrument"
 
         # Setup pitchbend_enable parameter  NOTE: this is not sent to the paddle
         self.parameters["pitchbend_enable"].name = "pitchbend Enabled"
         self.parameters["pitchbend_enable"].permission = "RW"
-        self.parameters["pitchbend_enable"].param_type = "BOOL"
+        self.parameters["pitchbend_enable"].param_type = "STR"
         self.parameters["pitchbend_enable"].description = "Is pitch-bend enabled?"
 
         # Setup pitchbend_is_CC parameter  NOTE: this is not sent to the paddle
@@ -72,7 +72,7 @@ class PoTProtocol(Protocol):
         # Setup MIDI Scale mode parameter
         self.parameters["mode"].name = "mode"
         self.parameters["mode"].permission = "RW"
-        self.parameters["mode"].param_type = "U8"
+        self.parameters["mode"].param_type = "STR"
         self.parameters["mode"].description = "Which mode will be used"
 
         # Setup MIDI CC control index parameter

@@ -9,15 +9,16 @@ Please take a look at [the Wiki](https://github.com/ChaseStewart/Paddle-of-These
 ## Repository Contents
 * **/Software/PadleFirmware** - Software Arduino project to program the Teensy LC/4.0. This Teensy is the main microcontroller for this project, and uses input sensor data to output MIDI commands to an external controller.
 * **/Software/ClientApp** - Software [FBS](https://build-system.fman.io/)-based [PyQtSA](https://github.com/spencerarrasmith/PyQtSA) project that builds a GUI application to allow users to configure the Paddle's saved settings in EEPROM.
+* **/Software/StubPaddle** - Software Python program for ClientApp development to simulate a USB connection to the paddle. Requires a virtual COM port program on Windows to run.
 * **/Hardware/Fritzing**   - Fritzing file for project Hardware _NOTE: HW Diagram uses a Teensy3.1 but I have verified proper function on Teensy4.0 and TeensyLC_
 * **/Hardware/Diagrams**   - HW diagrams generated from the Fritzing file; currently these include a schematic, PCB image, and breadboard diagram
 * **/Hardware/Components** - This contains the bill-of-materials for the relevant *electronics only* for this product. 
 
 ## Features
-This project will create a bass-guitar-like skeumorphic MIDI instrument out of a standard rowing paddle (or arbitrary instrument body) and sensors. The Teensy microcontroller will take in sensor values and provide MIDI output to an external Audio DAW (In our case, we use Ableton Live and https://midi.city).
+This project will create a bass-guitar-like skeumorphic MIDI instrument out of a standard rowing paddle (or arbitrary instrument body) and sensors. The Teensy microcontroller will take in sensor values and provide MIDI output to an external Audio DAW (In our case, we use Ableton Live and sometimes https://midi.city).
 
 ## Implementation Requirements
-Implementing this project will require some knowledge of electronics, prototyping, and potentially physical fabrication. 
+Implementing this project will require some knowledge of electronics, prototyping, and physical fabrication.
 
 ### Software Requirements
 - [Arduino IDE](https://www.arduino.cc/en/Main/Software)

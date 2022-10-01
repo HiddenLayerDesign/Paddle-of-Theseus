@@ -1,7 +1,4 @@
 import json
-
-from PyQt5.QtCore import pyqtSlot
-
 from pyqtsa.PyQtSA import *
 from gui_elements.protocol.PoTConstants import *
 from serialInterpreter import CMD_EXIT, CMD_RESTORE_DEFAULTS
@@ -57,14 +54,14 @@ class ColorConfigTab(QSATab):
             if isinstance(widget, WidgetPitchBendValue):
                 for subcomponent in widget.widgets:
                     if not isinstance(subcomponent, PitchbendEnableButton):
-                        subcomponent.setEnabled(True)
+                        subcomponent.setVisible(True)
 
     def disablePitchbendWidget(self):
         for widget in self.widgets:
             if isinstance(widget, WidgetPitchBendValue):
                 for subcomponent in widget.widgets:
                     if not isinstance(subcomponent, PitchbendEnableButton):
-                        subcomponent.setEnabled(False)
+                        subcomponent.setVisible(False)
 
     def enablePitchbendCC(self):
         for widget in self.widgets:
@@ -122,10 +119,10 @@ class PoTComboBox(QSAVariableFrame):
         my_argument = self.values[self.keys.index(text)]
         self.master.si.send_serial_command(cmd=self.parameter.name, argument=my_argument)
         self.parameter.variable.value = my_argument
-        self.combo_box.setCurrentIndex(self.parameter.variable.value)
+        self.combo_box.setCurrentIndex(self.values.index(self.parameter.variable.value))
 
     def updateValue(self, value=None):
-        self.combo_box.setCurrentIndex(self.parameter.variable.value)
+        self.combo_box.setCurrentIndex(self.values.index(self.parameter.variable.value))
 
 
 class PoTRestoreDefaultsButton(QSAPushbutton):
@@ -171,43 +168,6 @@ class PoTQuitButton(QSAPushbutton):
             pass
 
 
-class PoTEnableButton(QSAToggleButton):
-    def __init__(self, master=None, text=None, parameter=None, color=None):
-        super().__init__(master=master, text=text, parameter=parameter)
-        self.master = master
-        self.color = color
-        self.parameter = parameter
-
-    def reload(self):
-        if 1 == self.state.value:
-            self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
-            self.buttonText = self.onText
-            for page in self.master.tabs.pages:
-                page.enableAllWidgets()
-        else:
-            self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
-            self.buttonText = self.offText
-            for page in self.master.tabs.pages:
-                page.disableAllWidgets()
-
-    def onClick(self):
-        if self.master is not None:
-            self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.master.si.send_serial_command(cmd=self.parameter.name,
-                                               argument="TRUE" if self.state.value == 0 else "FALSE")
-
-            if 1 == self.state.value:
-                self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
-                self.buttonText = self.onText
-                for page in self.master.tabs.pages:
-                    page.disableAllWidgets()
-            else:
-                self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
-                self.buttonText = self.offText
-                for page in self.master.tabs.pages:
-                    page.enableAllWidgets()
-
-
 class PoTSerialEntry(QSAEntry):
     def __init__(self, master=None, text=None, parameter=None, color=None):
         super().__init__(master=master, text=text, parameter=parameter)
@@ -243,6 +203,127 @@ class PoTControlCodeEntry(QSAEntry):
         self.master.si.send_serial_command(cmd=self.parameter.name, argument=self.parameter.variable.value)
 
         self.helpText.updateValue(self.configDict[str(self.parameter.variable.value)])
+
+
+class PoTEnableButton(QSAToggleButton):
+    def __init__(self, master=None, text=None, parameter=None, color=None):
+        super().__init__(master=master, text=text, parameter=parameter)
+        self.master = master
+        self.color = color
+        self.parameter = parameter
+
+    def reload(self):
+        if "TRUE" == self.state.value:
+            self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
+            self.buttonText = self.onText
+            for page in self.master.tabs.pages:
+                page.enableAllWidgets()
+        else:
+            self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
+            self.buttonText = self.offText
+            for page in self.master.tabs.pages:
+                page.disableAllWidgets()
+
+    def onClick(self):
+        self.state.value = "FALSE" if self.state.value == "TRUE" else "TRUE"
+
+        if "TRUE" == self.state.value:
+            for page in self.master.tabs.pages:
+                page.enableAllWidgets()
+        else:
+            for page in self.master.tabs.pages:
+                page.disableAllWidgets()
+
+        if self.master is not None:
+            self.master.si.send_serial_command(cmd="color", argument=self.color)
+            self.master.si.send_serial_command(cmd=self.parameter.name,
+                                               argument=self.state.value)
+
+
+class PitchbendEnableButton(QSAToggleButton):
+    def __init__(self, master=None, text=None, parameter=None, enabled_parameter=None, color=None):
+        super().__init__(master=master, text=text, parameter=parameter)
+        self.master = master
+        self.color = color
+        self.parameter = parameter
+        self.enabledParameter = enabled_parameter
+
+    def reload(self):
+        if "TRUE" == self.state.value:
+            self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
+            self.buttonText = self.onText
+            for page in self.master.tabs.pages:
+                page.enablePitchbendWidget()
+        else:
+            self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
+            self.buttonText = self.offText
+            for page in self.master.tabs.pages:
+                page.disablePitchbendWidget()
+
+    def onClick(self):
+        self.state.value = "FALSE" if self.state.value == "TRUE" else "TRUE"
+        if self.master is not None:
+            if "TRUE" == self.state.value:
+                self.master.si.send_serial_command(cmd="color", argument=self.color)
+                self.enabledParameter.variable.value = 255
+                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
+                for page in self.master.tabs.pages:
+                    page.enablePitchbendWidget()
+            else:
+                self.master.si.send_serial_command(cmd="color", argument=self.color)
+                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
+                for page in self.master.tabs.pages:
+                    page.disablePitchbendWidget()
+
+
+class PitchbendComboBox(QSAVariableFrame):
+    def __init__(self, master=None, text=None, parameter=None, enabled_parameter=None, color=None, keys=[], values=[]):
+        super().__init__(master=master, parameter=parameter)
+        self.master = master
+        self.text = text
+        self.parameter = parameter
+        self.enabledParameter = enabled_parameter
+        self.color = color
+        self.values = list(values)
+        self.keys = list(keys)
+
+        self.combo_box = QComboBox()
+        self.combo_box.activated[str].connect(self.onChanged)
+        for key in keys:
+            self.combo_box.addItem(key)
+
+        self.combo_box.setStyleSheet(widgetStyle_spinboxActual)
+        self.parameter.variable.bind_to(self.updateValue)
+
+        self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
+        self.combo_box.setFixedWidth(90)
+
+    def reload(self):
+        if self.combo_box.currentIndex() == 0:
+            for page in self.master.tabs.pages:
+                page.disablePitchbendCC()
+        else:
+            if self.enabledParameter.variable.value < 128:
+                for page in self.master.tabs.pages:
+                    page.enablePitchbendCC()
+
+    def onChanged(self, text):
+        self.combo_box.adjustSize()
+        if text == "Pitch Bend":
+            self.master.si.send_serial_command(cmd="color", argument=self.color)
+            self.enabledParameter.variable.value = MIDI_CC_P_BEND
+            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
+            for page in self.master.tabs.pages:
+                page.disablePitchbendCC()
+
+        else:
+            self.master.si.send_serial_command(cmd="color", argument=self.color)
+            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
+            for page in self.master.tabs.pages:
+                page.enablePitchbendCC()
+
+    def updateValue(self, value=None):
+        self.combo_box.setCurrentIndex(self.parameter.variable.value)
 
 
 class WidgetEnable(QSAWidgetCluster):
@@ -341,96 +422,6 @@ class WidgetOffsets(QSAWidgetCluster):
                                             color=color),
                          ],
                          )
-
-
-class PitchbendEnableButton(QSAToggleButton):
-    def __init__(self, master=None, text=None, parameter=None, enabled_parameter=None, color=None):
-        super().__init__(master=master, text=text, parameter=parameter)
-        self.master = master
-        self.color = color
-        self.parameter = parameter
-        self.enabledParameter = enabled_parameter
-
-    def reload(self):
-        if 1 == self.state.value:
-            self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
-            self.buttonText = self.onText
-            for page in self.master.tabs.pages:
-                page.enablePitchbendWidget()
-        else:
-            self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
-            self.buttonText = self.offText
-            for page in self.master.tabs.pages:
-                page.disablePitchbendWidget()
-
-    def onClick(self):
-        if self.master is not None:
-
-            if 1 == self.state.value:
-                self.button.setStyleSheet(widgetStyle_toggleButtonEnable)
-                self.buttonText = self.onText
-                for page in self.master.tabs.pages:
-                    page.disablePitchbendWidget()
-                self.master.si.send_serial_command(cmd="color", argument=self.color)
-                self.enabledParameter.variable.value = 255
-                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
-            else:
-                self.button.setStyleSheet(widgetStyle_toggleButtonDisable)
-                self.buttonText = self.offText
-                self.master.si.send_serial_command(cmd="color", argument=self.color)
-                self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
-                for page in self.master.tabs.pages:
-                    page.enablePitchbendWidget()
-
-
-class PitchbendComboBox(QSAVariableFrame):
-    def __init__(self, master=None, text=None, parameter=None, enabled_parameter=None, color=None, keys=[], values=[]):
-        super().__init__(master=master, parameter=parameter)
-        self.master = master
-        self.text = text
-        self.parameter = parameter
-        self.enabledParameter = enabled_parameter
-        self.color = color
-        self.values = list(values)
-        self.keys = list(keys)
-
-        self.combo_box = QComboBox()
-        self.combo_box.activated[str].connect(self.onChanged)
-        for key in keys:
-            self.combo_box.addItem(key)
-
-        self.combo_box.setStyleSheet(widgetStyle_spinboxActual)
-        self.parameter.variable.bind_to(self.updateValue)
-
-        self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
-        self.combo_box.setFixedWidth(90)
-
-    def reload(self):
-        if self.combo_box.currentIndex() == 0:
-            for page in self.master.tabs.pages:
-                page.disablePitchbendCC()
-        else:
-            if self.enabledParameter.variable.value < 128:
-                for page in self.master.tabs.pages:
-                    page.enablePitchbendCC()
-
-    def onChanged(self, text):
-        self.combo_box.adjustSize()
-        if text == "Pitch Bend":
-            self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.enabledParameter.variable.value = MIDI_CC_P_BEND
-            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
-            for page in self.master.tabs.pages:
-                page.disablePitchbendCC()
-
-        else:
-            self.master.si.send_serial_command(cmd="color", argument=self.color)
-            self.master.si.send_serial_command(cmd="pitchbend", argument=self.enabledParameter.variable.value)
-            for page in self.master.tabs.pages:
-                page.enablePitchbendCC()
-
-    def updateValue(self, value=None):
-        self.combo_box.setCurrentIndex(self.parameter.variable.value)
 
 
 class WidgetPitchBendValue(QSAWidgetCluster):

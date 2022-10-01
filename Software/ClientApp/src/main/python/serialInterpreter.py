@@ -52,7 +52,8 @@ class SerialInterpreter:
         # Attempt the handshake
         self.serial.write(self.testMessage)
         self.serial.read_until()  # throw away first newline
-        if self.serial.read_until() == self.testResponse:
+        response = self.serial.read_until()
+        if response == self.testResponse:
             self.serial.close()
             return True
 
@@ -114,13 +115,15 @@ class SerialInterpreter:
             config_dict[key].set_parameters(
                 control=this_config["control"],
                 pb_is_cc=(int(this_config["pitchbend"]) != MIDI_CC_P_BEND),
-                pb_enable=(int(this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)),
+                pb_enable=(
+                    "TRUE" if (this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)
+                    else "FALSE"),
                 pb_value=this_config["pitchbend"],
                 offset1=this_config["offset1"],
                 offset2=this_config["offset2"],
                 offset3=this_config["offset3"],
                 octave=this_config["octave"],
-                root_note=this_config["root_note"] - rootNoteDict["C"],
-                mode=modeDict[this_config["mode"]],
-                enable=1 if this_config["enable"] == "True" else 0
+                root_note=this_config["root_note"],
+                mode=this_config["mode"],
+                enable=this_config["enable"]
             )
