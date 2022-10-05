@@ -143,6 +143,7 @@ class PoTRestoreDefaultsButton(QSAPushbutton):
         if reply == QMessageBox.RestoreDefaults:
             self.master.si.send_serial_command(cmd=CMD_RESTORE_DEFAULTS, argument=None)
             self.master.si.set_gui_config_from_serial(self.master.proto)
+            self.master.tabs.pages[self.master.tabs.currentIndex()].fullReload()
         else:
             pass
 
