@@ -5,15 +5,8 @@ import json
 from serial import Serial
 from serial.tools import list_ports
 from time import sleep
-from gui_elements.protocol.PoTProtocol import modeDict, rootNoteDict
+from gui_elements.protocol.PoTConstants import *
 from PyQt5 import QtCore, QtWidgets, Qt
-
-CMD_ABOUT = b"about\r"
-CMD_ALL_CONFIG = b"all_config\r"
-CMD_RESTORE_DEFAULTS = b"defaults\r"
-CMD_EXIT = b"exit\r"
-STR_ALL_CONFIGS = "all_configs"
-STR_CURR_CONFIG = "current_config"
 
 
 class SerialInterpreter:
@@ -59,7 +52,8 @@ class SerialInterpreter:
         # Attempt the handshake
         self.serial.write(self.testMessage)
         self.serial.read_until()  # throw away first newline
-        if self.serial.read_until() == self.testResponse:
+        response = self.serial.read_until()
+        if response == self.testResponse:
             self.serial.close()
             return True
 
@@ -114,22 +108,22 @@ class SerialInterpreter:
         if not response_str:
             raise RuntimeError('Got no response from paddle')
 
-        print(response_str)
         result_obj = json.loads(response_str)
         for key in result_obj[STR_ALL_CONFIGS].keys():
             this_config = result_obj[STR_ALL_CONFIGS][key]
-            print("{0}: {1}".format(key, this_config))
 
             config_dict[key].set_parameters(
                 control=this_config["control"],
-                pb_is_cc=(int(this_config["pitchbend"]) != 0xE0),
-                pb_enable=(int(this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == 0xE0)),
+                pb_is_cc=(int(this_config["pitchbend"]) != MIDI_CC_P_BEND),
+                pb_enable=(
+                    "TRUE" if (this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)
+                    else "FALSE"),
                 pb_value=this_config["pitchbend"],
                 offset1=this_config["offset1"],
                 offset2=this_config["offset2"],
                 offset3=this_config["offset3"],
                 octave=this_config["octave"],
-                root_note=this_config["root_note"] - rootNoteDict["C"],
-                mode=modeDict[this_config["mode"]],
-                enable=1 if this_config["enable"] == "True" else 0
+                root_note=this_config["root_note"],
+                mode=this_config["mode"],
+                enable=this_config["enable"]
             )

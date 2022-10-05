@@ -1,51 +1,17 @@
-import math
-from enum import Enum
-
 from pyqtsa.GUIParameter import GUIParameter
 from pyqtsa.Protocol import Protocol
-
-""" Enumeration of musical modes """
-modeDict = {
-    "MAJOR": 0,
-    "MINOR": 1,
-    "MIXOLYDIAN": 2,
-    "DORIAN": 3,
-    "CHROMATIC": 4
-}
-
-rootNoteDict = {
-    "C": 0,
-    "C#": 1,
-    "D": 2,
-    "D#": 3,
-    "E": 4,
-    "F": 5,
-    "F#": 6,
-    "G": 7,
-    "G#": 8,
-    "A": 9,
-    "A#": 10,
-    "B": 11,
-}
-
-octaveDict = {
-    "-1": 0,
-    "0": 12,
-    "1": 24,
-    "2": 36,
-    "3": 48,
-    "4": 60,
-}
-
-pitchbendDict = {
-    "Pitch Bend": 0,
-    "Control Code": 1,
-}
 
 
 class PoTProtocol(Protocol):
     """
-    Holds a list of individual parameters
+    Holds the parameters that are stored persistently in EEPROM in the Paddle,
+    and which are edited by the PoTConfig tool.
+
+    NOTE: The source of truth for these settings will always be the Paddle's EEPROM,
+    so this needs to stay in sync, at least at the start of every connection and after changing config.
+
+    ALSO: Parameters "pitchbend_enable" and "pitchbend_is_CC" simplify some of the GUI logic, but are just derived from
+    the "pitchbend" argument, and only "pitchbend" is stored on the paddle.
     """
 
     def __init__(self, master=None, color=""):
@@ -67,43 +33,49 @@ class PoTProtocol(Protocol):
             "pitchbend": GUIParameter()
         }
 
-        # Setup enable variable
+        # Setup ColorConfig Enable variable
         self.parameters["enable"].name = "enable"
         self.parameters["enable"].permission = "RW"
-        self.parameters["enable"].param_type = "BOOL"
-        self.parameters["enable"].description = "Is this color config enabled or disabled?"
+        self.parameters["enable"].param_type = "STR"
+        self.parameters["enable"].description = "Is this color config enabled or disabled"
 
+        # Setup MIDI Root Note parameter
         self.parameters["root_note"].name = "root_note"
         self.parameters["root_note"].permission = "RW"
-        self.parameters["root_note"].param_type = "U8"
+        self.parameters["root_note"].param_type = "STR"
         self.parameters["root_note"].description = "Which note is the root note"
 
+        # Setup MIDI Octave parameter
         self.parameters["octave"].name = "octave"
         self.parameters["octave"].permission = "RW"
-        self.parameters["octave"].param_type = "U8"
+        self.parameters["octave"].param_type = "STR"
         self.parameters["octave"].description = "Which octave is the root for the instrument"
 
+        # Setup pitchbend_enable parameter  NOTE: this is not sent to the paddle
         self.parameters["pitchbend_enable"].name = "pitchbend Enabled"
         self.parameters["pitchbend_enable"].permission = "RW"
-        self.parameters["pitchbend_enable"].param_type = "BOOL"
+        self.parameters["pitchbend_enable"].param_type = "STR"
         self.parameters["pitchbend_enable"].description = "Is pitch-bend enabled?"
 
+        # Setup pitchbend_is_CC parameter  NOTE: this is not sent to the paddle
         self.parameters["pitchbend_is_CC"].name = "pitchbend is Control Code"
         self.parameters["pitchbend_is_CC"].permission = "RW"
         self.parameters["pitchbend_is_CC"].param_type = "BOOL"
         self.parameters["pitchbend_is_CC"].description = "Does pitchbend control pitch or ControlCode"
 
+        # Setup MIDI pitch-bend type parameter
         self.parameters["pitchbend"].name = "pitchbend"
         self.parameters["pitchbend"].permission = "RW"
         self.parameters["pitchbend"].param_type = "U8"
-        self.parameters["pitchbend"].description = "What control code does the pitch-bend affect?"
+        self.parameters["pitchbend"].description = "What control code does the pitch-bend affect"
 
+        # Setup MIDI Scale mode parameter
         self.parameters["mode"].name = "mode"
         self.parameters["mode"].permission = "RW"
-        self.parameters["mode"].param_type = "U8"
+        self.parameters["mode"].param_type = "STR"
         self.parameters["mode"].description = "Which mode will be used"
 
-        # Setup MIDI CC control index
+        # Setup MIDI CC control index parameter
         self.parameters["control"].name = "control"
         self.parameters["control"].permission = "RW"
         self.parameters["control"].param_type = "U8"
@@ -113,7 +85,7 @@ class PoTProtocol(Protocol):
         self.parameters["control"].value_min = 0
         self.parameters["control"].value_max = 127
 
-        # Setup scale-offset between capTouch buttons 0 & 1
+        # Setup scale-offset between capTouch buttons 0 & 1 parameter
         self.parameters["offset1"].name = "offset1"
         self.parameters["offset1"].permission = "RW"
         self.parameters["offset1"].param_type = "U8"
@@ -123,7 +95,7 @@ class PoTProtocol(Protocol):
         self.parameters["offset1"].value_min = 0
         self.parameters["offset1"].value_max = 60
 
-        # Setup scale-offset between capTouch buttons 0 & 2
+        # Setup scale-offset between capTouch buttons 0 & 2 parameter
         self.parameters["offset2"].name = "offset2"
         self.parameters["offset2"].permission = "RW"
         self.parameters["offset2"].param_type = "U8"
@@ -133,7 +105,7 @@ class PoTProtocol(Protocol):
         self.parameters["offset2"].value_min = 0
         self.parameters["offset2"].value_max = 60
 
-        # Setup scale-offset between capTouch buttons 0 & 3
+        # Setup scale-offset between capTouch buttons 0 & 3 parameter
         self.parameters["offset3"].name = "offset3"
         self.parameters["offset3"].permission = "RW"
         self.parameters["offset3"].param_type = "U8"
@@ -145,7 +117,7 @@ class PoTProtocol(Protocol):
 
     def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave,
                        pb_enable, pb_is_cc, pb_value):
-        """ use function args to set params """
+        """ Set class parameters from provided arguments """
         self.parameters["offset1"].variable.value = offset1
         self.parameters["offset2"].variable.value = offset2
         self.parameters["mode"].variable.value = mode
