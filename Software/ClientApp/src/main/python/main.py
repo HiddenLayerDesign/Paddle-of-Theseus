@@ -7,6 +7,7 @@ from serialInterpreter import *
 from gui_elements.tabs.ColorConfig import *
 from gui_elements import version
 from gui_elements.protocol.PoTProtocol import *
+from gui_elements.menus.MenuBar import *
 
 
 class PoTConfigApp(ApplicationContext):
@@ -85,6 +86,10 @@ class PoTConfigApp(ApplicationContext):
         self.frame = QtWidgets.QFrame()
         self.frame.setStyleSheet(widgetStyle_mainWindow)
         self.frame.setLayout(self.layout)
+
+        # set up menu bar
+        self.menu_bar = FullMenuBar()
+        self.window.setMenuBar(self.menu_bar)
 
         # Start window in splash screen until SerialInterpreter finds a connection
         self.window.setCentralWidget(self.frame)
