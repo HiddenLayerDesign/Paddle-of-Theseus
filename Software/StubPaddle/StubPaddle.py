@@ -1,18 +1,33 @@
+"""
+Application to mimic hardware connection to Paddle of Theseus
+=============================================================
+
+StubPaddle is a python executable distinct from the Paddle of Theseus client application
+with the purpose of helping to debug and develop for the client application without having access to hardware.
+
+This StubPaddle relies on an outside program like https://com0com.sourceforge.net/ to provide a virtual COM port-pair
+to which the client application and this executable can attach.
+
+This program receives serial commands from the clientApp and maintains a bytearray to mimic the non-volatile
+memory region of the Teensy-LC hardware. It can accept UDP commands on its user socket
+at default location "127.0.0.1":65411 to dump out the memory or save/load its state
+"""
 import json
 import serial
 import serial.tools.list_ports as port_list
-from time import sleep
 from copy import deepcopy
 from StubPaddleConstants import *
+from StubPaddleUserSocket import StubPaddleUserSocket
 
 
 class StubPaddle:
-
     def __init__(self):
+        self.version_major = 0
+        self.version_minor = 9
+        self.version_bugfix = 9
+        self.config_mode_enabled = 1
         self.non_volatile_mem = bytearray(128)
-        for port in port_list.comports():
-            print(port.name)
-        self.serial_port = serial.Serial(port=port_list.comports()[0].name, baudrate=9600)
+        self.serial_port = serial.Serial(port=port_list.comports()[0].name, baudrate=9600, timeout=3)
         self.is_running = True
         self.about_text = "Stub paddle written by Chase E. Stewart for Hidden Layer Design"
         self.color = "BLUE"
@@ -20,7 +35,11 @@ class StubPaddle:
         for item in color_str_array:
             self.config_dict["all_configs"][item] = deepcopy(base_config_dict)
 
-        print(json.dumps(self.config_dict))
+        self.updateNonVolMem()
+
+        # see StubPaddleUserSocket
+        print("Initializing User Socket")
+        self.user_socket = StubPaddleUserSocket(parent=self, host='127.0.0.1', port=65411)
 
         self.serial_port.write(b"\r\nPaddle>")
         print("Paddle stub initialized!")
@@ -28,13 +47,52 @@ class StubPaddle:
 
     def mainLoop(self):
         while self.is_running:
-            message = self.serial_port.read_until(expected=b"\r").decode("UTF-8").replace("\r", "")
+            try:
+                message = self.serial_port.read_until(expected=b"\r").decode("UTF-8").replace("\r", "")
+            except BlockingIOError:
+                pass
             self.parseMessage(message)
             self.serial_port.write(b"\r\nPaddle>")
+            try:
+                (user_data, address) = self.user_socket.socket.recvfrom(256)
+                self.user_socket.parseInput(user_data)
+            except BlockingIOError:
+                pass
+            except Exception as e:
+                print(e)
+
+    def updateSingleConfig(self, start_offset, config):
+        self.non_volatile_mem[start_offset + CT1_DELTA_ADDR] = config["offset1"]
+        self.non_volatile_mem[start_offset + CT2_DELTA_ADDR] = config["offset2"]
+        self.non_volatile_mem[start_offset + CT3_DELTA_ADDR] = config["offset3"]
+        self.non_volatile_mem[start_offset + ROOT_NOTE_ADDR] = rootNoteDict[(config["root_note"])]
+        self.non_volatile_mem[start_offset + SCALE_MOD_ADDR] = modeList.index(config["mode"])
+        self.non_volatile_mem[start_offset + MODE_ENABLED_ADDR] = 1 if config["enable"] == "TRUE" else 0
+        self.non_volatile_mem[start_offset + CTRL_CHAN_ADDR] = config["control"]
+        self.non_volatile_mem[start_offset + OCTAVE_ADDR] = config["octave"]
+        self.non_volatile_mem[start_offset + PB_CHAN_ADDR] = config["pitchbend"]
+
+    def updateNonVolMem(self):
+        self.non_volatile_mem[EEPROM_CONFIG_MODE_ADDRESS] = self.config_mode_enabled
+        self.non_volatile_mem[EEPROM_VERSION_MAJOR_ADDRESS] = self.version_major
+        self.non_volatile_mem[EEPROM_VERSION_MINOR_ADDRESS] = self.version_minor
+        self.non_volatile_mem[EEPROM_VERSION_BUGFIX_ADDRESS] = self.version_bugfix
+
+        self.updateSingleConfig(EEPROM_BLUE_BASE_ADDR, self.config_dict["all_configs"]["BLUE"])
+        self.updateSingleConfig(EEPROM_WHITE_BASE_ADDR, self.config_dict["all_configs"]["WHITE"])
+        self.updateSingleConfig(EEPROM_CYAN_BASE_ADDR, self.config_dict["all_configs"]["CYAN"])
+        self.updateSingleConfig(EEPROM_PURPLE_BASE_ADDR, self.config_dict["all_configs"]["PURPLE"])
+        self.updateSingleConfig(EEPROM_GREEN_BASE_ADDR, self.config_dict["all_configs"]["GREEN"])
+        self.updateSingleConfig(EEPROM_RED_BASE_ADDR, self.config_dict["all_configs"]["RED"])
+        self.updateSingleConfig(EEPROM_YELLOW_BASE_ADDR, self.config_dict["all_configs"]["YELLOW"])
 
     def parseMessage(self, message):
+        if message == "":
+            return
+
         param = None
         command = message.split("=")[0]
+
         if len(message.split("=")) > 1:
             param = message.split("=")[1]
         if command == "about":
@@ -71,7 +129,8 @@ class StubPaddle:
             self.handleExit()
         else:
             print(f"Invalid command '{message}'")
-        #print(f"config is now {json.dumps(self.config_dict)}")
+
+        self.updateNonVolMem()
 
     def handleAbout(self):
         print("RX 'about'")
@@ -100,7 +159,7 @@ class StubPaddle:
 
     def handleOctave(self, octave):
         print("RX 'octave' = {}".format(str(octave)))
-        self.config_dict["all_configs"][self.color]['octave'] = octave
+        self.config_dict["all_configs"][self.color]['octave'] = int(octave)
 
     def handleMode(self, mode):
         print("RX 'mode' = {}".format(str(mode)))
@@ -123,24 +182,32 @@ class StubPaddle:
         for item in color_str_array:
             self.config_dict["all_configs"][item] = deepcopy(base_config_dict)
 
-    def handleMemDump(self):
-        print("RX 'memDump'")
-        print(self.non_volatile_mem)
-
     def handlePaddlePing(self):
         print("RX 'paddlePing'")
         self.serial_port.write(b"\r\npaddlePong")
 
-    def handleExit(self):
-        print("RX 'exit'")
-        self.serial_port.close()
-        sleep(1)
-        self.serial_port.open()
+    """ Commands below are handlers for user socket commands """
+    def userHandleReset(self):
+        self.handleDefaults()
+
+    def userHandleMemDump(self):
+        print_str = "*** MemDump ***\n"
+        for i in range(int(self.non_volatile_mem.__len__() / 16)):
+            print_str += f"0x{(16*i):02x}:"
+            for j in range(16):
+                print_str += f" {(self.non_volatile_mem[(16 * i) + j]):02x}"
+            print_str += "\n"
+
+        print(print_str)
+
+    def userHandleExit(self):
+        self.is_running = False
 
 
 if __name__ == "__main__":
     """ Run the program """
-    print("MAIN: Initializing stub")
+    print("MAIN: Initializing StubPaddle")
     stub = StubPaddle()
-    print("MAIN: Running loop")
+    print("MAIN: Running StubPaddle loop")
     stub.mainLoop()
+    print("MAIN: Exiting")

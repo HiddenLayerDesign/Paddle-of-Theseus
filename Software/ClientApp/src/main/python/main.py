@@ -8,6 +8,7 @@ from gui_elements.tabs.ColorConfig import *
 from gui_elements import version
 from gui_elements.protocol.PoTProtocol import *
 from gui_elements.menus.MenuBar import *
+from gui_elements.version import __appname__, __version__, __date__
 
 
 class PoTConfigApp(ApplicationContext):
@@ -88,12 +89,19 @@ class PoTConfigApp(ApplicationContext):
         self.frame.setLayout(self.layout)
 
         # set up menu bar
-        self.menu_bar = FullMenuBar()
+        self.menu_bar = FullMenuBar(self)
         self.window.setMenuBar(self.menu_bar)
 
         # Start window in splash screen until SerialInterpreter finds a connection
         self.window.setCentralWidget(self.frame)
         self.window.show()
+
+        # Create "about" message box
+        self.aboutSplash = QMessageBox()
+        self.aboutSplash.setWindowTitle(f"About {__appname__}")
+        self.aboutSplash.setIcon(QMessageBox.Information)
+        self.aboutSplash.setText(f"{__appname__}\n{__version__}\n{__date__}")
+        self.aboutSplash.setInformativeText("Written by Chase E. Stewart for Hidden Layer Design")
 
     def configureTab(self):
         """
@@ -110,6 +118,39 @@ class PoTConfigApp(ApplicationContext):
 
         self.tabs.pages[self.tabs.currentIndex()].fullReload()
         self.tabs.index_previous = self.tabs.currentIndex()
+
+    def exit(self):
+        QtCore.QCoreApplication.quit()
+
+    def about(self):
+        self.aboutSplash.show()
+
+    def openFile(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        open_file_name, _ = QFileDialog.getOpenFileName(self.window, "Load paddle config (*.JSON)", "",
+                                                        "All Files (*);;JSON Files (*.json)", options=options)
+        if open_file_name:
+            print(open_file_name)
+            # with open(open_file_name, "w") as f:
+            #     try:
+            #         load_json = json.loads(f.read())
+            #         self.si.set_gui_config_from_serial(load_json)
+            #     except Exception as e:
+            #         print(e)
+
+    def saveFile(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        save_file_name, _ = QFileDialog.getSaveFileName(self.window, "Save paddle config (*.JSON)", "",
+                                                        "All Files (*);;JSON Files (*.JSON)", options=options)
+        if save_file_name:
+            print(save_file_name)
+            # with open(save_file_name, "w") as f:
+            #     try:
+            #         f.write(json.dumps(self.proto))
+            #     except Exception as e:
+            #         print(e)
 
 
 """
