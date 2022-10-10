@@ -196,7 +196,7 @@ class StubPaddle:
             print_str += f"0x{(16*i):02x}:"
             for j in range(16):
                 print_str += f" {(self.non_volatile_mem[(16 * i) + j]):02x}"
-            print_str += "\n"
+            print_str += f" ({mem_dump_hint[i]})\n"
 
         print(print_str)
 

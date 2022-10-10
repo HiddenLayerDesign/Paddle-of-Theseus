@@ -11,27 +11,26 @@ from PyQt5 import QtCore, QtWidgets, Qt
 
 class SerialInterpreter:
 
-    def __init__(self, master=None):
+    def __init__(self, parent=None):
         """Initialize class vars and find Serial connection if possible"""
         self.serialPrompt = b"Paddle>"
         self.testMessage = b"paddlePing\r"
         self.testResponse = b"paddlePong\r\n"
 
         self.serial = Serial(baudrate=9600, timeout=0.05)
-        self.master = master
+        self.parent = parent
         self.serialConn = None
 
         while self.serialConn is None:
             self.serialConn = self.find_serial_connection()
             sleep(1)
 
-        self.master.splash.showMessage(f"Connecting to {self.serialConn}", QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom,  color=QtCore.Qt.white)
+        self.parent.splash.showMessage(f"Connecting to {self.serialConn}", QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom,  color=QtCore.Qt.white)
         print("Found serial connection at {0}".format(self.serialConn))
         self.serial.open()
 
     def test_serial_connection(self, inPort):
-        """
-        Test an individual serial connection to see whether it returns the POT handshake
+        """Test an individual serial connection to see whether it returns the POT handshake
 
         :param inPort: String name for the port
         :return: True == This serial port connects to the Paddle
@@ -111,19 +110,18 @@ class SerialInterpreter:
         result_obj = json.loads(response_str)
         for key in result_obj[STR_ALL_CONFIGS].keys():
             this_config = result_obj[STR_ALL_CONFIGS][key]
+            config_dict[key]["control"] = this_config["control"],
+            config_dict[key]["pitchbend"] = this_config["pitchbend"],
+            config_dict[key]["offset1"] = this_config["offset1"],
+            config_dict[key]["offset2"] = this_config["offset2"],
+            config_dict[key]["offset3"] = this_config["offset3"],
+            config_dict[key]["octave"] = this_config["octave"],
+            config_dict[key]["root_note"] = this_config["root_note"],
+            config_dict[key]["mode"] = this_config["mode"],
+            config_dict[key]["enable"] = this_config["enable"]
 
-            config_dict[key].set_parameters(
-                control=this_config["control"],
-                pb_is_cc=(int(this_config["pitchbend"]) != MIDI_CC_P_BEND),
-                pb_enable=(
-                    "TRUE" if (this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)
-                    else "FALSE"),
-                pb_value=this_config["pitchbend"],
-                offset1=this_config["offset1"],
-                offset2=this_config["offset2"],
-                offset3=this_config["offset3"],
-                octave=this_config["octave"],
-                root_note=this_config["root_note"],
-                mode=this_config["mode"],
-                enable=this_config["enable"]
-            )
+            # TODO figure out if these are needed at all
+            # pb_is_cc = (int(this_config["pitchbend"]) != MIDI_CC_P_BEND),
+            # pb_enable = ("TRUE" if (this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)
+            #              else "FALSE"),
+            # pb_value = this_config["pitchbend"],

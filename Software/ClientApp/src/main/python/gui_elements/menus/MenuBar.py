@@ -1,6 +1,11 @@
+"""
+Top MenuBar for ClientApp
+=============================================================
+
+Provides traditional top menuBar for ClientApp.
+"""
+
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QPixmap, QColor, QBitmap
 
 
 class FullMenuBar(QMenuBar):
@@ -8,20 +13,25 @@ class FullMenuBar(QMenuBar):
         super().__init__()
         self.parent = parent
 
+        # Create 'File' section
+        self.fileMenu = QMenu("&File", self)
         self.openAction = QAction("&Open...", self)
         self.saveAction = QAction("&Save", self)
-        self.exitAction = QAction("&Exit", self)
-        self.aboutAction = QAction("&About", self)
-
-        self.fileMenu = QMenu("&File", self)
-        self.addMenu(self.fileMenu)
+        self.exitAction = QAction("&Quit", self)
         self.fileMenu.addAction(self.openAction)
         self.fileMenu.addAction(self.saveAction)
         self.fileMenu.addAction(self.exitAction)
+
+        # Create 'Help' section
         self.aboutMenu = QMenu("&Help", self)
-        self.addMenu(self.aboutMenu)
+        self.aboutAction = QAction("&About", self)
         self.aboutMenu.addAction(self.aboutAction)
 
+        # add sections to top-level menu
+        self.addMenu(self.aboutMenu)
+        self.addMenu(self.fileMenu)
+
+        # connect QActions to callback commands
         self.openAction.triggered.connect(self.openFile)
         self.saveAction.triggered.connect(self.saveFile)
         self.exitAction.triggered.connect(self.exit)

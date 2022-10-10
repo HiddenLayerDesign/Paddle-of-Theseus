@@ -67,3 +67,5 @@ EEPROM_CONFIG_MODE_ADDRESS = 0
 EEPROM_VERSION_MAJOR_ADDRESS = 1
 EEPROM_VERSION_MINOR_ADDRESS = 2
 EEPROM_VERSION_BUGFIX_ADDRESS = 3
+
+mem_dump_hint = ["General", "White", "Cyan", "Purple", "Blue", "Yellow", "Green", "Red"]

@@ -1,12 +1,12 @@
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5 import QtGui
+from copy import deepcopy
 
 from serialInterpreter import *
 
 from gui_elements.tabs.ColorConfig import *
 from gui_elements import version
-from gui_elements.protocol.PoTProtocol import *
 from gui_elements.menus.MenuBar import *
 from gui_elements.version import __appname__, __version__, __date__
 
@@ -17,9 +17,7 @@ class PoTConfigApp(ApplicationContext):
         pass
 
     def __init__(self):
-        """
-        Initialize the application context and create/show the app window
-        """
+        """Initialize the application context and create/show the app window"""
         super().__init__()
 
         # set up window
@@ -27,33 +25,33 @@ class PoTConfigApp(ApplicationContext):
         self.window.resize(1024, 760)
         self.window.setWindowTitle("{0} {1}".format(version.__appname__, version.__version__))
         self.window.setWindowIcon(QtGui.QIcon(self.get_resource('images/favicon.ico')))
-        self.window.setStyleSheet(widgetStyle_mainWindow)
+        # TODO self.window.setStyleSheet(TODO)
 
         self.proto = {
-            "BLUE": PoTProtocol(color="BLUE", master=self),
-            "GREEN": PoTProtocol(color="GREEN", master=self),
-            "RED": PoTProtocol(color="RED", master=self),
-            "CYAN": PoTProtocol(color="CYAN", master=self),
-            "PURPLE": PoTProtocol(color="PURPLE", master=self),
-            "YELLOW": PoTProtocol(color="YELLOW", master=self),
-            "WHITE": PoTProtocol(color="WHITE", master=self),
+            "BLUE": deepcopy(base_config_dict),
+            "GREEN": deepcopy(base_config_dict),
+            "RED": deepcopy(base_config_dict),
+            "CYAN": deepcopy(base_config_dict),
+            "PURPLE": deepcopy(base_config_dict),
+            "YELLOW": deepcopy(base_config_dict),
+            "WHITE": deepcopy(base_config_dict)
         }
 
         # set up custom tabs for each possible ColorConfig
         tabs = [
-            ColorConfigTab(master=self, protocol=self.proto["BLUE"], title="Blue",
+            ColorConfigTab(parent=self, protocol=self.proto["BLUE"], title="Blue",
                            icon='images/tabIcon_Blue.png', index=0, color="BLUE"),
-            ColorConfigTab(master=self, protocol=self.proto["GREEN"], title="Green",
+            ColorConfigTab(parent=self, protocol=self.proto["GREEN"], title="Green",
                            icon='images/tabIcon_Green.png', index=1, color="GREEN"),
-            ColorConfigTab(master=self, protocol=self.proto["RED"], title="Red",
+            ColorConfigTab(parent=self, protocol=self.proto["RED"], title="Red",
                            icon='images/tabIcon_Red.png', index=2, color="RED"),
-            ColorConfigTab(master=self, protocol=self.proto["CYAN"], title="Cyan",
+            ColorConfigTab(parent=self, protocol=self.proto["CYAN"], title="Cyan",
                            icon='images/tabIcon_Cyan.png', index=3, color="CYAN"),
-            ColorConfigTab(master=self, protocol=self.proto["YELLOW"], title="Yellow",
+            ColorConfigTab(parent=self, protocol=self.proto["YELLOW"], title="Yellow",
                            icon='images/tabIcon_Yellow.png', index=4, color="YELLOW"),
-            ColorConfigTab(master=self, protocol=self.proto["PURPLE"], title="Purple",
+            ColorConfigTab(parent=self, protocol=self.proto["PURPLE"], title="Purple",
                            icon='images/tabIcon_Purple.png', index=5, color="PURPLE"),
-            ColorConfigTab(master=self, protocol=self.proto["WHITE"], title="White",
+            ColorConfigTab(parent=self, protocol=self.proto["WHITE"], title="White",
                            icon='images/tabIcon_White.png', index=6, color="WHITE"),
         ]
 
@@ -69,13 +67,13 @@ class PoTConfigApp(ApplicationContext):
         self.splash.close()
 
         # Set up tabs widget
-        self.tabs = QSATabWidget(pages=tabs)
+        self.tabs = PoTTabWidget(pages=tabs)
         self.tabs.setCurrentIndex(0)
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
         self.tabs.pages[0].fullReload()
         self.tabs.currentChanged.connect(self.configureTab)
-        self.tabs.setStyleSheet(widgetStyle_tabBar)
+        #self.tabs.setStyleSheet(widgetStyle_tabBar)
 
         # set up layout
         self.layout = QGridLayout()
@@ -85,7 +83,7 @@ class PoTConfigApp(ApplicationContext):
 
         # set up frame
         self.frame = QtWidgets.QFrame()
-        self.frame.setStyleSheet(widgetStyle_mainWindow)
+        #self.frame.setStyleSheet(widgetStyle_mainWindow)
         self.frame.setLayout(self.layout)
 
         # set up menu bar
@@ -100,12 +98,11 @@ class PoTConfigApp(ApplicationContext):
         self.aboutSplash = QMessageBox()
         self.aboutSplash.setWindowTitle(f"About {__appname__}")
         self.aboutSplash.setIcon(QMessageBox.Information)
-        self.aboutSplash.setText(f"{__appname__}\n{__version__}\n{__date__}")
+        self.aboutSplash.setText(f"{__appname__}\n{__version__}\n{__date__[:4]}-{__date__[4:6]}-{__date__[6:]}")
         self.aboutSplash.setInformativeText("Written by Chase E. Stewart for Hidden Layer Design")
 
     def configureTab(self):
-        """
-        Update polled loop timers and hidden protected parameters when changing between tabs
+        """Update polled loop timers and hidden protected parameters when changing between tabs
         NOTE: I don't understand this but the library uses it and I found I needed to as well
         """
         self.window.repaint()
@@ -152,11 +149,24 @@ class PoTConfigApp(ApplicationContext):
             #     except Exception as e:
             #         print(e)
 
+    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave,
+                       pb_enable, pb_is_cc, pb_value):
+        """ Set class parameters from provided arguments """
+        self.parameters["offset1"].variable.value = offset1
+        self.parameters["offset2"].variable.value = offset2
+        self.parameters["mode"].variable.value = mode
+        self.parameters["enable"].variable.value = enable
+        self.parameters["octave"].variable.value = octave
+        self.parameters["root_note"].variable.value = root_note
+        self.parameters["offset3"].variable.value = offset3
+        self.parameters["control"].variable.value = control
+        self.parameters["pitchbend_enable"].variable.value = pb_enable
+        self.parameters["pitchbend_is_CC"].variable.value = pb_is_cc
+        self.parameters["pitchbend"].variable.value = pb_value
 
-"""
-Run the program when `main.py` is invoked
-"""
+
+"""Run the program when `main.py` is invoked"""
 if __name__ == '__main__':
-    appctxt = PoTConfigApp()  # 1. Instantiate ApplicationContext
-    exit_code = appctxt.app.exec_()  # 2. Invoke appctxt.app.exec_()
+    app_context = PoTConfigApp()  # 1. Instantiate ApplicationContext
+    exit_code = app_context.app.exec_()  # 2. Invoke appctxt.app.exec_()
     sys.exit(exit_code)
