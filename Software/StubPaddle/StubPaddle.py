@@ -126,7 +126,7 @@ class StubPaddle:
         elif command == "paddlePing":
             self.handlePaddlePing()
         elif command == "exit":
-            self.handleExit()
+            self.userHandleExit()
         else:
             print(f"Invalid command '{message}'")
 

@@ -73,7 +73,7 @@ class PoTConfigApp(ApplicationContext):
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
         self.tabs.pages[0].fullReload()
         self.tabs.currentChanged.connect(self.configureTab)
-        #self.tabs.setStyleSheet(widgetStyle_tabBar)
+        # TODO self.tabs.setStyleSheet(TODO)
 
         # set up layout
         self.layout = QGridLayout()
@@ -83,7 +83,7 @@ class PoTConfigApp(ApplicationContext):
 
         # set up frame
         self.frame = QtWidgets.QFrame()
-        #self.frame.setStyleSheet(widgetStyle_mainWindow)
+        # TODO self.frame.setStyleSheet(TODO)
         self.frame.setLayout(self.layout)
 
         # set up menu bar
@@ -148,21 +148,6 @@ class PoTConfigApp(ApplicationContext):
             #         f.write(json.dumps(self.proto))
             #     except Exception as e:
             #         print(e)
-
-    def set_parameters(self, enable, root_note, mode, offset1, offset2, offset3, control, octave,
-                       pb_enable, pb_is_cc, pb_value):
-        """ Set class parameters from provided arguments """
-        self.parameters["offset1"].variable.value = offset1
-        self.parameters["offset2"].variable.value = offset2
-        self.parameters["mode"].variable.value = mode
-        self.parameters["enable"].variable.value = enable
-        self.parameters["octave"].variable.value = octave
-        self.parameters["root_note"].variable.value = root_note
-        self.parameters["offset3"].variable.value = offset3
-        self.parameters["control"].variable.value = control
-        self.parameters["pitchbend_enable"].variable.value = pb_enable
-        self.parameters["pitchbend_is_CC"].variable.value = pb_is_cc
-        self.parameters["pitchbend"].variable.value = pb_value
 
 
 """Run the program when `main.py` is invoked"""
