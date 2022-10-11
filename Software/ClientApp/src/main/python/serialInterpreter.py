@@ -1,12 +1,13 @@
 import glob
 import sys
 import json
+from json import JSONDecodeError
 
 from serial import Serial
 from serial.tools import list_ports
 from time import sleep
-from gui_elements.protocol.PoTConstants import *
-from PyQt5 import QtCore, QtWidgets, Qt
+from src.main.resources.base.config.PoTConstants import *
+from PyQt5 import QtCore
 
 
 class SerialInterpreter:
@@ -22,14 +23,14 @@ class SerialInterpreter:
         self.serialConn = None
 
         while self.serialConn is None:
-            self.serialConn = self.find_serial_connection()
+            self.serialConn = self.findSerialConnection()
             sleep(1)
 
         self.parent.splash.showMessage(f"Connecting to {self.serialConn}", QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom,  color=QtCore.Qt.white)
         print("Found serial connection at {0}".format(self.serialConn))
         self.serial.open()
 
-    def test_serial_connection(self, inPort):
+    def testSerialConnection(self, inPort):
         """Test an individual serial connection to see whether it returns the POT handshake
 
         :param inPort: String name for the port
@@ -59,7 +60,7 @@ class SerialInterpreter:
         self.serial.close()
         return False
 
-    def send_serial_command(self, cmd, argument=None):
+    def sendSerialCommand(self, cmd, argument=None):
         """ Send command `cmd` optionally with arg `argument` to the paddle, return multi-line string response
 
         :param cmd: The command to send
@@ -86,42 +87,62 @@ class SerialInterpreter:
             message = None
         return message
 
-    def find_serial_connection(self):
+    def findSerialConnection(self):
         """return name of serial connection if possible, else None"""
         if sys.platform.startswith('win'):
             for comport_struct in list_ports.comports():
-                if self.test_serial_connection(comport_struct.name):
+                if self.testSerialConnection(comport_struct.name):
                     return comport_struct.name
 
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
             for port_str in glob.glob('/dev/tty?*'):  # trick to find all TTYs except `/dev/tty`
-                if self.test_serial_connection(port_str):
+                if self.testSerialConnection(port_str):
                     return port_str
         else:
             raise RuntimeError('Only Windows, Linux, and Cygwin are supported!')
         return None
 
-    def set_gui_config_from_serial(self, config_dict):
+    def updateConfigFromSerial(self):
         """ send command to get all config, update config from response """
-        response_str = self.send_serial_command(CMD_ALL_CONFIG)
-        if not response_str:
-            raise RuntimeError('Got no response from paddle')
+        serial_success = False
 
-        result_obj = json.loads(response_str)
+        while not serial_success:
+            response_str = self.sendSerialCommand(CMD_ALL_CONFIG)
+            if not response_str:
+                raise RuntimeError('Got no response from paddle')
+            if response_str == self.serialPrompt:
+                continue
+            else:
+                serial_success = True
+
+        try:
+            result_obj = json.loads(response_str)
+        except JSONDecodeError:
+            print(f"Failed to decode string {response_str}")
+            return
+
+        config_dict = {}
         for key in result_obj[STR_ALL_CONFIGS].keys():
+            config_dict[key] = {}
             this_config = result_obj[STR_ALL_CONFIGS][key]
-            config_dict[key]["control"] = this_config["control"],
-            config_dict[key]["pitchbend"] = this_config["pitchbend"],
-            config_dict[key]["offset1"] = this_config["offset1"],
-            config_dict[key]["offset2"] = this_config["offset2"],
-            config_dict[key]["offset3"] = this_config["offset3"],
-            config_dict[key]["octave"] = this_config["octave"],
-            config_dict[key]["root_note"] = this_config["root_note"],
-            config_dict[key]["mode"] = this_config["mode"],
-            config_dict[key]["enable"] = this_config["enable"]
+            config_dict[key]["control"] = int(this_config["control"])
+            config_dict[key]["offset1"] = int(this_config["offset1"])
+            config_dict[key]["offset2"] = int(this_config["offset2"])
+            config_dict[key]["offset3"] = int(this_config["offset3"])
+            config_dict[key]["octave"] = int(this_config["octave"])
+            config_dict[key]["root_note"] = str(this_config["root_note"])
+            config_dict[key]["mode"] = str(this_config["mode"])
+            config_dict[key]["enable"] = str(this_config["enable"])
+            config_dict[key]["pitchbend"] = int(this_config["pitchbend"])
 
-            # TODO figure out if these are needed at all
-            # pb_is_cc = (int(this_config["pitchbend"]) != MIDI_CC_P_BEND),
-            # pb_enable = ("TRUE" if (this_config["pitchbend"]) < 128 or int(this_config["pitchbend"] == MIDI_CC_P_BEND)
-            #              else "FALSE"),
-            # pb_value = this_config["pitchbend"],
+        return config_dict
+
+    def pushConfigOverSerial(self):
+        """Send all of the current config to the Paddle."""
+        for key in self.parent.protocol.keys():
+            self.sendSerialCommand("color", key)
+            for parameter in self.parent.protocol[key]:
+                self.sendSerialCommand(parameter, self.parent.protocol[key][parameter])
+
+
+

@@ -1,14 +1,20 @@
+import json
+import sys
+
+from PyQt5.QtGui import QPixmap
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QGridLayout, QMessageBox, QTabBar, QFileDialog
+from PyQt5.QtCore import Qt
+from PyQt5 import QtGui, QtWidgets, QtCore
 from copy import deepcopy
 
-from serialInterpreter import *
+from gui_elements.PoTColorTab import ColorConfigTab, PoTTabWidget
+from serialInterpreter import SerialInterpreter
 
-from gui_elements.tabs.ColorConfig import *
 from gui_elements import version
-from gui_elements.menus.MenuBar import *
+from gui_elements.menus.MenuBar import FullMenuBar
 from gui_elements.version import __appname__, __version__, __date__
+from src.main.resources.base.config.PoTConstants import base_config_dict
 
 
 class PoTConfigApp(ApplicationContext):
@@ -27,7 +33,7 @@ class PoTConfigApp(ApplicationContext):
         self.window.setWindowIcon(QtGui.QIcon(self.get_resource('images/favicon.ico')))
         # TODO self.window.setStyleSheet(TODO)
 
-        self.proto = {
+        self.protocol = {
             "BLUE": deepcopy(base_config_dict),
             "GREEN": deepcopy(base_config_dict),
             "RED": deepcopy(base_config_dict),
@@ -37,22 +43,15 @@ class PoTConfigApp(ApplicationContext):
             "WHITE": deepcopy(base_config_dict)
         }
 
-        # set up custom tabs for each possible ColorConfig
+        # set up custom rows for each possible ColorConfig
         tabs = [
-            ColorConfigTab(parent=self, protocol=self.proto["BLUE"], title="Blue",
-                           icon='images/tabIcon_Blue.png', index=0, color="BLUE"),
-            ColorConfigTab(parent=self, protocol=self.proto["GREEN"], title="Green",
-                           icon='images/tabIcon_Green.png', index=1, color="GREEN"),
-            ColorConfigTab(parent=self, protocol=self.proto["RED"], title="Red",
-                           icon='images/tabIcon_Red.png', index=2, color="RED"),
-            ColorConfigTab(parent=self, protocol=self.proto["CYAN"], title="Cyan",
-                           icon='images/tabIcon_Cyan.png', index=3, color="CYAN"),
-            ColorConfigTab(parent=self, protocol=self.proto["YELLOW"], title="Yellow",
-                           icon='images/tabIcon_Yellow.png', index=4, color="YELLOW"),
-            ColorConfigTab(parent=self, protocol=self.proto["PURPLE"], title="Purple",
-                           icon='images/tabIcon_Purple.png', index=5, color="PURPLE"),
-            ColorConfigTab(parent=self, protocol=self.proto["WHITE"], title="White",
-                           icon='images/tabIcon_White.png', index=6, color="WHITE"),
+            ColorConfigTab(parent=self, title="White", icon='images/tabIcon_White.png', index=0, color="WHITE"),
+            ColorConfigTab(parent=self, title="Cyan", icon='images/tabIcon_Cyan.png', index=1, color="CYAN"),
+            ColorConfigTab(parent=self, title="Purple", icon='images/tabIcon_Purple.png', index=2, color="PURPLE"),
+            ColorConfigTab(parent=self, title="Blue", icon='images/tabIcon_Blue.png', index=3, color="BLUE"),
+            ColorConfigTab(parent=self, title="Yellow", icon='images/tabIcon_Yellow.png', index=4, color="YELLOW"),
+            ColorConfigTab(parent=self, title="Green", icon='images/tabIcon_Green.png', index=5, color="GREEN"),
+            ColorConfigTab(parent=self, title="Red", icon='images/tabIcon_Red.png', index=6, color="RED")
         ]
 
         # Set up splash screen for until the serial connection is established
@@ -63,17 +62,20 @@ class PoTConfigApp(ApplicationContext):
 
         # When connection is finally made, close the splash screen and go to the regular GUI
         self.si = SerialInterpreter(self)
-        self.si.set_gui_config_from_serial(self.proto)
-        self.splash.close()
-
-        # Set up tabs widget
         self.tabs = PoTTabWidget(pages=tabs)
         self.tabs.setCurrentIndex(0)
+        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
+        self.protocol = self.si.updateConfigFromSerial()
+        self.splash.close()
+
+        # Set up rows widget
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
-        self.tabs.pages[0].fullReload()
+        for page_idx in range(len(self.tabs.pages)):
+            self.tabs.pages[page_idx].fullReload()
+
         self.tabs.currentChanged.connect(self.configureTab)
-        # TODO self.tabs.setStyleSheet(TODO)
+        # TODO self.rows.setStyleSheet(TODO)
 
         # set up layout
         self.layout = QGridLayout()
@@ -83,8 +85,8 @@ class PoTConfigApp(ApplicationContext):
 
         # set up frame
         self.frame = QtWidgets.QFrame()
-        # TODO self.frame.setStyleSheet(TODO)
         self.frame.setLayout(self.layout)
+        # TODO self.frame.setStyleSheet(TODO)
 
         # set up menu bar
         self.menu_bar = FullMenuBar(self)
@@ -100,54 +102,89 @@ class PoTConfigApp(ApplicationContext):
         self.aboutSplash.setIcon(QMessageBox.Information)
         self.aboutSplash.setText(f"{__appname__}\n{__version__}\n{__date__[:4]}-{__date__[4:6]}-{__date__[6:]}")
         self.aboutSplash.setInformativeText("Written by Chase E. Stewart for Hidden Layer Design")
+        self.aboutSplash.setMinimumWidth(200)
+        self.aboutSplash.setMaximumWidth(800)
 
     def configureTab(self):
-        """Update polled loop timers and hidden protected parameters when changing between tabs
-        NOTE: I don't understand this but the library uses it and I found I needed to as well
-        """
-        self.window.repaint()
-
+        """Update polled loop timers and hidden protected parameters when changing between rows"""
         self.tabs.tabBar().setTabButton(self.tabs.index_previous, QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.index_previous].button_inactive)
 
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
 
-        self.tabs.pages[self.tabs.currentIndex()].fullReload()
+        self.protocol = self.si.updateConfigFromSerial()
+        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
+        self.current_tab.fullReload()
+
+        if self.protocol[self.current_tab.color]["pitchbend"] == 255:
+            self.tabs.pages[self.tabs.currentIndex()].disablePitchbendWidget()
+        elif self.protocol[self.current_tab.color]["pitchbend"] == 224:
+            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendWidget()
+            self.tabs.pages[self.tabs.currentIndex()].disablePitchbendCC()
+        else:
+            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendWidget()
+            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendCC()
+
+        self.window.repaint()
         self.tabs.index_previous = self.tabs.currentIndex()
 
-    def exit(self):
+    # noinspection PyMethodMayBeStatic
+    def menuQuit(self):
         QtCore.QCoreApplication.quit()
 
-    def about(self):
+    def menuAbout(self):
         self.aboutSplash.show()
 
-    def openFile(self):
+    # noinspection PyMethodMayBeStatic
+    def updateConfigFromFile(self, json_str):
+        result_obj = json.loads(json_str)
+
+        config_dict = {}
+        for key in result_obj.keys():
+            config_dict[key] = {}
+            this_config = result_obj[key]
+            config_dict[key]["control"] = int(this_config["control"])
+            config_dict[key]["offset1"] = int(this_config["offset1"])
+            config_dict[key]["offset2"] = int(this_config["offset2"])
+            config_dict[key]["offset3"] = int(this_config["offset3"])
+            config_dict[key]["octave"] = int(this_config["octave"])
+            config_dict[key]["root_note"] = str(this_config["root_note"])
+            config_dict[key]["mode"] = str(this_config["mode"])
+            config_dict[key]["enable"] = str(this_config["enable"])
+            config_dict[key]["pitchbend"] = int(this_config["pitchbend"])
+
+        return config_dict
+
+    def menuOpenFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         open_file_name, _ = QFileDialog.getOpenFileName(self.window, "Load paddle config (*.JSON)", "",
                                                         "All Files (*);;JSON Files (*.json)", options=options)
         if open_file_name:
             print(open_file_name)
-            # with open(open_file_name, "w") as f:
-            #     try:
-            #         load_json = json.loads(f.read())
-            #         self.si.set_gui_config_from_serial(load_json)
-            #     except Exception as e:
-            #         print(e)
+            with open(open_file_name, "r") as f:
+                try:
+                    self.protocol = self.updateConfigFromFile(f.read())
+                    self.si.pushConfigOverSerial()
+                except Exception as e:
+                    print(e)
 
-    def saveFile(self):
+    def menuSaveFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         save_file_name, _ = QFileDialog.getSaveFileName(self.window, "Save paddle config (*.JSON)", "",
                                                         "All Files (*);;JSON Files (*.JSON)", options=options)
         if save_file_name:
             print(save_file_name)
-            # with open(save_file_name, "w") as f:
-            #     try:
-            #         f.write(json.dumps(self.proto))
-            #     except Exception as e:
-            #         print(e)
+            with open(save_file_name, "w") as f:
+                try:
+                    f.write(json.dumps(self.protocol))
+                except Exception as e:
+                    print(e)
+
+    def menuDumpConfig(self):
+        print(self.protocol)
 
 
 """Run the program when `main.py` is invoked"""

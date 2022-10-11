@@ -60,5 +60,5 @@ pitchbendDict = {
 }
 
 """Hold default values for empty colorConfig dictionary."""
-base_config_dict = dict(enable="TRUE", offset1=5, offset2=7, offset3=12, octave=24, root_note="C",
-                        mode="MAJOR", control=17, pitchbend=14, pitchbend_enable="TRUE", pitchbend_is_CC="TRUE")
+base_config_dict = dict(enable="TRUE", offset1=1, offset2=2, offset3=3, octave=0, root_note="C", mode="MAJOR",
+                        control=5, pitchbend=6)

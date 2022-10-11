@@ -4,8 +4,7 @@ Top MenuBar for ClientApp
 
 Provides traditional top menuBar for ClientApp.
 """
-
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QMenuBar, QMenu, QAction
 
 
 class FullMenuBar(QMenuBar):
@@ -17,10 +16,15 @@ class FullMenuBar(QMenuBar):
         self.fileMenu = QMenu("&File", self)
         self.openAction = QAction("&Open...", self)
         self.saveAction = QAction("&Save", self)
-        self.exitAction = QAction("&Quit", self)
+        self.quitAction = QAction("&Quit", self)
         self.fileMenu.addAction(self.openAction)
         self.fileMenu.addAction(self.saveAction)
-        self.fileMenu.addAction(self.exitAction)
+        self.fileMenu.addAction(self.quitAction)
+
+        # Create 'Tools' section
+        self.toolsMenu = QMenu("&Tools", self)
+        self.dumpConfigAction = QAction("&Dump Config", self)
+        self.toolsMenu.addAction(self.dumpConfigAction)
 
         # Create 'Help' section
         self.aboutMenu = QMenu("&Help", self)
@@ -28,31 +32,33 @@ class FullMenuBar(QMenuBar):
         self.aboutMenu.addAction(self.aboutAction)
 
         # add sections to top-level menu
-        self.addMenu(self.aboutMenu)
         self.addMenu(self.fileMenu)
+        self.addMenu(self.toolsMenu)
+        self.addMenu(self.aboutMenu)
 
         # connect QActions to callback commands
         self.openAction.triggered.connect(self.openFile)
         self.saveAction.triggered.connect(self.saveFile)
-        self.exitAction.triggered.connect(self.exit)
+        self.quitAction.triggered.connect(self.exit)
         self.aboutAction.triggered.connect(self.about)
+        self.dumpConfigAction.triggered.connect(self.dumpConfig)
 
     def openFile(self):
-        # Logic for opening an existing file goes here...
-        print("Would have opened a file")
-        self.parent.openFile()
+        print("Opening config from a file")
+        self.parent.menuOpenFile()
 
     def saveFile(self):
-        # Logic for saving a file goes here...
-        print("Would have saved")
-        self.parent.saveFile()
+        print("Saving current config")
+        self.parent.menuSaveFile()
 
     def exit(self):
-        # Logic for cutting content goes here...
-        print("Would have exited!")
-        self.parent.exit()
+        print("Exiting")
+        self.parent.menuQuit()
 
     def about(self):
-        # Logic for showing an about dialog content goes here...
-        print("Would have displayed an about page")
-        self.parent.about()
+        print("Displaying an about page")
+        self.parent.menuAbout()
+
+    def dumpConfig(self):
+        print("Dumping configuration")
+        self.parent.menuDumpConfig()
