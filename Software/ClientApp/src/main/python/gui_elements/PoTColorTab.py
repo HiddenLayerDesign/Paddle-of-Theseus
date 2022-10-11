@@ -127,12 +127,12 @@ class ColorConfigTab(PoTColorTab):
     def disableAllWidgets(self):
         for widget in self.widgets:
             if not isinstance(widget, PoTRowEnable) and not isinstance(widget, PoTRowDangerZone):
-                widget.setEnabled(False)
+                widget.setVisible(False)
 
     def enableAllWidgets(self):
         for widget in self.widgets:
             if not isinstance(widget, PoTRowEnable) and not isinstance(widget, PoTRowDangerZone):
-                widget.setEnabled(True)
+                widget.setVisible(True)
 
     def enablePitchbendWidget(self):
         for widget in self.widgets:
