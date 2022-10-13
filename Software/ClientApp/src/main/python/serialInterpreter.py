@@ -130,9 +130,13 @@ class SerialInterpreter:
             config_dict[key]["offset2"] = int(this_config["offset2"])
             config_dict[key]["offset3"] = int(this_config["offset3"])
             config_dict[key]["octave"] = int(this_config["octave"])
-            config_dict[key]["root_note"] = str(this_config["root_note"])
+            try:
+                config_dict[key]["root_note"] = str(rootNoteArray[int(this_config["root_note"])])
+            except Exception as e:
+                print(e)
+                config_dict[key]["root_note"] = str(this_config["root_note"])
             config_dict[key]["mode"] = str(this_config["mode"])
-            config_dict[key]["enable"] = str(this_config["enable"])
+            config_dict[key]["enable"] = str(this_config["enable"]).upper()
             config_dict[key]["pitchbend"] = int(this_config["pitchbend"])
 
         return config_dict

@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QMessageBox, QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QSizePolicy, QFrame, QGridLayout
 
 from gui_elements.common.CommonTypes import PoTRow, PoTPushbutton
 from src.main.resources.base.config.PoTConstants import CMD_RESTORE_DEFAULTS, CMD_EXIT
@@ -51,15 +52,35 @@ class PoTQuitButton(PoTPushbutton):
         pass
 
 
+class PoTFiller(QFrame):
+    def __init__(self):
+        super().__init__()
+        self.filler = QWidget()
+        self.filler.setSizePolicy(QSizePolicy.Expanding | QSizePolicy.Preferred,
+                                  QSizePolicy.Expanding | QSizePolicy.Preferred)
+        self.filler.setAttribute(Qt.WA_TranslucentBackground)
+        self.filler.setContextMenuPolicy(Qt.PreventContextMenu)
+
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+        # self.layout.setSpacing(5)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.addWidget(self.filler, 0, 0)
+
+    def reload(self):
+        pass
+
+
 class PoTRowDangerZone(PoTRow):
     """Provides some button actions such as restoring default config and rebooting the paddle."""
 
     def __init__(self, parent=None, text=None):
         self.quitButton = PoTQuitButton(parent=parent, text="Exit Program")
         self.defaultsButton = PoTRestoreDefaultsButton(parent=parent, text="Restore Defaults")
+        self.filler = PoTFiller()
 
         super().__init__(
             parent=parent,
             text=text,
-            widgets=[self.quitButton, self.defaultsButton]
+            widgets=[self.quitButton, self.filler, self.defaultsButton]
         )

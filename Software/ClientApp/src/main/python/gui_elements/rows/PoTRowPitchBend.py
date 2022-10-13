@@ -61,13 +61,13 @@ class PitchbendComboBox(QFrame):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
 
         self.label = QLabel()
         self.label.setText(self.text)
 
         self.layout.addWidget(self.label, 0, 0)
-        self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.values = list(values)
         self.keys = list(keys)

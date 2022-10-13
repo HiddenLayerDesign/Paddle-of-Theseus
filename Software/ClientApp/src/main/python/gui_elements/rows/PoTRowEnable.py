@@ -1,3 +1,5 @@
+from PyQt5.QtCore import Qt
+
 from gui_elements.common.CommonTypes import PoTRow, PoTToggleButton
 
 
@@ -9,6 +11,8 @@ class PoTEnableButton(PoTToggleButton):
         self.parent = parent
         self.config_name = config_name
         self.color = color
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
     def reload(self):
         self.state = self.parent.protocol[self.color][self.config_name]

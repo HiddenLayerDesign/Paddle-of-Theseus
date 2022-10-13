@@ -53,7 +53,7 @@ class PoTToggleButton(QFrame):
 
         self.layout = QGridLayout()
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
+        self.layout.setContentsMargins(0, 5, 80, 5)
         self.layout.addWidget(self.button, 0, 0)
         self.setLayout(self.layout)
 
@@ -96,7 +96,8 @@ class PoTSerialEntry(QFrame):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.spinbox_set = QDoubleSpinBox()
         self.spinbox_set.setButtonSymbols(2)
@@ -109,7 +110,7 @@ class PoTSerialEntry(QFrame):
         # TODO self.spinbox_set.setStyleSheet(TODO)
 
         self.layout.addWidget(self.spinbox_set, 0, 1, 1, 4)
-        self.spinbox_set.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.spinbox_set.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.spinbox_set.setFixedWidth(90)
 
     def valueChangedCallback(self):
@@ -146,7 +147,8 @@ class PoTPushbutton(QFrame):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.layout.addWidget(self.button, 0, 0)
         self.button.clicked.connect(self.onClick)
@@ -172,19 +174,23 @@ class PoTComboBox(QFrame):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
 
         self.label = QLabel()
         self.label.setText(self.text)
 
         self.layout.addWidget(self.label, 0, 0)
-        self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.parameter = self.parent.protocol[self.color][self.config_name]
         self.values = list(values)
         self.keys = list(keys)
 
         self.combo_box = QComboBox()
+
+        # TODO below the [str] is necessary for the combo box to return the title of the combo-box option rather
+        #      than just the index. For the future it may be better to work off the index to simplify the mapping
+        #      Counterpoint, one upside of this approach is that the dictionaries in PoTConstants document themselves
         self.combo_box.activated[str].connect(self.onChanged)
         for key in keys:
             self.combo_box.addItem(key)
@@ -194,6 +200,7 @@ class PoTComboBox(QFrame):
         self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
 
     def onChanged(self, text):
+        text = str(text)
         self.combo_box.adjustSize()
         self.parent.si.sendSerialCommand(cmd="color", argument=self.color)
         my_argument = self.values[self.keys.index(text)]

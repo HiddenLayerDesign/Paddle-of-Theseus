@@ -18,7 +18,7 @@ class PoTInfoFrame(QFrame):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
         self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
+        self.layout.setContentsMargins(0, 5, 80, 5)
 
         self.label = QLabel()
         self.label.setText(self.text)
@@ -30,10 +30,10 @@ class PoTInfoFrame(QFrame):
         self.label_info.setStyleSheet("QLabel {font: 11pt Segoe UI;}")
 
         self.layout.addWidget(self.label, 0, 0)
-        self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.layout.addWidget(self.label_info, 0, 1, 1, 3)
-        self.label_info.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.label_info.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
     def updateValue(self, text):
         self.label_info.setText(str(text))
@@ -60,8 +60,8 @@ class PoTControlCodeEntry(QFrame):
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
-        self.layout.setSpacing(5)
-        self.layout.setContentsMargins(5, 1, 5, 1)
+        # self.layout.setSpacing(5)
+        self.layout.setContentsMargins(0, 5, 80, 5)
 
         self.spinbox_set = QDoubleSpinBox()
         self.spinbox_set.setButtonSymbols(2)

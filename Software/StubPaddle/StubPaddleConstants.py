@@ -25,7 +25,7 @@ rootNoteDict = {
     "A": 9,
     "A#": 10,
     "B": 11,
-    "Unknown": 255,
+    "Unknown": 255
 }
 
 """ per-octave Offsets to be added to root notes as MIDI """
@@ -36,7 +36,7 @@ octaveDict = {
     "2": 36,
     "3": 48,
     "4": 60,
-    "Unknown": 255,
+    "Unknown": 255
 }
 
 """ Memory serialization constants """

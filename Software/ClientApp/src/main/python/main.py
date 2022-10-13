@@ -28,7 +28,7 @@ class PoTConfigApp(ApplicationContext):
 
         # set up window
         self.window = QMainWindow()
-        self.window.resize(1024, 760)
+        self.window.resize(900, 500)
         self.window.setWindowTitle("{0} {1}".format(version.__appname__, version.__version__))
         self.window.setWindowIcon(QtGui.QIcon(self.get_resource('images/favicon.ico')))
         # TODO self.window.setStyleSheet(TODO)
@@ -75,11 +75,9 @@ class PoTConfigApp(ApplicationContext):
             self.tabs.pages[page_idx].fullReload()
 
         self.tabs.currentChanged.connect(self.configureTab)
-        # TODO self.rows.setStyleSheet(TODO)
 
         # set up layout
         self.layout = QGridLayout()
-        self.layout.setSpacing(5)
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.layout.addWidget(self.tabs, 2, 0, 1, 10)
 

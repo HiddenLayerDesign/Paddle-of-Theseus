@@ -43,6 +43,9 @@ rootNoteDict = {
     "B": 11
 }
 
+""" Same information as rootNoteDict above but in zero-indexed list format."""
+rootNoteArray = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
 """Per-octave offsets to be added to root notes as MIDI."""
 octaveDict = {
     "-1": 0,
@@ -56,7 +59,7 @@ octaveDict = {
 """Enumerate of internal mapping to pitchBendEnable."""
 pitchbendDict = {
     "Pitch Bend": 0,
-    "Control Code": 1,
+    "Control Code": 1
 }
 
 """Hold default values for empty colorConfig dictionary."""

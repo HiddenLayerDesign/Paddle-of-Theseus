@@ -26,7 +26,7 @@ class StubPaddle:
         self.version_minor = 9
         self.version_bugfix = 9
         self.config_mode_enabled = 1
-        self.non_volatile_mem = bytearray(128)
+        self.non_volatile_mem = bytearray(128)  # emulating the physical EEPROM of the Paddle of Theseus
         self.serial_port = serial.Serial(port=port_list.comports()[0].name, baudrate=9600, timeout=3)
         self.is_running = True
         self.about_text = "Stub paddle written by Chase E. Stewart for Hidden Layer Design"
@@ -37,7 +37,7 @@ class StubPaddle:
 
         self.updateNonVolMem()
 
-        # see StubPaddleUserSocket
+        # see StubPaddleUserSocket.py
         print("Initializing User Socket")
         self.user_socket = StubPaddleUserSocket(parent=self, host='127.0.0.1', port=65411)
 
@@ -49,10 +49,10 @@ class StubPaddle:
         while self.is_running:
             try:
                 message = self.serial_port.read_until(expected=b"\r").decode("UTF-8").replace("\r", "")
+                self.parseMessage(message)
+                self.serial_port.write(b"\r\nPaddle>")
             except BlockingIOError:
                 pass
-            self.parseMessage(message)
-            self.serial_port.write(b"\r\nPaddle>")
             try:
                 (user_data, address) = self.user_socket.socket.recvfrom(256)
                 self.user_socket.parseInput(user_data)
@@ -122,7 +122,7 @@ class StubPaddle:
         elif command == "defaults":
             self.handleDefaults()
         elif command == "memDump":
-            self.handleMemDump()
+            self.userHandleMemDump()
         elif command == "paddlePing":
             self.handlePaddlePing()
         elif command == "exit":
