@@ -54,9 +54,7 @@ class PitchbendComboBox(QFrame):
         self.text = text
         self.color = color
         self.config_name = config_name
-
-        self.setFixedWidth(220)
-        self.setFixedHeight(50)
+        self.setStyleSheet("QComboBox {font: 9pt Helvetica;}")
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -65,7 +63,7 @@ class PitchbendComboBox(QFrame):
         self.label = QLabel()
         self.label.setText(self.text)
 
-        self.layout.addWidget(self.label, 0, 0)
+        self.layout.addWidget(self.label, 0, 0, 1, 1)
         self.layout.setContentsMargins(0, 5, 80, 5)
         self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
@@ -84,10 +82,9 @@ class PitchbendComboBox(QFrame):
 
         for key in keys:
             self.combo_box.addItem(key)
-        # TODO self.combo_box.setStyleSheet(TODO)
 
-        self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
-        self.combo_box.setFixedWidth(90)
+        self.layout.addWidget(self.combo_box, 0, 0)
+        self.combo_box.setFixedWidth(150)
 
     def setEntry(self, entry):
         self.entry = entry

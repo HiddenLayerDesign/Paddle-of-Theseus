@@ -20,11 +20,11 @@ MIDI_CC_P_BEND = 0xE0
 
 """Enumerate supported musical modes."""
 modeDict = {
-    "MAJOR": 0,
-    "MINOR": 1,
-    "MIXOLYDIAN": 2,
-    "DORIAN": 3,
-    "CHROMATIC": 4
+    "Major": 0,
+    "Minor": 1,
+    "Mixolydian": 2,
+    "Dorian": 3,
+    "Chromatic": 4
 }
 
 """Enumerate root notes as MIDI."""

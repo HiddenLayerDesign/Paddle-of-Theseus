@@ -10,6 +10,10 @@ class PoTRestoreDefaultsButton(PoTPushbutton):
         super().__init__(text=text)
         self.parent = parent
         self.text = text
+        self.button.setStyleSheet('QPushButton {background-color: rgba(230, 76, 73, 100%); color: white; font: bold '
+                                  '11pt "Helvetica"}'
+                                  'QMessageBox {background-color: white}')
+        self.layout.setContentsMargins(0, 5, 80, 5)
 
     def onClick(self):
         reply = QMessageBox.question(
@@ -34,6 +38,8 @@ class PoTQuitButton(PoTPushbutton):
         super().__init__(text=text)
         self.parent = parent
         self.text = text
+        self.button.setStyleSheet('QPushButton {background-color: rgba(230, 76, 73, 100%); color: white; font: bold '
+                                  '11pt "Helvetica"}')
 
     def onClick(self):
         reply = QMessageBox.question(
@@ -63,7 +69,6 @@ class PoTFiller(QFrame):
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
-        # self.layout.setSpacing(5)
         self.layout.setContentsMargins(0, 5, 80, 5)
         self.layout.addWidget(self.filler, 0, 0)
 
@@ -82,5 +87,5 @@ class PoTRowDangerZone(PoTRow):
         super().__init__(
             parent=parent,
             text=text,
-            widgets=[self.quitButton, self.filler, self.defaultsButton]
+            widgets=[self.quitButton, self.defaultsButton]  # [self.quitButton, self.filler, self.defaultsButton]
         )

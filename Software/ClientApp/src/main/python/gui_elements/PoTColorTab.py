@@ -1,7 +1,8 @@
 import json
 
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QFrame, QLabel, QGroupBox, QGridLayout, QWidget, QSizePolicy, QTabBar, QTabWidget
+from PyQt5.QtWidgets import QFrame, QLabel, QGroupBox, QGridLayout, QWidget, QSizePolicy, QTabBar, QTabWidget, \
+    QGraphicsDropShadowEffect
 from PyQt5.QtCore import Qt
 
 from gui_elements.common.CommonTypes import PoTSerialEntry
@@ -15,6 +16,7 @@ from gui_elements.rows.PoTRowPitchBend import PoTRowPitchBend, PitchbendEnableBu
 
 class PoTColorTab(QFrame):
     """A GUI region which contains all parameters relevant to one subsystem"""
+
     def __init__(self, serial=None, parent=None, title="", icon="", index=0, widgets=[], widthActive=160,
                  widthInactive=80):
         super().__init__()
@@ -27,6 +29,7 @@ class PoTColorTab(QFrame):
         self.title = title
         self.label_title = QLabel(title)
         self.label_title.setAttribute(Qt.WA_TranslucentBackground)
+        self.label_title.setStyleSheet("QLabel {font: 12pt Helvetica;}")
 
         self.index = index
         self.widthActive = widthActive
@@ -36,6 +39,8 @@ class PoTColorTab(QFrame):
         self.iconfile = self.parent.get_resource(icon)
         self.icon = QLabel()
         self.icon.setAttribute(Qt.WA_TranslucentBackground)
+        self.icon.setStyleSheet("QLabel {border: 0px; background-color:rgba(0,0,0,0%);}")
+
         if len(self.iconfile):
             self.iconpix = QPixmap(self.iconfile)
             self.icon.setPixmap(self.iconpix)
@@ -47,7 +52,8 @@ class PoTColorTab(QFrame):
         self.layout_buttonactive = QGridLayout()
         self.layout_buttonactive.addWidget(self.label_title, 0, 0)
         self.button_active.setLayout(self.layout_buttonactive)
-        # TODO self.button_active.setStyleSheet(TODO)
+        self.button_active.setStyleSheet('QGroupBox {border: 0px; background-color: rgba(0,0,0,0%);}')
+
         self.button_active.setContextMenuPolicy(Qt.CustomContextMenu)
         self.button_active.customContextMenuRequested.connect(self.contextMenuEvent)
 
@@ -58,7 +64,7 @@ class PoTColorTab(QFrame):
         self.layout_buttoninactive = QGridLayout()
         self.button_inactive.setLayout(self.layout_buttoninactive)
         self.layout_buttoninactive.addWidget(self.icon, 0, 0)
-        # TODO self.button_inactive.setStyleSheet(TODO)
+        self.button_inactive.setStyleSheet('QGroupBox { border: 0px; background-color:rgba(0,0,0,0%);}')
         self.button_inactive.setAttribute(Qt.WA_TranslucentBackground)
         self.button_inactive.setToolTip(self.title)
 
@@ -68,7 +74,6 @@ class PoTColorTab(QFrame):
         self.layout = QGridLayout()
         self.layout.setSpacing(2)
         self.layout.setContentsMargins(10, 10, 10, 10)
-        # TODO self.setStyleSheet(TODO)
 
         row = 0
         for widget in self.widgets:
@@ -94,8 +99,43 @@ class PoTColorTab(QFrame):
 
 class PoTTabWidget(QTabWidget):
     """A container object for adding rows to"""
+
     def __init__(self, pages=None):
         super().__init__()
+
+        self.effect = QGraphicsDropShadowEffect()
+        self.effect.setColor(Qt.black)
+        self.effect.setBlurRadius(15)
+        self.effect.setXOffset(-2)
+        self.effect.setYOffset(2)
+        self.setGraphicsEffect(self.effect)
+
+        self.setTabShape(QTabWidget.Rounded)
+        self.setStyleSheet('''
+        QTabWidget::pane {
+            background-color: white;
+            border: none;
+            border-bottom-left-radius: 7px;           
+            border-bottom-right-radius: 7px;            
+            border-top-right-radius: 7px;            
+        }
+        QTabBar::tab:selected {
+            background-color: white;
+            border-bottom-color: 1px white;
+            border-top-color: 1px solid grey;
+            border-left-color: 1px solid grey;
+            border-right-color: 1px solid grey;
+            padding: 6px;
+            border-top-left-radius: 7px;
+            border-top-right-radius: 7px;
+        }
+        QTabBar::tab {
+            background-color: rgba(220,220,220,100%);
+            border: 1px solid grey;
+            padding: 6px;
+            border-top-left-radius: 7px;
+            border-top-right-radius: 7px;
+        }''')
 
         self.pages = pages
         self.index_previous = 0
@@ -170,5 +210,3 @@ class ColorConfigTab(PoTColorTab):
         for widget in self.widgets:
             for sub_component in widget.widgets:
                 sub_component.reload()
-
-

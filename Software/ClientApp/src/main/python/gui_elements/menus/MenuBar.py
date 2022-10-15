@@ -11,6 +11,7 @@ class FullMenuBar(QMenuBar):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.setStyleSheet("background-color: white")
 
         # Create 'File' section
         self.fileMenu = QMenu("&File", self)

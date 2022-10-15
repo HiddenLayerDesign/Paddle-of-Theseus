@@ -28,10 +28,10 @@ class PoTConfigApp(ApplicationContext):
 
         # set up window
         self.window = QMainWindow()
-        self.window.resize(900, 500)
+        self.window.resize(1000, 500)
         self.window.setWindowTitle("{0} {1}".format(version.__appname__, version.__version__))
         self.window.setWindowIcon(QtGui.QIcon(self.get_resource('images/favicon.ico')))
-        # TODO self.window.setStyleSheet(TODO)
+
 
         self.protocol = {
             "BLUE": deepcopy(base_config_dict),
@@ -70,7 +70,7 @@ class PoTConfigApp(ApplicationContext):
 
         # Set up rows widget
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
-                                        self.tabs.pages[self.tabs.currentIndex()].button_active)
+                                        self.current_tab.button_active)
         for page_idx in range(len(self.tabs.pages)):
             self.tabs.pages[page_idx].fullReload()
 
@@ -84,7 +84,7 @@ class PoTConfigApp(ApplicationContext):
         # set up frame
         self.frame = QtWidgets.QFrame()
         self.frame.setLayout(self.layout)
-        # TODO self.frame.setStyleSheet(TODO)
+        # self.frame.setStyleSheet("background-color: transparent")
 
         # set up menu bar
         self.menu_bar = FullMenuBar(self)

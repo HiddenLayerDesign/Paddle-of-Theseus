@@ -23,11 +23,11 @@ class PoTInfoFrame(QFrame):
         self.label = QLabel()
         self.label.setText(self.text)
         self.label.setAttribute(Qt.WA_TranslucentBackground)
-        self.label.setStyleSheet("QLabel {font: 11pt Segoe UI;}")
+        self.label.setStyleSheet("QLabel {font: bold 12pt Helvetica;}")
 
         self.label_info = QLabel()
         self.label_info.setAttribute(Qt.WA_TranslucentBackground)
-        self.label_info.setStyleSheet("QLabel {font: 11pt Segoe UI;}")
+        self.label_info.setStyleSheet("QLabel {font: 12pt Helvetica;}")
 
         self.layout.addWidget(self.label, 0, 0)
         self.label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -47,7 +47,6 @@ class PoTControlCodeEntry(QFrame):
 
     def __init__(self, parent=None, text=None, config_name=None, color=None, helpText=None, configDict=None):
         super().__init__()
-
         self.parent = parent
         self.text = text
         self.color = color
@@ -60,7 +59,6 @@ class PoTControlCodeEntry(QFrame):
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
-        # self.layout.setSpacing(5)
         self.layout.setContentsMargins(0, 5, 80, 5)
 
         self.spinbox_set = QDoubleSpinBox()
@@ -71,13 +69,16 @@ class PoTControlCodeEntry(QFrame):
         self.spinbox_set.editingFinished.connect(self.editFinishedCallback)
         self.spinbox_set.valueChanged.connect(self.valueChangedCallback)
         self.spinbox_set.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.spinbox_set.setFixedWidth(90)
         self.spinbox_set.setDecimals(0)
 
         self.layout.addWidget(self.spinbox_set, 0, 1, 1, 4)
 
         self.spinbox_set.setValue(self.parameter)
         self.helpText.updateValue(self.configDict[str(self.parameter)])
+
+        self.setStyleSheet("QDoubleSpinBox {font: 11pt Helvetica;}")
+        self.spinbox_set.setFixedWidth(130)
+
 
     def valueChangedCallback(self):
         self.isValueUpdated = True
