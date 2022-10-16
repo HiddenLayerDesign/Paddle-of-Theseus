@@ -16,6 +16,7 @@ class PitchbendEnableButton(PoTToggleButton):
         self.parameter = self.parent.protocol[self.color][self.config_name]
         self.state = "FALSE" if self.parameter == 255 else "TRUE"
         self.text = text
+        self.layout.setContentsMargins(0, 5, 80, 5)
 
     def reload(self):
         self.state = self.parent.protocol[self.color][self.config_name]
@@ -24,11 +25,11 @@ class PitchbendEnableButton(PoTToggleButton):
         if "TRUE" == self.state:
             # TODO self.button.setStyleSheet(TODO)
             self.buttonText = self.onText
-            self.parent.tabs.pages[self.parent.tabs.currentIndex()].enablePitchbendWidget()
+            self.parent.current_tab.enablePitchbendWidget()
         else:
             # TODO self.button.setStyleSheet(TODO)
             self.buttonText = self.offText
-            self.parent.tabs.pages[self.parent.tabs.currentIndex()].disablePitchbendWidget()
+            self.parent.current_tab.disablePitchbendWidget()
 
     def onClick(self):
         self.state = "FALSE" if self.state == "TRUE" else "TRUE"
@@ -85,6 +86,7 @@ class PitchbendComboBox(QFrame):
 
         self.layout.addWidget(self.combo_box, 0, 0)
         self.combo_box.setFixedWidth(150)
+        self.combo_box.setFixedHeight(35)
 
     def setEntry(self, entry):
         self.entry = entry

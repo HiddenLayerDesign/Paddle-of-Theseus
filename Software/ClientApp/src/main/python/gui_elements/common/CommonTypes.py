@@ -1,5 +1,6 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QPushButton, QGridLayout, QGroupBox, QLabel, QComboBox, QDoubleSpinBox
+from PyQt5.QtWidgets import QFrame, QPushButton, QGridLayout, QGroupBox, QLabel, QComboBox, QDoubleSpinBox, QWidget, \
+    QSizePolicy
 
 
 class PoTRow(QGroupBox):
@@ -15,16 +16,15 @@ class PoTRow(QGroupBox):
             QGroupBox {
                     background-color: qlineargradient(x1: 0, y1: 0, x2:0, y2: 1, stop: 0 #FFFFFF stop: 1 #E0E0E0);
                     border: 1px solid grey;
-                    border-radius: 7px;
+                    border-radius: 3px;
             }''')
 
         self.setContextMenuPolicy(Qt.PreventContextMenu)
-        # TODO self.setStyleSheet(TODO)
 
         self.label_group = QLabel()
         self.label_group.setText(self.text)
         self.label_group.setStyleSheet('QLabel {font: bold 13pt "Helvetica";}')
-        # TODO self.label_group.setStyleSheet(TODO)
+        self.label_group.setFixedWidth(200)
 
         self.layout.addWidget(self.label_group, 0, 0, 1, 1)
         self.label_group.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -58,8 +58,6 @@ class PoTToggleButton(QFrame):
         self.button.clicked.connect(lambda: self.updateValue(self.state))
 
         self.layout = QGridLayout()
-        self.layout.setSpacing(5)
-        self.layout.setContentsMargins(0, 5, 80, 5)
         self.layout.addWidget(self.button, 0, 0)
         self.setLayout(self.layout)
 
@@ -74,7 +72,8 @@ class PoTToggleButton(QFrame):
             background-color: rgba(94, 230, 73, 100%);
             font: bold 11pt "Helvetica"; 
         }''')
-        self.button.setFixedWidth(130)
+        self.button.setFixedWidth(150)
+        self.button.setFixedHeight(35)
 
     def updateValue(self, value):
         """Update the button state when the serial parameter variable changes"""
@@ -115,9 +114,6 @@ class PoTSerialEntry(QFrame):
         self.color = color
         self.config_name = config_name
 
-        self.setFixedWidth(220)
-        self.setFixedHeight(50)
-
         self.isValueUpdated = False
 
         self.layout = QGridLayout()
@@ -134,11 +130,11 @@ class PoTSerialEntry(QFrame):
         self.spinbox_set.setContextMenuPolicy(Qt.PreventContextMenu)
         self.spinbox_set.editingFinished.connect(self.editFinishedCallback)
         self.spinbox_set.valueChanged.connect(self.valueChangedCallback)
-        # TODO self.spinbox_set.setStyleSheet(TODO)
 
         self.layout.addWidget(self.spinbox_set, 0, 1, 1, 4)
         self.spinbox_set.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.spinbox_set.setFixedWidth(130)
+        self.spinbox_set.setFixedWidth(150)
+        self.spinbox_set.setFixedHeight(35)
 
     def valueChangedCallback(self):
         self.isValueUpdated = True
@@ -171,8 +167,7 @@ class PoTPushbutton(QFrame):
         self.button = QPushButton(self.text)
         self.layout = QGridLayout()
         self.setLayout(self.layout)
-        # self.layout.setSpacing(5)
-        # self.layout.setContentsMargins(0, 5, 80, 5)
+
         self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
         self.layout.addWidget(self.button, 0, 0)
@@ -182,7 +177,9 @@ class PoTPushbutton(QFrame):
         self.label.setText(self.text)
 
         self.setStyleSheet("QPushButton {font: 11pt Helvetica; border-radius: 4px}")
-        self.button.setFixedWidth(130)
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.button.setFixedWidth(150)
+        self.button.setFixedHeight(35)
 
     def onClick(self):
         pass
@@ -202,6 +199,8 @@ class PoTComboBox(QFrame):
 
         self.label = QLabel()
         self.label.setText(self.text)
+        self.label.setFixedWidth(50)
+        self.label.setFixedHeight(35)
 
         self.layout.addWidget(self.label, 0, 0)
         self.layout.setContentsMargins(0, 5, 80, 5)
@@ -222,8 +221,9 @@ class PoTComboBox(QFrame):
 
         self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
 
-        self.setStyleSheet('QComboBox {font: 11pt Helvetica;} QLabel {font: 9pt Helvetica;}')
-        self.combo_box.setFixedWidth(130)
+        self.setStyleSheet('QComboBox {font: 11pt "Helvetica";} QLabel {font: bold 9pt "Helvetica";}')
+        self.combo_box.setFixedWidth(90)
+        self.combo_box.setFixedHeight(35)
 
     def onChanged(self, text):
         text = str(text)
@@ -240,3 +240,19 @@ class PoTComboBox(QFrame):
     def reload(self):
         self.parameter = self.parent.protocol[self.color][self.config_name]
         self.combo_box.setCurrentIndex(self.values.index(self.parameter))
+
+
+class PoTFiller(QFrame):
+    def __init__(self):
+        super().__init__()
+        self.filler = QWidget()
+        self.filler.setSizePolicy(QSizePolicy.Expanding | QSizePolicy.Preferred,
+                                  QSizePolicy.Expanding | QSizePolicy.Preferred)
+        self.filler.setAttribute(Qt.WA_TranslucentBackground)
+        self.filler.setContextMenuPolicy(Qt.PreventContextMenu)
+
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+
+    def reload(self):
+        pass

@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QDoubleSpinBox
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QDoubleSpinBox, QSpacerItem, QSizePolicy
 
-from gui_elements.common.CommonTypes import PoTRow
+from gui_elements.common.CommonTypes import PoTRow, PoTFiller
 
 
 class PoTInfoFrame(QFrame):
@@ -77,8 +78,8 @@ class PoTControlCodeEntry(QFrame):
         self.helpText.updateValue(self.configDict[str(self.parameter)])
 
         self.setStyleSheet("QDoubleSpinBox {font: 11pt Helvetica;}")
-        self.spinbox_set.setFixedWidth(130)
-
+        self.spinbox_set.setFixedWidth(150)
+        self.spinbox_set.setFixedHeight(35)
 
     def valueChangedCallback(self):
         self.isValueUpdated = True
@@ -122,5 +123,5 @@ class PoTRowCC(PoTRow):
         super().__init__(
             parent=parent,
             text=text,
-            widgets=[self.cc_entry, self.info_frame]
+            widgets=[self.cc_entry, PoTFiller(), self.info_frame]
         )
