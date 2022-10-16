@@ -5,7 +5,9 @@ from PyQt5.QtWidgets import QFrame, QLabel, QGroupBox, QGridLayout, QWidget, QSi
     QGraphicsDropShadowEffect
 from PyQt5.QtCore import Qt
 
-from gui_elements.common.CommonTypes import PoTSerialEntry
+from gui_elements.common.PoTCommonTypes import PoTSerialEntry
+from gui_elements.common.PoTStyleSheets import PoTStyleQLabelStandard, PoTStyleTabQLabel, PoTStyleTabQGroupBox, \
+    PotStyleFullTab
 from gui_elements.rows.PoTRowCC import PoTRowCC
 from gui_elements.rows.PoTRowDangerZone import PoTRowDangerZone
 from gui_elements.rows.PoTRowEnable import PoTRowEnable
@@ -29,7 +31,7 @@ class PoTColorTab(QFrame):
         self.title = title
         self.label_title = QLabel(title)
         self.label_title.setAttribute(Qt.WA_TranslucentBackground)
-        self.label_title.setStyleSheet("QLabel {font: 12pt Helvetica;}")
+        self.label_title.setStyleSheet(PoTStyleQLabelStandard)
 
         self.index = index
         self.widthActive = widthActive
@@ -39,7 +41,7 @@ class PoTColorTab(QFrame):
         self.iconfile = self.parent.get_resource(icon)
         self.icon = QLabel()
         self.icon.setAttribute(Qt.WA_TranslucentBackground)
-        self.icon.setStyleSheet("QLabel {border: 0px; background-color:rgba(0,0,0,0%);}")
+        self.icon.setStyleSheet(PoTStyleTabQLabel)
 
         if len(self.iconfile):
             self.iconpix = QPixmap(self.iconfile)
@@ -52,7 +54,7 @@ class PoTColorTab(QFrame):
         self.layout_buttonactive = QGridLayout()
         self.layout_buttonactive.addWidget(self.label_title, 0, 0)
         self.button_active.setLayout(self.layout_buttonactive)
-        self.button_active.setStyleSheet('QGroupBox {border: 0px; background-color: rgba(0,0,0,0%);}')
+        self.button_active.setStyleSheet(PoTStyleTabQGroupBox)
 
         self.button_active.setContextMenuPolicy(Qt.CustomContextMenu)
         self.button_active.customContextMenuRequested.connect(self.contextMenuEvent)
@@ -64,7 +66,7 @@ class PoTColorTab(QFrame):
         self.layout_buttoninactive = QGridLayout()
         self.button_inactive.setLayout(self.layout_buttoninactive)
         self.layout_buttoninactive.addWidget(self.icon, 0, 0)
-        self.button_inactive.setStyleSheet('QGroupBox { border: 0px; background-color:rgba(0,0,0,0%);}')
+        self.button_inactive.setStyleSheet(PoTStyleTabQGroupBox)
         self.button_inactive.setAttribute(Qt.WA_TranslucentBackground)
         self.button_inactive.setToolTip(self.title)
 
@@ -111,31 +113,7 @@ class PoTTabWidget(QTabWidget):
         self.setGraphicsEffect(self.effect)
 
         self.setTabShape(QTabWidget.Rounded)
-        self.setStyleSheet('''
-        QTabWidget::pane {
-            background-color: white;
-            border: none;
-            border-bottom-left-radius: 7px;           
-            border-bottom-right-radius: 7px;            
-            border-top-right-radius: 7px;            
-        }
-        QTabBar::tab:selected {
-            background-color: white;
-            border-bottom-color: 1px white;
-            border-top-color: 1px solid grey;
-            border-left-color: 1px solid grey;
-            border-right-color: 1px solid grey;
-            padding: 6px;
-            border-top-left-radius: 7px;
-            border-top-right-radius: 7px;
-        }
-        QTabBar::tab {
-            background-color: rgba(220,220,220,100%);
-            border: 1px solid grey;
-            padding: 6px;
-            border-top-left-radius: 7px;
-            border-top-right-radius: 7px;
-        }''')
+        self.setStyleSheet(PotStyleFullTab)
 
         self.pages = pages
         self.index_previous = 0

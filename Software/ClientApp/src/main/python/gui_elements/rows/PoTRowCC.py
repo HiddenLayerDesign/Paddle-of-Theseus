@@ -1,8 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QDoubleSpinBox, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QDoubleSpinBox, QSpacerItem, QSizePolicy, QSpinBox
 
-from gui_elements.common.CommonTypes import PoTRow, PoTFiller
+from gui_elements.common.PoTCommonTypes import PoTRow, PoTFiller
+from gui_elements.common.PoTStyleSheets import PoTStyleQLabelStandard, PoTStyleQLabelBold, PoTStyleQSpinBox
 
 
 class PoTInfoFrame(QFrame):
@@ -24,11 +25,11 @@ class PoTInfoFrame(QFrame):
         self.label = QLabel()
         self.label.setText(self.text)
         self.label.setAttribute(Qt.WA_TranslucentBackground)
-        self.label.setStyleSheet("QLabel {font: bold 12pt Helvetica;}")
+        self.label.setStyleSheet(PoTStyleQLabelBold)
 
         self.label_info = QLabel()
         self.label_info.setAttribute(Qt.WA_TranslucentBackground)
-        self.label_info.setStyleSheet("QLabel {font: 12pt Helvetica;}")
+        self.label_info.setStyleSheet(PoTStyleQLabelStandard)
 
         self.layout.addWidget(self.label, 0, 0)
         self.label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -62,7 +63,8 @@ class PoTControlCodeEntry(QFrame):
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 5, 80, 5)
 
-        self.spinbox_set = QDoubleSpinBox()
+        # TODO convert to QSpinbox everywhere
+        self.spinbox_set = QSpinBox()
         self.spinbox_set.setButtonSymbols(2)
         self.spinbox_set.setMinimum(0)
         self.spinbox_set.setMaximum(255)
@@ -70,14 +72,13 @@ class PoTControlCodeEntry(QFrame):
         self.spinbox_set.editingFinished.connect(self.editFinishedCallback)
         self.spinbox_set.valueChanged.connect(self.valueChangedCallback)
         self.spinbox_set.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.spinbox_set.setDecimals(0)
 
         self.layout.addWidget(self.spinbox_set, 0, 1, 1, 4)
 
         self.spinbox_set.setValue(self.parameter)
         self.helpText.updateValue(self.configDict[str(self.parameter)])
 
-        self.setStyleSheet("QDoubleSpinBox {font: 11pt Helvetica;}")
+        self.setStyleSheet(PoTStyleQSpinBox)
         self.spinbox_set.setFixedWidth(150)
         self.spinbox_set.setFixedHeight(35)
 

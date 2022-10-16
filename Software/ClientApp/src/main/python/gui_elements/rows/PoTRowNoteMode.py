@@ -1,4 +1,4 @@
-from gui_elements.common.CommonTypes import PoTRow, PoTComboBox
+from gui_elements.common.PoTCommonTypes import PoTRow, PoTComboBox
 from src.main.resources.base.config.PoTConstants import octaveDict, rootNoteDict, modeDict
 
 

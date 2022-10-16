@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QComboBox, QFrame, QGridLayout, QLabel
 
-from gui_elements.common.CommonTypes import PoTToggleButton, PoTRow, PoTSerialEntry
+from gui_elements.common.PoTCommonTypes import PoTToggleButton, PoTRow, PoTSerialEntry
+from gui_elements.common.PoTStyleSheets import PoTStyleQComboBox
 from src.main.resources.base.config.PoTConstants import MIDI_CC_P_BEND, pitchbendDict
 
 
@@ -55,7 +56,7 @@ class PitchbendComboBox(QFrame):
         self.text = text
         self.color = color
         self.config_name = config_name
-        self.setStyleSheet("QComboBox {font: 9pt Helvetica;}")
+        self.setStyleSheet(PoTStyleQComboBox)
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)

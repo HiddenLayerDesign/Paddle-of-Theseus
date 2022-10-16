@@ -1,6 +1,9 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QPushButton, QGridLayout, QGroupBox, QLabel, QComboBox, QDoubleSpinBox, QWidget, \
-    QSizePolicy
+from PyQt5.QtWidgets import QFrame, QPushButton, QGridLayout, QGroupBox, QLabel, QComboBox, QWidget, \
+    QSizePolicy, QSpinBox
+
+from gui_elements.common.PoTStyleSheets import PoTStyleQSpinBox, PoTStyleQComboBox, PoTStyleQPushbuttonRed, \
+    PoTStyleQPushbuttonGreen, PoTStyleQLabelLarge, PoTStyleRowQGroupBox
 
 
 class PoTRow(QGroupBox):
@@ -12,18 +15,13 @@ class PoTRow(QGroupBox):
         self.layout = QGridLayout()
         self.layout.setSpacing(10)
         self.layout.setContentsMargins(5, 1, 5, 1)
-        self.setStyleSheet('''
-            QGroupBox {
-                    background-color: qlineargradient(x1: 0, y1: 0, x2:0, y2: 1, stop: 0 #FFFFFF stop: 1 #E0E0E0);
-                    border: 1px solid grey;
-                    border-radius: 3px;
-            }''')
+        self.setStyleSheet(PoTStyleRowQGroupBox)
 
         self.setContextMenuPolicy(Qt.PreventContextMenu)
 
         self.label_group = QLabel()
         self.label_group.setText(self.text)
-        self.label_group.setStyleSheet('QLabel {font: bold 13pt "Helvetica";}')
+        self.label_group.setStyleSheet(PoTStyleQLabelLarge)
         self.label_group.setFixedWidth(200)
 
         self.layout.addWidget(self.label_group, 0, 0, 1, 1)
@@ -43,6 +41,34 @@ class PoTRow(QGroupBox):
                 col += 1
 
 
+class PoTPushbutton(QFrame):
+    """A small region containing a push button"""
+    def __init__(self, parent=None, text=None):
+        super().__init__()
+        self.parent = parent
+        self.text = text
+
+        self.button = QPushButton(self.text)
+        self.button.setFlat(False)
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+
+        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        self.layout.addWidget(self.button, 0, 0)
+        self.button.clicked.connect(self.onClick)
+
+        self.label = QLabel()
+        self.label.setText(self.text)
+
+        self.layout.setContentsMargins(0, 5, 80, 5)
+        self.button.setFixedWidth(150)
+        self.button.setFixedHeight(35)
+
+    def onClick(self):
+        pass
+
+
 class PoTToggleButton(QFrame):
     """A small region containing a button which toggles between two states"""
     def __init__(self, parent=None, offText="Disabled", onText="Enabled", text=None):
@@ -54,6 +80,7 @@ class PoTToggleButton(QFrame):
         self.onText = onText
 
         self.button = QPushButton(self.text)
+        self.button.setFlat(False)
         self.button.clicked.connect(self.onClick)
         self.button.clicked.connect(lambda: self.updateValue(self.state))
 
@@ -65,13 +92,7 @@ class PoTToggleButton(QFrame):
         self.buttonText = onText
         self.button.setText(self.buttonText)
 
-        self.setStyleSheet('''QPushButton {
-            font: 11pt Helvetica; 
-            border: 1px solid grey; 
-            border-radius: 4px;
-            background-color: rgba(94, 230, 73, 100%);
-            font: bold 11pt "Helvetica"; 
-        }''')
+        self.setStyleSheet(PoTStyleQPushbuttonGreen)
         self.button.setFixedWidth(150)
         self.button.setFixedHeight(35)
 
@@ -79,21 +100,10 @@ class PoTToggleButton(QFrame):
         """Update the button state when the serial parameter variable changes"""
         self.state = value
         if self.state == "TRUE":
-            self.setStyleSheet('''QPushButton {
-                font: bold 11pt "Helvetica"; 
-                border: 1px solid grey; 
-                border-radius: 4px;
-                background-color: rgba(94, 230, 73, 100%);
-            }''')
+            self.setStyleSheet(PoTStyleQPushbuttonGreen)
             self.buttonText = self.onText
         else:
-            self.setStyleSheet('''QPushButton {
-                font: bold 11pt "Helvetica"; 
-                border: 1px solid grey; 
-                border-radius: 4px;
-                background-color: rgba(230, 76, 73, 100%); 
-                color: white;
-            }''')
+            self.setStyleSheet(PoTStyleQPushbuttonRed)
             self.buttonText = self.offText
         self.button.setText(self.buttonText)
 
@@ -107,7 +117,7 @@ class PoTToggleButton(QFrame):
 class PoTSerialEntry(QFrame):
     def __init__(self, parent=None, text=None, color=None, config_name=None):
         super().__init__()
-        self.setStyleSheet("QDoubleSpinBox {font: 11pt Helvetica;}")
+        self.setStyleSheet(PoTStyleQSpinBox)
         self.parent = parent
         self.text = text
         self.parameter = -1
@@ -122,9 +132,8 @@ class PoTSerialEntry(QFrame):
         self.layout.setContentsMargins(0, 5, 80, 5)
         self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        self.spinbox_set = QDoubleSpinBox()
+        self.spinbox_set = QSpinBox()
         self.spinbox_set.setButtonSymbols(2)
-        self.spinbox_set.setDecimals(0)
         self.spinbox_set.setMinimum(0)
         self.spinbox_set.setMaximum(255)
         self.spinbox_set.setContextMenuPolicy(Qt.PreventContextMenu)
@@ -155,34 +164,6 @@ class PoTSerialEntry(QFrame):
     def reload(self):
         self.parameter = self.parent.protocol[self.color][self.config_name]
         self.updateValue()
-
-
-class PoTPushbutton(QFrame):
-    """A small region containing a push button"""
-    def __init__(self, parent=None, text=None):
-        super().__init__()
-        self.parent = parent
-        self.text = text
-
-        self.button = QPushButton(self.text)
-        self.layout = QGridLayout()
-        self.setLayout(self.layout)
-
-        self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-        self.layout.addWidget(self.button, 0, 0)
-        self.button.clicked.connect(self.onClick)
-
-        self.label = QLabel()
-        self.label.setText(self.text)
-
-        self.setStyleSheet("QPushButton {font: 11pt Helvetica; border-radius: 4px}")
-        self.layout.setContentsMargins(0, 5, 80, 5)
-        self.button.setFixedWidth(150)
-        self.button.setFixedHeight(35)
-
-    def onClick(self):
-        pass
 
 
 class PoTComboBox(QFrame):
@@ -221,7 +202,7 @@ class PoTComboBox(QFrame):
 
         self.layout.addWidget(self.combo_box, 0, 1, 1, 4)
 
-        self.setStyleSheet('QComboBox {font: 11pt "Helvetica";} QLabel {font: bold 9pt "Helvetica";}')
+        self.setStyleSheet(PoTStyleQComboBox)
         self.combo_box.setFixedWidth(90)
         self.combo_box.setFixedHeight(35)
 

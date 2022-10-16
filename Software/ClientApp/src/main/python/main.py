@@ -3,17 +3,19 @@ import sys
 
 from PyQt5.QtGui import QPixmap
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QGridLayout, QMessageBox, QTabBar, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QGridLayout, QMessageBox, QTabBar, QFileDialog, QFrame, QLabel
 from PyQt5.QtCore import Qt
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5 import QtGui, QtCore
 from copy import deepcopy
 
 from gui_elements.PoTColorTab import ColorConfigTab, PoTTabWidget
+from gui_elements.common.PoTStyleSheets import PoTStyleQSplashScreen, PoTStyleQLabelLarge
+from gui_elements.menus.MenuBar import FullMenuBar
+from gui_elements import version
+from gui_elements.version import __appname__, __version__, __date__
+
 from serialInterpreter import SerialInterpreter
 
-from gui_elements import version
-from gui_elements.menus.MenuBar import FullMenuBar
-from gui_elements.version import __appname__, __version__, __date__
 from src.main.resources.base.config.PoTConstants import base_config_dict
 
 
@@ -28,10 +30,9 @@ class PoTConfigApp(ApplicationContext):
 
         # set up window
         self.window = QMainWindow()
-        self.window.resize(1000, 500)
+        self.window.setFixedSize(1000, 550)
         self.window.setWindowTitle("{0} {1}".format(version.__appname__, version.__version__))
         self.window.setWindowIcon(QtGui.QIcon(self.get_resource('images/favicon.ico')))
-
 
         self.protocol = {
             "BLUE": deepcopy(base_config_dict),
@@ -56,7 +57,8 @@ class PoTConfigApp(ApplicationContext):
 
         # Set up splash screen for until the serial connection is established
         self.splash = QSplashScreen(QPixmap(self.get_resource("images/splash_screen.jpg")))
-        self.splash.setStyleSheet("QSplashScreen {font: 32pt Segoe UI;}")
+        self.splash.setWindowFlags(Qt.WindowStaysOnTopHint)
+        self.splash.setStyleSheet(PoTStyleQSplashScreen)
         self.splash.showMessage("Waiting for serial connection...", Qt.AlignCenter | Qt.AlignBottom, color=Qt.white)
         self.splash.show()
 
@@ -76,13 +78,27 @@ class PoTConfigApp(ApplicationContext):
 
         self.tabs.currentChanged.connect(self.configureTab)
 
+        self.name_and_logo = QFrame()
+        self.name_and_logo.layout = QGridLayout()
+        self.name_and_logo.name = QLabel()
+        self.name_and_logo.name.setStyleSheet(PoTStyleQLabelLarge)
+        self.name_and_logo.name.setText("Paddle of Theseus Config Tool")
+        self.name_and_logo.name.setContentsMargins(40, 10, 10, 10)
+        self.name_and_logo.logo = QLabel()
+        self.name_and_logo.logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.name_and_logo.logo.setPixmap(QPixmap(self.get_resource("images/Hidden_Layer_Logo.png")))
+        self.name_and_logo.layout.addWidget(self.name_and_logo.logo, 0, 0, 1, 1)
+        self.name_and_logo.layout.addWidget(self.name_and_logo.name, 0, 1, 1, 10)
+        self.name_and_logo.setLayout(self.name_and_logo.layout)
+
         # set up layout
         self.layout = QGridLayout()
         self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.addWidget(self.name_and_logo, 0, 0, 1, 10)
         self.layout.addWidget(self.tabs, 2, 0, 1, 10)
 
         # set up frame
-        self.frame = QtWidgets.QFrame()
+        self.frame = QFrame()
         self.frame.setLayout(self.layout)
         # self.frame.setStyleSheet("background-color: transparent")
 
@@ -157,10 +173,11 @@ class PoTConfigApp(ApplicationContext):
     def menuOpenFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        open_file_name, _ = QFileDialog.getOpenFileName(self.window, "Load paddle config (*.JSON)", "",
-                                                        "All Files (*);;JSON Files (*.json)", options=options)
+        open_file_name, _ = QFileDialog.getOpenFileName(self.window, "Load paddle config (*.ptc)", "",
+                                                        "Paddle Config JSON Files (*.ptc)", options=options)
         if open_file_name:
             print(open_file_name)
+
             with open(open_file_name, "r") as f:
                 try:
                     self.protocol = self.updateConfigFromFile(f.read())
@@ -171,13 +188,16 @@ class PoTConfigApp(ApplicationContext):
     def menuSaveFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        save_file_name, _ = QFileDialog.getSaveFileName(self.window, "Save paddle config (*.JSON)", "",
-                                                        "All Files (*);;JSON Files (*.JSON)", options=options)
+        save_file_name, _ = QFileDialog.getSaveFileName(self.window, "Save paddle config (*.ptc)", "",
+                                                        "Paddle Config JSON Files (*.ptc)", options=options)
         if save_file_name:
-            print(save_file_name)
+            if save_file_name[-4:] != ".ptc":
+                print("Appending suffix .ptc")
+                save_file_name += ".ptc"
             with open(save_file_name, "w") as f:
                 try:
-                    f.write(json.dumps(self.protocol))
+                    print(f'Saving to "{save_file_name}"')
+                    f.write(json.dumps(self.protocol, indent=4) + "\n")
                 except Exception as e:
                     print(e)
 
@@ -187,6 +207,6 @@ class PoTConfigApp(ApplicationContext):
 
 """Run the program when `main.py` is invoked"""
 if __name__ == '__main__':
-    app_context = PoTConfigApp()  # 1. Instantiate ApplicationContext
-    exit_code = app_context.app.exec_()  # 2. Invoke appctxt.app.exec_()
+    app_context = PoTConfigApp()
+    exit_code = app_context.app.exec_()
     sys.exit(exit_code)

@@ -1,4 +1,4 @@
-from gui_elements.common.CommonTypes import PoTRow, PoTSerialEntry
+from gui_elements.common.PoTCommonTypes import PoTRow, PoTSerialEntry
 
 
 class PoTRowOffsets(PoTRow):

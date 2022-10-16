@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QSizePolicy, QFrame, QGridLayout
 
-from gui_elements.common.CommonTypes import PoTRow, PoTPushbutton, PoTFiller
+from gui_elements.common.PoTCommonTypes import PoTRow, PoTPushbutton, PoTFiller
+from gui_elements.common.PoTStyleSheets import PoTStyleQPushbuttonRed
 from src.main.resources.base.config.PoTConstants import CMD_RESTORE_DEFAULTS, CMD_EXIT
 
 
@@ -10,9 +11,7 @@ class PoTRestoreDefaultsButton(PoTPushbutton):
         super().__init__(text=text)
         self.parent = parent
         self.text = text
-        self.button.setStyleSheet('QPushButton {background-color: rgba(230, 76, 73, 100%); color: white; font: bold '
-                                  '11pt "Helvetica"}'
-                                  'QMessageBox {background-color: white}')
+        self.button.setStyleSheet(PoTStyleQPushbuttonRed)
 
     def onClick(self):
         reply = QMessageBox.question(
@@ -37,8 +36,7 @@ class PoTQuitButton(PoTPushbutton):
         super().__init__(text=text)
         self.parent = parent
         self.text = text
-        self.button.setStyleSheet('QPushButton {background-color: rgba(230, 76, 73, 100%); color: white; font: bold '
-                                  '11pt "Helvetica"}')
+        self.button.setStyleSheet(PoTStyleQPushbuttonRed)
 
     def onClick(self):
         reply = QMessageBox.question(

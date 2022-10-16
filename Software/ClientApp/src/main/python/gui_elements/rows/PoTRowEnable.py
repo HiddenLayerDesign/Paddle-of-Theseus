@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 
-from gui_elements.common.CommonTypes import PoTRow, PoTToggleButton
+from gui_elements.common.PoTCommonTypes import PoTRow, PoTToggleButton
 
 
 class PoTEnableButton(PoTToggleButton):
@@ -17,11 +17,9 @@ class PoTEnableButton(PoTToggleButton):
     def reload(self):
         self.state = self.parent.protocol[self.color][self.config_name]
         if "TRUE" == self.state:
-            # TODO self.button.setStyleSheet(TODO)
             self.button.setText(self.onText)
             self.parent.current_tab.enableAllWidgets()
         else:
-            # TODO self.button.setStyleSheet(TODO)
             self.button.setText(self.offText)
             self.parent.current_tab.disableAllWidgets()
 
