@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from serial import Serial
 from serial.tools import list_ports
 from time import sleep
-from src.main.resources.base.config.PoTConstants import *
+from gui_elements.common.PoTConstants import *
 from PyQt5 import QtCore
 
 

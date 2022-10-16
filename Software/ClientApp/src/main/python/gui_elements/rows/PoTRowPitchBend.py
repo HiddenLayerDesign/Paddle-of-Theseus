@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QComboBox, QFrame, QGridLayout, QLabel
 
 from gui_elements.common.PoTCommonTypes import PoTToggleButton, PoTRow, PoTSerialEntry
 from gui_elements.common.PoTStyleSheets import PoTStyleQComboBox
-from src.main.resources.base.config.PoTConstants import MIDI_CC_P_BEND, pitchbendDict
+from gui_elements.common.PoTConstants import MIDI_CC_P_BEND, pitchbendDict
 
 
 class PitchbendEnableButton(PoTToggleButton):

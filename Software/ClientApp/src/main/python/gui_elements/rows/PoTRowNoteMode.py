@@ -1,5 +1,5 @@
 from gui_elements.common.PoTCommonTypes import PoTRow, PoTComboBox
-from src.main.resources.base.config.PoTConstants import octaveDict, rootNoteDict, modeDict
+from gui_elements.common.PoTConstants import octaveDict, rootNoteDict, modeDict
 
 
 class PoTModeComboBox(PoTComboBox):

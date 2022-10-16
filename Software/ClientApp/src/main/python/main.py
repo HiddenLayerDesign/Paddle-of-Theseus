@@ -16,7 +16,7 @@ from gui_elements.version import __appname__, __version__, __date__
 
 from serialInterpreter import SerialInterpreter
 
-from src.main.resources.base.config.PoTConstants import base_config_dict
+from gui_elements.common.PoTConstants import base_config_dict
 
 
 class PoTConfigApp(ApplicationContext):
@@ -83,12 +83,12 @@ class PoTConfigApp(ApplicationContext):
         self.name_and_logo.name = QLabel()
         self.name_and_logo.name.setStyleSheet(PoTStyleQLabelLarge)
         self.name_and_logo.name.setText("Paddle of Theseus Config Tool")
-        self.name_and_logo.name.setContentsMargins(40, 10, 10, 10)
+        self.name_and_logo.name.setContentsMargins(40, 10, 0, 10)
         self.name_and_logo.logo = QLabel()
         self.name_and_logo.logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.name_and_logo.logo.setPixmap(QPixmap(self.get_resource("images/Hidden_Layer_Logo.png")))
         self.name_and_logo.layout.addWidget(self.name_and_logo.logo, 0, 0, 1, 1)
-        self.name_and_logo.layout.addWidget(self.name_and_logo.name, 0, 1, 1, 10)
+        self.name_and_logo.layout.addWidget(self.name_and_logo.name, 0, 1, 1, 5)
         self.name_and_logo.setLayout(self.name_and_logo.layout)
 
         # set up layout

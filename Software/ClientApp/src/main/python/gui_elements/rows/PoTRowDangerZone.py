@@ -1,9 +1,8 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMessageBox, QApplication, QWidget, QSizePolicy, QFrame, QGridLayout
+from PyQt5.QtWidgets import QMessageBox, QApplication
 
 from gui_elements.common.PoTCommonTypes import PoTRow, PoTPushbutton, PoTFiller
 from gui_elements.common.PoTStyleSheets import PoTStyleQPushbuttonRed
-from src.main.resources.base.config.PoTConstants import CMD_RESTORE_DEFAULTS, CMD_EXIT
+from gui_elements.common.PoTConstants import CMD_RESTORE_DEFAULTS, CMD_EXIT
 
 
 class PoTRestoreDefaultsButton(PoTPushbutton):
