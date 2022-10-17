@@ -20,16 +20,13 @@ class PitchbendEnableButton(PoTToggleButton):
         self.layout.setContentsMargins(0, 5, 80, 5)
 
     def reload(self):
-        self.state = self.parent.protocol[self.color][self.config_name]
+        self.parameter = self.parent.protocol[self.color][self.config_name]
         self.state = "FALSE" if self.parameter == 255 else "TRUE"
+        self.updateValue(self.state)
 
         if "TRUE" == self.state:
-            # TODO self.button.setStyleSheet(TODO)
-            self.buttonText = self.onText
             self.parent.current_tab.enablePitchbendWidget()
         else:
-            # TODO self.button.setStyleSheet(TODO)
-            self.buttonText = self.offText
             self.parent.current_tab.disablePitchbendWidget()
 
     def onClick(self):

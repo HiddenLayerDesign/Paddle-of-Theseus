@@ -23,6 +23,7 @@ class PoTRestoreDefaultsButton(PoTPushbutton):
         if reply == QMessageBox.RestoreDefaults:
             self.parent.si.sendSerialCommand(cmd=CMD_RESTORE_DEFAULTS, argument=None)
             self.parent.protocol = self.parent.si.updateConfigFromSerial()
+            self.parent.configureTab()
         else:
             pass
 

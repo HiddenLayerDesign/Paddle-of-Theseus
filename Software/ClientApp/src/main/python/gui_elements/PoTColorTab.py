@@ -158,8 +158,6 @@ class ColorConfigTab(PoTColorTab):
                 for sub_component in widget.widgets:
                     if not isinstance(sub_component, PitchbendEnableButton):
                         sub_component.setVisible(True)
-                    else:
-                        sub_component.button.setText(sub_component.onText)
 
     def disablePitchbendWidget(self):
         for widget in self.widgets:
@@ -167,8 +165,6 @@ class ColorConfigTab(PoTColorTab):
                 for sub_component in widget.widgets:
                     if not isinstance(sub_component, PitchbendEnableButton):
                         sub_component.setVisible(False)
-                    else:
-                        sub_component.button.setText(sub_component.offText)
 
     def enablePitchbendCC(self):
         for widget in self.widgets:

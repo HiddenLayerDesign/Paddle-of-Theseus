@@ -65,17 +65,16 @@ class PoTConfigApp(ApplicationContext):
         # When connection is finally made, close the splash screen and go to the regular GUI
         self.si = SerialInterpreter(self)
         self.tabs = PoTTabWidget(pages=tabs)
-        self.tabs.setCurrentIndex(0)
-        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
         self.protocol = self.si.updateConfigFromSerial()
         self.splash.close()
 
         # Set up rows widget
+        self.tabs.setCurrentIndex(0)
+        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
         self.tabs.tabBar().setTabButton(self.tabs.currentIndex(), QTabBar.LeftSide,
                                         self.current_tab.button_active)
-        for page_idx in range(len(self.tabs.pages)):
-            self.tabs.pages[page_idx].fullReload()
 
+        self.configureTab()
         self.tabs.currentChanged.connect(self.configureTab)
 
         self.name_and_logo = QFrame()
@@ -121,6 +120,8 @@ class PoTConfigApp(ApplicationContext):
 
     def configureTab(self):
         """Update polled loop timers and hidden protected parameters when changing between rows"""
+        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
+
         self.tabs.tabBar().setTabButton(self.tabs.index_previous, QTabBar.LeftSide,
                                         self.tabs.pages[self.tabs.index_previous].button_inactive)
 
@@ -128,17 +129,16 @@ class PoTConfigApp(ApplicationContext):
                                         self.tabs.pages[self.tabs.currentIndex()].button_active)
 
         self.protocol = self.si.updateConfigFromSerial()
-        self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
         self.current_tab.fullReload()
 
         if self.protocol[self.current_tab.color]["pitchbend"] == 255:
-            self.tabs.pages[self.tabs.currentIndex()].disablePitchbendWidget()
+            self.current_tab.disablePitchbendWidget()
         elif self.protocol[self.current_tab.color]["pitchbend"] == 224:
-            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendWidget()
-            self.tabs.pages[self.tabs.currentIndex()].disablePitchbendCC()
+            self.current_tab.enablePitchbendWidget()
+            self.current_tab.disablePitchbendCC()
         else:
-            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendWidget()
-            self.tabs.pages[self.tabs.currentIndex()].enablePitchbendCC()
+            self.current_tab.enablePitchbendWidget()
+            self.current_tab.enablePitchbendCC()
 
         self.window.repaint()
         self.tabs.index_previous = self.tabs.currentIndex()
