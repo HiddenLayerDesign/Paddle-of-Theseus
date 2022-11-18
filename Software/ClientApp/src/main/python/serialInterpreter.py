@@ -1,9 +1,11 @@
+import logging
 import glob
 import sys
 import json
 from json import JSONDecodeError
 
-from serial import Serial
+from PyQt5.QtWidgets import QApplication
+from serial import Serial, SerialTimeoutException, SerialException
 from serial.tools import list_ports
 from time import sleep
 from gui_elements.common.PoTConstants import *
@@ -18,16 +20,20 @@ class SerialInterpreter:
         self.testMessage = b"paddlePing\r"
         self.testResponse = b"paddlePong\r\n"
 
-        self.serial = Serial(baudrate=9600, timeout=0.05)
+        self.serial = Serial(baudrate=9600, timeout=0.1, write_timeout=0.1)
         self.parent = parent
         self.serialConn = None
+        self.initSerial()
 
+    def initSerial(self):
+        self.serialConn = None
         while self.serialConn is None:
             self.serialConn = self.findSerialConnection()
-            sleep(1)
+            QApplication.processEvents()
+            sleep(0.1)
 
         self.parent.splash.showMessage(f"Connecting to {self.serialConn}", QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom,  color=QtCore.Qt.white)
-        print("Found serial connection at {0}".format(self.serialConn))
+        logging.info("Found serial connection at {0}".format(self.serialConn))
         self.serial.open()
 
     def testSerialConnection(self, inPort):
@@ -72,19 +78,43 @@ class SerialInterpreter:
         else:
             cmd_str = cmd
 
-        print(f"About to send {cmd_str}")
-        self.serial.write(cmd_str)
+        logging.info(f"About to send {cmd_str}")
+        try:
+            self.serial.write(cmd_str)
 
-        message = ""
-        latest = b""
-        # return message one line at a time until we get the prompt
-        if cmd is not CMD_EXIT:
-            while latest != self.serialPrompt:
-                message += latest.decode(encoding="UTF-8")
-                latest = self.serial.read_until()
+            message = ""
+            latest = b""
+            retries = 0
+            # return message one line at a time until we get the prompt
+            if cmd is not CMD_EXIT:
+                while latest != self.serialPrompt and retries < 5:
+                    message += latest.decode(encoding="UTF-8")
+                    latest = self.serial.read_until()
+                    retries += 1
 
-        if message == "":
-            message = None
+            if message == "":
+                message = None
+            return message
+        except SerialTimeoutException as e:
+            pass
+
+    def flushSerial(self):
+        self.serial.flush()
+
+    def sendHeartbeat(self):
+        if not self.serial.writable() or not self.serial.readable():
+            return
+        # Attempt the handshake
+        try:
+            self.serial.write(self.testMessage)
+        except (SerialException, SerialTimeoutException) as e:
+            raise e
+
+        latest = None
+        while latest != self.serialPrompt and latest is not b'':
+            message = latest
+            latest = self.serial.read_until()
+
         return message
 
     def findSerialConnection(self):
@@ -98,6 +128,7 @@ class SerialInterpreter:
             for port_str in glob.glob('/dev/tty?*'):  # trick to find all TTYs except `/dev/tty`
                 if self.testSerialConnection(port_str):
                     return port_str
+                QApplication.processEvents()
         else:
             raise RuntimeError('Only Windows, Linux, and Cygwin are supported!')
         return None
@@ -118,7 +149,7 @@ class SerialInterpreter:
         try:
             result_obj = json.loads(response_str)
         except JSONDecodeError:
-            print(f"Failed to decode string {response_str}")
+            logging.info(f"Failed to decode response")
             return
 
         config_dict = {}

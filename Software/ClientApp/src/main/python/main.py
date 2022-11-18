@@ -1,14 +1,18 @@
 import json
 import sys
+import logging
 
 from PyQt5.QtGui import QPixmap
 from fbs_runtime.application_context.PyQt5 import ApplicationContext
-from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QGridLayout, QMessageBox, QTabBar, QFileDialog, QFrame, QLabel
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow, QSplashScreen, QGridLayout, QMessageBox, QTabBar, QFileDialog, QFrame, QLabel, \
+    QApplication
+from PyQt5.QtCore import Qt, QThread
 from PyQt5 import QtGui, QtCore
 from copy import deepcopy
 
+from gui_elements.PoTSplashScreen import PoTSplashScreen
 from gui_elements.PoTColorTab import ColorConfigTab, PoTTabWidget
+from gui_elements.background.healthCheckWorker import HealthCheckWorker
 from gui_elements.common.PoTStyleSheets import PoTStyleQSplashScreen, PoTStyleQLabelLarge
 from gui_elements.menus.MenuBar import FullMenuBar
 from gui_elements import version
@@ -56,17 +60,13 @@ class PoTConfigApp(ApplicationContext):
         ]
 
         # Set up splash screen for until the serial connection is established
-        self.splash = QSplashScreen(QPixmap(self.get_resource("images/splash_screen.jpg")))
-        self.splash.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.splash.setStyleSheet(PoTStyleQSplashScreen)
-        self.splash.showMessage("Waiting for serial connection...", Qt.AlignCenter | Qt.AlignBottom, color=Qt.white)
+        self.splash = PoTSplashScreen(self)
         self.splash.show()
 
         # When connection is finally made, close the splash screen and go to the regular GUI
         self.si = SerialInterpreter(self)
         self.tabs = PoTTabWidget(pages=tabs)
         self.protocol = self.si.updateConfigFromSerial()
-        self.splash.close()
 
         # Set up rows widget
         self.tabs.setCurrentIndex(0)
@@ -108,6 +108,7 @@ class PoTConfigApp(ApplicationContext):
         # Start window in splash screen until SerialInterpreter finds a connection
         self.window.setCentralWidget(self.frame)
         self.window.show()
+        self.splash.finish(self.window)
 
         # Create "about" message box
         self.aboutSplash = QMessageBox()
@@ -117,6 +118,17 @@ class PoTConfigApp(ApplicationContext):
         self.aboutSplash.setInformativeText("Written by Chase E. Stewart for Hidden Layer Design")
         self.aboutSplash.setMinimumWidth(200)
         self.aboutSplash.setMaximumWidth(800)
+
+        # Add healthcheck worker thread
+        self.thread = QThread()
+        self.HealthCheckWorker = HealthCheckWorker(self.si)
+        self.HealthCheckWorker.moveToThread(self.thread)
+        self.thread.started.connect(self.HealthCheckWorker.run)
+        self.HealthCheckWorker.finished.connect(self.thread.quit)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.HealthCheckWorker.isConnectedSig.connect(self.checkConnection)
+        logging.info("Starting worker thread")
+        self.thread.start()
 
     def configureTab(self):
         """Update polled loop timers and hidden protected parameters when changing between rows"""
@@ -176,14 +188,14 @@ class PoTConfigApp(ApplicationContext):
         open_file_name, _ = QFileDialog.getOpenFileName(self.window, "Load paddle config (*.ptc)", "",
                                                         "Paddle Config JSON Files (*.ptc)", options=options)
         if open_file_name:
-            print(open_file_name)
+            logging.info(open_file_name)
 
             with open(open_file_name, "r") as f:
                 try:
                     self.protocol = self.updateConfigFromFile(f.read())
                     self.si.pushConfigOverSerial()
                 except Exception as e:
-                    print(e)
+                    logging.info(e)
 
     def menuSaveFile(self):
         options = QFileDialog.Options()
@@ -192,21 +204,40 @@ class PoTConfigApp(ApplicationContext):
                                                         "Paddle Config JSON Files (*.ptc)", options=options)
         if save_file_name:
             if save_file_name[-4:] != ".ptc":
-                print("Appending suffix .ptc")
+                logging.info("Appending suffix .ptc")
                 save_file_name += ".ptc"
             with open(save_file_name, "w") as f:
                 try:
-                    print(f'Saving to "{save_file_name}"')
+                    logging.info(f'Saving to "{save_file_name}"')
                     f.write(json.dumps(self.protocol, indent=4) + "\n")
                 except Exception as e:
-                    print(e)
+                    logging.info(e)
 
     def menuDumpConfig(self):
-        print(self.protocol)
+        logging.info(self.protocol)
+
+    def checkConnection(self, shouldDrop):
+        """re-raise the splash screen and wait for a new connection"""
+        if shouldDrop is not True:
+            self.si.serial.close()
+            logging.info("Going to initial splash screen!")
+            self.splash = PoTSplashScreen(self)
+            self.splash.show()
+            self.window.hide()
+            QApplication.processEvents()
+            self.si.initSerial()
+            self.tabs.setCurrentIndex(0)
+            self.current_tab = self.tabs.pages[self.tabs.currentIndex()]
+            self.configureTab()
+            self.window.show()
+            self.splash.finish(self.window)
+            self.HealthCheckWorker.setRunning(True)
 
 
 """Run the program when `main.py` is invoked"""
 if __name__ == '__main__':
+
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     app_context = PoTConfigApp()
     exit_code = app_context.app.exec_()
     sys.exit(exit_code)

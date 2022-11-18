@@ -4,6 +4,7 @@ Top MenuBar for ClientApp
 
 Provides traditional top menuBar for ClientApp.
 """
+import logging
 from PyQt5.QtWidgets import QMenuBar, QMenu, QAction
 
 
@@ -44,21 +45,21 @@ class FullMenuBar(QMenuBar):
         self.dumpConfigAction.triggered.connect(self.dumpConfig)
 
     def openFile(self):
-        print("Opening config from a file")
+        logging.info("Opening config from a file")
         self.parent.menuOpenFile()
 
     def saveFile(self):
-        print("Saving current config")
+        logging.info("Saving current config")
         self.parent.menuSaveFile()
 
     def exit(self):
-        print("Exiting")
+        logging.info("Exiting")
         self.parent.menuQuit()
 
     def about(self):
-        print("Displaying an about page")
+        logging.info("Displaying an about page")
         self.parent.menuAbout()
 
     def dumpConfig(self):
-        print("Dumping configuration")
+        logging.info("Dumping configuration")
         self.parent.menuDumpConfig()

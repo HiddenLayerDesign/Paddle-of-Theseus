@@ -16,7 +16,11 @@ class PoTModeComboBox(PoTComboBox):
         self.combo_box.setCurrentIndex(self.values.index(self.parameter))
 
     def reload(self):
-        self.parameter = self.parent.protocol[self.color][self.config_name].title()
+        old_value = self.parameter
+        try:
+            self.parameter = self.parent.protocol[self.color][self.config_name].title()
+        except TypeError:
+            self.parameter = old_value
         self.combo_box.setCurrentIndex(self.values.index(self.parameter))
 
 

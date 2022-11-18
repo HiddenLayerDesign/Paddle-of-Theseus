@@ -16,7 +16,12 @@ class PoTEnableButton(PoTToggleButton):
         self.layout.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
     def reload(self):
-        self.state = self.parent.protocol[self.color][self.config_name]
+        old_state = self.state
+        try:
+            self.state = self.parent.protocol[self.color][self.config_name]
+        except TypeError:
+            self.state = old_state
+
         if "TRUE" == self.state:
             self.button.setText(self.onText)
             self.setStyleSheet(PoTStyleQPushbuttonGreen)

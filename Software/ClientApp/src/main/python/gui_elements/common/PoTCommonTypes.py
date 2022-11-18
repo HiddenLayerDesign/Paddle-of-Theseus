@@ -219,7 +219,12 @@ class PoTComboBox(QFrame):
         self.combo_box.setCurrentIndex(self.values.index(self.parameter))
 
     def reload(self):
-        self.parameter = self.parent.protocol[self.color][self.config_name]
+        old_state = self.parameter
+        try:
+            self.parameter = self.parent.protocol[self.color][self.config_name]
+        except TypeError:
+            self.parameter = old_state
+
         self.combo_box.setCurrentIndex(self.values.index(self.parameter))
 
 
