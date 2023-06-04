@@ -16,7 +16,6 @@
 #define TRUE_STR "TRUE"
 #define FALSE_STR "FALSE"
 
-const char *colorString = "TODO FIXME";
 rot_enc_state config_state;
 config_t current_config; 
 
@@ -125,7 +124,8 @@ bool selectColorHandler(Commander &Cmdr)
     Cmdr.println("ERROR: only accepted values are \"BLUE\", \"CYAN\", \"GREEN\", \"PURPLE\", \"RED\",  \"YELLOW\", \"WHITE\"!");
     return false;  
   }
-  
+
+  current_config = loadConfigFromEEPROM(config_state);
   Cmdr.print("SUCCESS: Changed current config to ");
   Cmdr.println(color_str_array[(int) config_state]);
   return true;
@@ -250,10 +250,29 @@ bool rootNoteHandler(Commander &Cmdr)
   return true;
 }
 
+bool octaveHandler(Commander &Cmdr)
+{
+  if (Cmdr.getInt(myInt))
+  {
+
+    if ((myInt > 60) ||
+    ((myInt % 12 > 0) && (myInt > 0)))
+    {
+      Cmdr.println("ERROR: only accepted values are \"0\", \"12\", \"24\", \"36\", \"48\", \"60\"!");
+      return false;  
+    }
+    
+    Cmdr.print("SUCCESS: Setting octave to ");
+    Cmdr.println(myInt);
+    current_config.octave = myInt;
+    saveConfigToEEPROM(current_config, config_state);
+  }
+  return true;
+}
+
 bool modifierHandler(Commander &Cmdr)
 {
   String compare = NULL;
-  const char *color_str = color_str_array[(int) config_state];
   
   if (!Cmdr.hasPayload())
   {
@@ -284,9 +303,13 @@ bool modifierHandler(Commander &Cmdr)
   {
     current_config.modifier = MOD_DORIAN;
   }
+  else if (!strncmp(compare.c_str(), modifier_str_array[MOD_CHROMATIC], strlen(modifier_str_array[MOD_CHROMATIC])))
+  {
+    current_config.modifier = MOD_CHROMATIC;
+  }
   else
   {
-    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\"!");
+    Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"MIXOLYDIAN\", \"DORIAN\", \"CHROMATIC\"!");
     return false;
   }
   Cmdr.print("SUCCESS: Setting modifier to ");
@@ -305,7 +328,6 @@ bool button1Handler(Commander &Cmdr)
 {
   if (Cmdr.getInt(myInt))
   {
-    const char *color_str = color_str_array[(int) config_state];
     Cmdr.print("SUCCESS: Setting button 1 offset to ");
     Cmdr.println(myInt);
     current_config.button1_offset = myInt;
@@ -318,7 +340,6 @@ bool button2Handler(Commander &Cmdr)
 {
   if (Cmdr.getInt(myInt))
   {
-    const char *color_str = color_str_array[(int) config_state];
     Cmdr.print("SUCCESS: Setting button 2 offset to ");
     Cmdr.println(myInt);
     current_config.button2_offset = myInt;
@@ -331,7 +352,6 @@ bool button3Handler(Commander &Cmdr)
 {
   if (Cmdr.getInt(myInt))
   {
-    const char *color_str = color_str_array[(int) config_state];
     Cmdr.print("SUCCESS: Setting button 3 offset to ");
     Cmdr.println(myInt);
     current_config.button3_offset = myInt;
@@ -344,7 +364,6 @@ bool ctrlChanHandler(Commander &Cmdr)
 {
   if (Cmdr.getInt(myInt))
   {
-    const char *color_str = color_str_array[(int) config_state];
     Cmdr.print("SUCCESS: Setting MIDI control channel to ");
     Cmdr.println(myInt);
     current_config.control_channel = myInt;
@@ -353,11 +372,15 @@ bool ctrlChanHandler(Commander &Cmdr)
   return true;
 }
 
-bool saveColorHandler(Commander &Cmdr)
+bool pbChanHandler(Commander &Cmdr)
 {
-  saveConfigToEEPROM(current_config, config_state);
-  const char *color_str = color_str_array[(int) config_state];
-  Cmdr.println("SUCCESS: Saved color handler");
+  if (Cmdr.getInt(myInt))
+  {
+    Cmdr.print("SUCCESS: Setting Pitchbend control channel to ");
+    Cmdr.println(myInt);
+    current_config.pitchbend_channel = myInt;
+    saveConfigToEEPROM(current_config, config_state);
+  }
   return true;
 }
 
@@ -365,7 +388,8 @@ bool exitHandler(Commander &Cmdr)
 {
   Cmdr.println("Saving settings!");
   Cmdr.println("Going down for reboot now!");
-  delay(5000);
+  delay(1000);
+  WriteConfigMode(false);
   softRestart();
   
   /* Will likely never get here, but harmless anyways */
@@ -377,7 +401,9 @@ bool defaultsHandler(Commander &Cmdr)
   config_t default_config;
 
   default_config.is_enabled = true;
-  default_config.root_note=24;
+  default_config.root_note = 0;
+  default_config.octave = 24;
+  default_config.pitchbend_channel = MIDI_CTRL_CHG_PITCHBEND;
   default_config.modifier = MOD_MAJOR;
   default_config.button1_offset = 3;
   default_config.button2_offset = 5;
@@ -392,6 +418,13 @@ bool defaultsHandler(Commander &Cmdr)
   return true;
 }
 
+bool memDumpHandler(Commander &Cmdr)
+{
+  memdumpEEPROM();
+  return true;  
+}
+
+
 void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
 {
   config_t print_config = loadConfigFromEEPROM(state);
@@ -405,12 +438,16 @@ void printConfig(Commander &Cmdr, rot_enc_state state, bool is_last_config)
   Cmdr.print(", \"offset3\": ");
   Cmdr.print(print_config.button3_offset);
 
-  Cmdr.print(",\"root\": ");
+  Cmdr.print(",\"octave\": ");
+  Cmdr.print(print_config.octave);
+  Cmdr.print(", \"root_note\": ");
   Cmdr.print(print_config.root_note);
   Cmdr.print(", \"mode\": \"");
   Cmdr.print(modifier_str_array[print_config.modifier]);
   
   Cmdr.print("\", \"control\": ");
   Cmdr.print(print_config.control_channel);  
+  Cmdr.print(", \"pitchbend\": ");
+  Cmdr.print(print_config.pitchbend_channel);
   Cmdr.print((is_last_config) ? "}" : "},");
 }

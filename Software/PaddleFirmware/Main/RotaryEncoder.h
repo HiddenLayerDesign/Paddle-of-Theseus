@@ -12,7 +12,7 @@
 
 #include "Arduino.h"
 
-#define ROT_ENC_MAX 255
+#define ROT_ENC_MAX 127
 #define ROT_ENC_MIN 0
 
 

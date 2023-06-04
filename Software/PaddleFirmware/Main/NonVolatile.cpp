@@ -34,7 +34,8 @@ const char *color_str_array[ROT_ENC_ENUM_SIZE] = {"BLUE",
 const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
                                              "MINOR",
                                              "MIXOLYDIAN",
-                                             "DORIAN"};
+                                             "DORIAN",
+                                             "CHROMATIC"};
 void CheckUpdateVersionNumber(void)
 {
   uint8_t eeprom_version_major  = EEPROM.read(EEPROM_VERSION_MAJOR_ADDRESS);
@@ -91,17 +92,19 @@ config_t loadConfigFromEEPROM(rot_enc_state state)
   int base_addr = config_addr_array[(int) state];
 
   /* fill out config_t */
-  return_config.is_enabled      = (bool) (0 == EEPROM.read(base_addr + MODE_ENABLED_ADDR)) ? false : true;
-  return_config.button1_offset  = (int) EEPROM.read(base_addr + CT1_DELTA_ADDR);
-  return_config.button2_offset  = (int) EEPROM.read(base_addr + CT2_DELTA_ADDR);
-  return_config.button3_offset  = (int) EEPROM.read(base_addr + CT3_DELTA_ADDR);
-  return_config.root_note       = (int) EEPROM.read(base_addr + ROOT_NOTE_ADDR);
-  return_config.control_channel = (int) EEPROM.read(base_addr + CTRL_CHAN_ADDR);
-  return_config.modifier        = (modifier_t) EEPROM.read(base_addr + SCALE_MOD_ADDR);
+  return_config.is_enabled        = (bool) (0 == EEPROM.read(base_addr + MODE_ENABLED_ADDR)) ? false : true;
+  return_config.button1_offset    = (int) EEPROM.read(base_addr + CT1_DELTA_ADDR);
+  return_config.button2_offset    = (int) EEPROM.read(base_addr + CT2_DELTA_ADDR);
+  return_config.button3_offset    = (int) EEPROM.read(base_addr + CT3_DELTA_ADDR);
+  return_config.root_note         = (int) EEPROM.read(base_addr + ROOT_NOTE_ADDR);
+  return_config.octave            = (int) EEPROM.read(base_addr + OCTAVE_ADDR);
+  return_config.control_channel   = (int) EEPROM.read(base_addr + CTRL_CHAN_ADDR);
+  return_config.pitchbend_channel = (int) EEPROM.read(base_addr + PB_CHAN_ADDR);
+  return_config.modifier          = (modifier_t) EEPROM.read(base_addr + SCALE_MOD_ADDR);
   if (return_config.modifier > MOD_LIMIT)
   {
     return_config.modifier = MOD_MAJOR;
-  }
+  }  
   
   return return_config;
 }
@@ -128,6 +131,15 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(": Writing root note = ");
     DEBUG_PRINTLN(in_config.root_note);
     EEPROM.write(base_addr + ROOT_NOTE_ADDR, in_config.root_note);  
+    retval = true;
+  } 
+
+  if (in_config.octave != EEPROM.read(base_addr + OCTAVE_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing octave = ");
+    DEBUG_PRINTLN(in_config.octave);
+    EEPROM.write(base_addr + OCTAVE_ADDR, in_config.octave);  
     retval = true;
   } 
 
@@ -175,5 +187,47 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     EEPROM.write(base_addr + CTRL_CHAN_ADDR, (int) in_config.control_channel);  
     retval = true;
   }
+
+  if (in_config.pitchbend_channel != EEPROM.read(base_addr + PB_CHAN_ADDR))
+  {
+    DEBUG_PRINT(color_str);
+    DEBUG_PRINT(": Writing Pitchbend control channel = ");
+    DEBUG_PRINTLN(in_config.pitchbend_channel);
+    EEPROM.write(base_addr + PB_CHAN_ADDR, (int) in_config.pitchbend_channel);  
+    retval = true;
+  }
+  
   return retval;  
+}
+
+void memdumpEEPROM(void)
+{
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("");
+  DEBUG_PRINTLN("*** DUMPING EEPROM ***");
+  uint8_t value;
+
+  for (int i=0; i <= EEPROM_LIMIT; i += 0x10 )
+  {
+    DEBUG_PRINT("0x");
+    DEBUG_PRINT_HEX(i);
+    if (i<0x10)
+    {
+      DEBUG_PRINT("0");
+    }
+    DEBUG_PRINT(": ");
+    for (int j=0; j < 0x10; j++)
+    {
+      value = EEPROM.read(i+j);
+      DEBUG_PRINT(" ");
+      if (value < 0x10)
+      {
+        DEBUG_PRINT("0");
+      }
+      DEBUG_PRINT_HEX(value);      
+    }
+    DEBUG_PRINTLN("");
+  }
+  DEBUG_PRINTLN("*** DONE ***");
+  DEBUG_PRINTLN("");
 }

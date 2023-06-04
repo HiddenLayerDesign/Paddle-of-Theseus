@@ -28,6 +28,8 @@
 #define SCALE_MOD_ADDR    (uint8_t) 4
 #define MODE_ENABLED_ADDR (uint8_t) 5
 #define CTRL_CHAN_ADDR    (uint8_t) 6
+#define OCTAVE_ADDR       (uint8_t) 7
+#define PB_CHAN_ADDR      (uint8_t) 8
 
 #define EEPROM_RED_BASE_ADDR (uint8_t) 0x70
 #define EEPROM_GREEN_BASE_ADDR (uint8_t) 0x60
@@ -37,17 +39,18 @@
 #define EEPROM_CYAN_BASE_ADDR (uint8_t) 0x20
 #define EEPROM_WHITE_BASE_ADDR (uint8_t) 0x10
 
+#define EEPROM_LIMIT EEPROM_RED_BASE_ADDR
+
 /**
  * Check this bit to know whether to go to config menu or regular operation
  */
-#define EEPROM_CONFIG_MODE_ADDRESS    (uint8_t) 100
-
+#define EEPROM_CONFIG_MODE_ADDRESS    (uint8_t) 0
 /**
  * Store the Paddle FW version in EEPROM
  */
-#define EEPROM_VERSION_MAJOR_ADDRESS  (uint8_t) 125
-#define EEPROM_VERSION_MINOR_ADDRESS  (uint8_t) 126
-#define EEPROM_VERSION_BUGFIX_ADDRESS (uint8_t) 127
+#define EEPROM_VERSION_MAJOR_ADDRESS  (uint8_t) 1
+#define EEPROM_VERSION_MINOR_ADDRESS  (uint8_t) 2
+#define EEPROM_VERSION_BUGFIX_ADDRESS (uint8_t) 3
 
 /**
  * 
@@ -58,6 +61,7 @@ enum modifier_t
   MOD_MINOR,
   MOD_MIXOLYDIAN,
   MOD_DORIAN,
+  MOD_CHROMATIC,
   MOD_LIMIT
 };
 
@@ -67,12 +71,14 @@ enum modifier_t
 typedef struct 
 {
   bool is_enabled;
-  int root_note;
+  uint8_t root_note;
   modifier_t modifier;
-  int button1_offset;
-  int button2_offset;
-  int button3_offset;
-  int control_channel;
+  uint8_t button1_offset;
+  uint8_t button2_offset;
+  uint8_t button3_offset;
+  uint8_t control_channel;
+  uint8_t octave;
+  uint8_t pitchbend_channel;
 } config_t;
 
 /**
@@ -115,6 +121,11 @@ void WriteConfigMode(bool is_config_mode_enabled);
  * @return config_t Struct filled out with the values from EEPROM
  */
 config_t loadConfigFromEEPROM(rot_enc_state state);
+
+/**
+ * print all EEPROM values
+ */
+void memdumpEEPROM(void);
 
 /**
  * Compare fields of `in_config` to values in EEPROM, overwrite EEPROM where they don't match

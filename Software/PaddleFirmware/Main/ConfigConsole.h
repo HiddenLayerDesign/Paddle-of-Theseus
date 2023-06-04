@@ -55,22 +55,22 @@ bool infoHandler(Commander &Cmdr);
 bool printConfigHandler(Commander &Cmdr);
 
 /**
- * Set the MIDI control channel
+ * Set the MIDI control channel for the current config
  */
 bool ctrlChanHandler(Commander &Cmdr);
 
 /**
- * Set the button1 delta
- */
+ * Set the button1 delta for the current config
+ */ 
 bool button1Handler(Commander &Cmdr);
 
 /**
- * Set the button2 delta
+ * Set the button2 delta for the current config
  */
 bool button2Handler(Commander &Cmdr);
 
 /**
- * Set the button3 delta
+ * Set the button3 delta for the current config
  */
 bool button3Handler(Commander &Cmdr);
 
@@ -78,11 +78,6 @@ bool button3Handler(Commander &Cmdr);
  * Select the current config to be worked on
  */
 bool selectColorHandler (Commander &Cmdr);
-
-/**
- * Save the current config to EEPROM
- */
-bool saveColorHandler(Commander &Cmdr);
 
 /**
  * Enable or disable the current config
@@ -100,14 +95,29 @@ bool defaultsHandler(Commander &Cmdr);
 bool rootNoteHandler(Commander &Cmdr);
 
 /**
+ * Set the octave for the current config
+ */
+bool octaveHandler(Commander &Cmdr);
+
+/**
  * Set the modifer for the current config
  */
 bool modifierHandler(Commander &Cmdr);
 
 /**
+ * Set the channel controlled by pitchbend for the current config
+ */
+bool pbChanHandler(Commander &Cmdr);
+
+/**
  * Send the heartbeat/ ID message
  */
 bool paddlePingHandler(Commander &Cmdr);
+
+/**
+ * memDump the EEPROM
+ */
+bool memDumpHandler(Commander &Cmdr);
 
 /**
  * Exit the menu and reboot
@@ -119,13 +129,16 @@ const commandList_t masterCommands[] = {
   {"all_config", printConfigHandler, "print all stored configuration, format is `all_config`"},
   {"enable",     colorEnableHandler,  "enable or disable this color, format is `enable=TRUE`"},
   {"color",      selectColorHandler, "select current config color, format is `color=CYAN`"},
-  {"root",       rootNoteHandler,    "set root note of scale, format is `root=A`"},
+  {"root_note",  rootNoteHandler,    "set root note of scale, format is `root=A`"},
+  {"octave",     octaveHandler,      "set root octave of scale, format is `octave=1`"},
   {"mode",       modifierHandler,    "set mode, format is `mode=MAJOR`"},
   {"offset1",    button1Handler,     "set button1 offset for this color, format is `offset1=3`"},
   {"offset2",    button2Handler,     "set button2 offset for this color, format is `offset2=5`"},
   {"offset3",    button3Handler,     "set button3 offset for this color, format is `offset3=7`"},
   {"control",    ctrlChanHandler,    "set MIDI control change idx for this color, format is `control=20`"},
+  {"pitchbend",  pbChanHandler,      "set Pitchbend control change idx for this color, format is `pitchbend=20`"},
   {"defaults",   defaultsHandler,    "reset all MIDI configs to default, format is `defaults`"},
+  {"memDump",    memDumpHandler,     "dump all memory in EEPROM"},
   {"paddlePing", paddlePingHandler,  "return `paddlePong`"},
   {"exit",       exitHandler,        "exit this menu and reboot, saving all settings. Format is `exit`"}
 };

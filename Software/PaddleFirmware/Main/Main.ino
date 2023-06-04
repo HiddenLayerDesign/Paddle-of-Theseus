@@ -4,10 +4,6 @@
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
  *  
- *  This design is built off of Teensy MIDI example code 
- *     Sparkfun code for the accelerometer
- *     and Seeed studio code for the Ultrasonic Rangefinder
- *  
  *  Note: You must select "Serial + MIDI" from the "Tools > USB Type" menu
  *  http://www.pjrc.com/teensy/td_midi.html
  *  
@@ -134,25 +130,37 @@ void setup()
     Serial.begin(9600);
     while (!Serial)
     {
-        if (PollForSerial(flip_time, is_green_not_yellow))
-        {
-          is_green_not_yellow = !is_green_not_yellow;
-          flip_time = millis() + 500;
-        }
+      if (PollForSerial(flip_time, is_green_not_yellow))
+      {
+        is_green_not_yellow = !is_green_not_yellow;
+        flip_time = millis() + 500;
       }
     }
     printBanner();
 #endif /* DEBUG */
 
-      /* Select the next enabled configuration */
-      do
-      {
-        encoder_state = (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
-        running_config = loadConfigFromEEPROM(encoder_state);
-      } while (!running_config.is_enabled);
+    int num_disabled_configs = 0;
+    /* Select the next enabled configuration */
+    encoder_state = (rot_enc_state) encoder_state;
+    
+    while (!running_config.is_enabled)
+    {
+      encoder_state = (rot_enc_state) ((encoder_state + 1) % ROT_ENC_ENUM_SIZE);
+      num_disabled_configs += 1;
 
+      if (num_disabled_configs == ROT_ENC_ENUM_SIZE)
+      {
+        encoder_state = ROT_ENC_BLUE;
+        running_config = loadConfigFromEEPROM(encoder_state);
+        running_config.is_enabled = true;
+        saveConfigToEEPROM(running_config, encoder_state);
+        break;
+      }
+    }
+    
+    running_config = loadConfigFromEEPROM(encoder_state);
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
-  }  
+  }
   accel.init();
   WriteConfigMode(false);
 }
@@ -203,9 +211,22 @@ void loop()
     prev_rot_button = curr_rot_button;
     
     /* Sample Rotary Encoder Twist Knob */
-    curr_enc_reading = rotEnc.read();
-    constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
-    
+    if (!is_lefty_flipped)
+    {
+      curr_enc_reading =  prev_enc_reading + (-1 * (rotEnc.read() - prev_enc_reading));
+      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+      rotEnc.write(constrained_enc_reading);
+    }
+    else
+    {
+      curr_enc_reading = rotEnc.read();
+      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
+      if (constrained_enc_reading != curr_enc_reading)
+      {
+        rotEnc.write(constrained_enc_reading);
+      }
+    }
+       
     if (constrained_enc_reading != prev_enc_reading)
     {
       usbMIDI.sendControlChange(running_config.control_channel, constrained_enc_reading, MIDI_CHANNEL_2);
@@ -256,12 +277,29 @@ void loop()
     curr_bend_val = SCALED_PITCH_BEND(range_in_cm);
     if (curr_bend_val!= prev_bend_val && abs(curr_bend_val- prev_bend_val) < MAX_PITCH_BEND_DELTA)
     {
-      usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
+      if (running_config.pitchbend_channel == MIDI_CTRL_CHG_PITCHBEND)
+      {
+        usbMIDI.sendPitchBend(curr_bend_val, MIDI_CHANNEL_2);
+      }
+      else if (running_config.pitchbend_channel < MIDI_CTRL_CHG_MAX)
+      {        
+        usbMIDI.sendControlChange(running_config.pitchbend_channel, ONEBYTE_SCALED_PITCH_BEND(range_in_cm), MIDI_CHANNEL_2);
+      }
+      else if (running_config.pitchbend_channel == MIDI_CTRL_CHG_INVAL)
+      {
+        // don't send pitchbend            
+      }
+      else // any invalid Control Change input value should be ignored
+      {
+        // also don't send pitchbend                    
+      }
+      
       prev_bend_val = curr_bend_val;
     }
   
     /* set volume */
     analog_volume = getVolume(is_lefty_flipped);
+    constrain(analog_volume, 0, 127);
     if (analog_volume < TEENSY_MIN_VOLUME)
     {
       analog_volume = 0;
@@ -327,13 +365,13 @@ static void configurePins(void)
  * Return the instrument volume, taking into account whether a left- or right-handed person is using the paddle
  * 
  * @param is_lefty_flipped [in] True == the paddle is currently lefty-flipped, else False
- * @return int Volume between 0-255 where 255 is MAX volume
+ * @return int Volume between 0-127 where 127 is MAX volume
  */
 int getVolume(bool is_lefty_flipped)
 {
   return (is_lefty_flipped) ?
-            floor(analogRead(TEENSY_ROT_POT_PIN) * 256.0/1024.0) :
-            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 256.0/1024.0);
+            floor(analogRead(TEENSY_ROT_POT_PIN) * 128.0/1024.0) :
+            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 128.0/1024.0);
 }
 
 /**
@@ -371,8 +409,8 @@ void printBanner(void)
  */
 void printLoopDebugInfo()
 {
-  DEBUG_PRINT("\rLoop Time: ");
-  DEBUG_PRINT(loop_micros);
+  DEBUG_PRINT("\rFret reading: ");
+  DEBUG_PRINT(analogRead(TEENSY_LIN_POT_PIN));
   DEBUG_PRINT(", volume: ");
   DEBUG_PRINT(analog_volume);
   DEBUG_PRINT("     ");
