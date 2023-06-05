@@ -1,3 +1,6 @@
 [submodule "Software/PaddleStub"]
 	path = Software/PaddleStub
 	url = git@github.com:HiddenLayerDesign/PaddleStub.git
+[submodule "Software/PaddleClient"]
+	path = Software/PaddleClient
+	url = git@github.com:HiddenLayerDesign/PaddleClient
