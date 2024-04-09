@@ -60,6 +60,8 @@ class QTouchBoard
     uint8_t QT1070ReadSingleReg(uint8_t reg);
     void QT1070WriteSingleReg(uint8_t reg, uint8_t value);
     void QT2120WriteSingleReg(uint8_t reg, uint8_t value);
+    uint8_t ReturnStrumKey(uint8_t ss0, uint8_t ss1, uint8_t ss2);
+    uint8_t ReturnFret(uint8_t ks0, uint8_t ks1, uint8_t ks2);
 };
 
 #endif  // __QTOUCHBOARD_HPP__

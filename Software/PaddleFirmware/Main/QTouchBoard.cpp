@@ -210,3 +210,85 @@ void QTouchBoard::QT1070WriteSingleReg(uint8_t reg, uint8_t value)
 {
   _WriteSingleReg(false, reg, value);  
 }
+
+ /**************************************************************************/
+/*!
+    @brief    Update _fret member with the highest fret currently pressed
+    @param    ks0
+              Output of AT42QT2120 status register LSB
+    @param    ks1
+              Output of AT42QT2120 status register MSB 
+    @param    ks2
+              Output of AT42QT1070 status register 
+*/
+/**************************************************************************/
+uint8_t QTouchBoard::ReturnFret(uint8_t ks0, uint8_t ks1, uint8_t ks2)
+{
+  // Efficiently check FretBoard status registers for highest pressed fret
+  uint8_t _fret = 0;
+
+  if (ks2)
+  {
+    if (ks2 & 0x40) _fret = 19;
+    else if (ks2 & 0x20) _fret = 18;
+    else if (ks2 & 0x10) _fret = 17;
+    else if (ks2 & 0x08) _fret = 16;
+    else if (ks2 & 0x04) _fret = 15;
+    else if (ks2 & 0x02) _fret = 14;
+    else if (ks2 & 0x01) _fret = 13;
+  }
+  else if (ks1)
+  {
+    if      (ks1 & 0x08) _fret = 12;
+    else if (ks1 & 0x04) _fret = 11;
+    else if (ks1 & 0x02) _fret = 10;
+    else if (ks1 & 0x01) _fret = 9;
+  }
+  else if (ks0)
+  {
+    if (ks0 & 0x80) _fret = 8;
+    else if (ks0 & 0x40) _fret = 7;
+    else if (ks0 & 0x20) _fret = 6;
+    else if (ks0 & 0x10) _fret = 5;
+    else if (ks0 & 0x08) _fret = 4;
+    else if (ks0 & 0x04) _fret = 3;
+    else if (ks0 & 0x02) _fret = 2;
+    else if (ks0 & 0x01) _fret = 1;
+    else _fret = 0;
+  }
+  return _fret;
+}
+
+/**************************************************************************/
+/*!
+    @brief    Update _key member with the set of keys currently pressed, if any
+    @param    ss0
+              Output of AT42QT2120 status register LSB
+    @param    ss1
+              Output of AT42QT2120 status register MSB 
+    @param    ss2
+              Output of AT42QT1070 status register 
+*/
+/**************************************************************************/
+uint8_t QTouchBoard::ReturnStrumKey(uint8_t ss0, uint8_t ss1, uint8_t ss2)
+{
+  uint8_t result = 0;
+
+  if (ss0 & 0x0F)
+  {
+    result |= 0x1;
+  }
+  if ((ss0 >> 4) & 0x0F)
+  {
+    result |= 0x2;
+  } 
+  if (ss1 & 0x0F)
+  {
+    result |= 0x4;
+  } 
+  if (ss2 & 0x0F)
+  {
+    result |= 0x8;
+  } 
+  return result;
+}

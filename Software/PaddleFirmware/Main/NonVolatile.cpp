@@ -12,7 +12,7 @@
 #include "Arduino.h"
 #include "Version.hpp"
 #include "NonVolatile.hpp"
-#include "TeensyBSP.hpp"
+#include "BoardLayout.hpp"
 
 
 int config_addr_array[ROT_ENC_ENUM_SIZE] = {EEPROM_BLUE_BASE_ADDR, 

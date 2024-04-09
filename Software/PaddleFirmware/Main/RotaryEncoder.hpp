@@ -61,4 +61,6 @@ void RotEncStandardPattern(void);
  */
 void RotEncConfigPattern(void);
 
+int32_t ProcessRotEnc(int32_t rotEncReading, bool IsLeftyFlipped);
+
 #endif // __ROT_ENC_HPP__

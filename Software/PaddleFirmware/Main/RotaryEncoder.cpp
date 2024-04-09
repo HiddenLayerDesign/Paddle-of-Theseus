@@ -15,9 +15,9 @@
 
 void RotEncSetLED(uint8_t color)
 {
-  digitalWrite(TEENSY_ROT_LEDR, color & 0x1);
-  digitalWrite(TEENSY_ROT_LEDG, color & 0x2);
-  digitalWrite(TEENSY_ROT_LEDB, color & 0x4);
+  digitalWrite(PIN_ROT_LEDR, color & 0x1);
+  digitalWrite(PIN_ROT_LEDG, color & 0x2);
+  digitalWrite(PIN_ROT_LEDB, color & 0x4);
 }
 
 void RotEncStandardPattern(void)
@@ -62,4 +62,10 @@ void RotEncErrorPattern(void)
   }
   RotEncSetLED(LED_OFF);
   delay(2000);  
+}
+
+int32_t ProcessRotEnc(int32_t rotEncReading, bool isLeftyFlipped)
+{
+  int32_t rotEnc = (isLeftyFlipped) ? rotEncReading : (-1 * rotEncReading) ;
+  return constrain(rotEnc, 0,255);
 }
