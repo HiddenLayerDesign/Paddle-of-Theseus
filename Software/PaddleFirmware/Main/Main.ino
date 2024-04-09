@@ -263,13 +263,33 @@ void loop()
       strum_keys = strumBoard.ReturnStrumKey(strumStatus0, strumStatus1, strumStatus2);
     }
   
+  
+    /* send notes if needed */
+    if (strum_keys & 0x01)
+    {
+      button0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+    }
+    if (strum_keys & 0x02)
+    {
+      button1.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
+    }
+    if (strum_keys & 0x04)
+    {
+      button2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
+    }
+    if (strum_keys & 0x08)
+    {
+      button3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
+    }
+    
+# if 0
+
     /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
     button0.Update(strum_keys & 0x01);
     button1.Update(strum_keys & 0x02);
     button2.Update(strum_keys & 0x04);
     button3.Update(strum_keys & 0x08);
-  
-    /* send notes if needed */
+
     if (button0.ShouldSendNote()) 
       button0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
     if (button1.ShouldSendNote()) 
@@ -278,6 +298,7 @@ void loop()
       button2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
     if (button3.ShouldSendNote())
       button3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+#endif  // 0
 
     /* Get Ultrasonic Distance sensor reading */
     if (micros() >= ping_time)
