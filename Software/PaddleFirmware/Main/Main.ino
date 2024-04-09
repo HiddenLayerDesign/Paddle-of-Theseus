@@ -145,6 +145,11 @@ void setup()
         flip_time = millis() + 500;
       }
     }
+    if (CrashReport) 
+    {
+      Serial.print(CrashReport);
+      delay(5000);
+    }
     printBanner();
 #endif /* DEBUG */
 
@@ -166,6 +171,16 @@ void setup()
         break;
       }
     }
+
+    Serial.println("*** Setup FretBoard ***");
+    Wire.begin();
+    fretBoard.begin(Wire);
+    Serial.println("*** Done ***");
+
+    Serial.println("*** Setup StrumBoard ***");
+    Wire1.begin();
+    strumBoard.begin(Wire1);
+    Serial.println("*** Done ***");
     
     running_config = loadConfigFromEEPROM(encoder_state);
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
@@ -356,7 +371,7 @@ static void configurePins(void)
   pinMode(PIN_FRET_2120_INT, INPUT);
   pinMode(PIN_STRUM_1070_INT, INPUT);
   pinMode(PIN_STRUM_2120_INT, INPUT);
-  
+
   pinMode(PIN_ROT_ENC_SW, INPUT);
   pinMode(PIN_ROT_POT, INPUT);
 

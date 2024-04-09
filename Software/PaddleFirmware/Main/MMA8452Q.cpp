@@ -36,14 +36,14 @@ Distributed as-is; no warranty is given.
  */
 byte readRegister(byte addressToRead)
 {
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToRead);
-  Wire.endTransmission(false); //endTransmission but keep the connection active
+  Wire1.beginTransmission(MMA8452Q_SLAVE_ADDR);
+  Wire1.write(addressToRead);
+  Wire1.endTransmission(false); //endTransmission but keep the connection active
 
-  Wire.requestFrom(MMA8452Q_SLAVE_ADDR, 1); //Ask for 1 byte, once done, bus is released by default
+  Wire1.requestFrom(MMA8452Q_SLAVE_ADDR, 1); //Ask for 1 byte, once done, bus is released by default
 
-  while(!Wire.available()) ; //Wait for the data to come back
-  return Wire.read(); //Return this one byte
+  while(!Wire1.available()) ; //Wait for the data to come back
+  return Wire1.read(); //Return this one byte
 }
 
 /** 
@@ -55,17 +55,17 @@ byte readRegister(byte addressToRead)
  */
 void readRegisters(byte addressToRead, int bytesToRead, byte * dest)
 {
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToRead);
-  Wire.endTransmission(false); //endTransmission but keep the connection active
+  Wire1.beginTransmission(MMA8452Q_SLAVE_ADDR);
+  Wire1.write(addressToRead);
+  Wire1.endTransmission(false); //endTransmission but keep the connection active
 
-  Wire.requestFrom(MMA8452Q_SLAVE_ADDR, bytesToRead); //Ask for bytes, once done, bus is released by default
+  Wire1.requestFrom(MMA8452Q_SLAVE_ADDR, bytesToRead); //Ask for bytes, once done, bus is released by default
 
-  while(Wire.available() < bytesToRead); //Hang out until we get the # of bytes we expect
+  while(Wire1.available() < bytesToRead); //Hang out until we get the # of bytes we expect
 
   for(int x = 0 ; x < bytesToRead ; x++)
   {
-    dest[x] = Wire.read();
+    dest[x] = Wire1.read();
   }    
 }
 
@@ -77,10 +77,10 @@ void readRegisters(byte addressToRead, int bytesToRead, byte * dest)
  */
 void writeRegister(byte addressToWrite, byte dataToWrite)
 {
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToWrite);
-  Wire.write(dataToWrite);
-  Wire.endTransmission(); //Stop transmitting
+  Wire1.beginTransmission(MMA8452Q_SLAVE_ADDR);
+  Wire1.write(addressToWrite);
+  Wire1.write(dataToWrite);
+  Wire1.endTransmission(); //Stop transmitting
 }
 
 /** 
@@ -106,7 +106,7 @@ void MMA8452Active()
  */
 MMA8452Q::MMA8452Q()
 {
-  Wire.begin();
+  Wire1.begin();
   _slave_addr = MMA8452Q_SLAVE_ADDR;
   x = 0;
   y = 0;
