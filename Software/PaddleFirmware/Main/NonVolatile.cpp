@@ -10,9 +10,9 @@
 #include<EEPROM.h>
 
 #include "Arduino.h"
-#include "Version.h"
-#include "NonVolatile.h"
-#include "TeensyBSP.h"
+#include "Version.hpp"
+#include "NonVolatile.hpp"
+#include "TeensyBSP.hpp"
 
 
 int config_addr_array[ROT_ENC_ENUM_SIZE] = {EEPROM_BLUE_BASE_ADDR, 

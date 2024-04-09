@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: MIDIConstants.h
+ *  File: MIDIConstants.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -11,8 +11,8 @@
  *  
  *******************************************************/
  
-#ifndef __MIDI_CONST_H__
-#define __MIDI_CONST_H__
+#ifndef __MIDI_CONST_HPP__
+#define __MIDI_CONST_HPP__
 
 /* MIDI Channel Constants */
 const int MIDI_CHANNEL_1  = 0;
@@ -103,4 +103,4 @@ const int CHROMATIC_DELTAS[MIDI_SCALE_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
                                           91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 
                                           105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 
                                           117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
-#endif /* __MIDI_CONST_H__ */
+#endif /* __MIDI_CONST_HPP__ */

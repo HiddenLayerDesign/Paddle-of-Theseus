@@ -13,18 +13,17 @@
 #include <Encoder.h>
 #include <NewPing.h>
 
-#include "Arduino.h"
-#include "MMA8452Q.h"
-#include "CapTouch.h"
-#include "ConfigConsole.h"
-#include "LinearPotentiometer.h"
-#include "MIDIConstants.h"
-#include "RotaryEncoder.h"
-#include "TeensyBSP.h"
-#include "Ultrasonic.h"
-#include "NonVolatile.h"
-#include "Version.h"
-#include "Preferences.h"
+#include "Arduino.hpp"
+#include "MMA8452Q.hpp"
+#include "ConfigConsole.hpp"
+#include "LinearPotentiometer.hpp"
+#include "MIDIConstants.hpp"
+#include "RotaryEncoder.hpp"
+#include "BoardLayout.hpp"
+#include "Ultrasonic.hpp"
+#include "NonVolatile.hpp"
+#include "Version.hpp"
+#include "Preferences.hpp"
 
 /* Static Prototypes */
 static int getVolume(bool is_lefty_flipped);

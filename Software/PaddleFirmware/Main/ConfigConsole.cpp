@@ -8,9 +8,9 @@
  *
  *******************************************************/
 #include "ConfigConsole.h"
-#include "NonVolatile.h"
-#include "RotaryEncoder.h"
-#include "MIDIConstants.h"
+#include "NonVolatile.hpp"
+#include "RotaryEncoder.hpp"
+#include "MIDIConstants.hpp"
 
 #define CHAR_CR 13
 #define TRUE_STR "TRUE"

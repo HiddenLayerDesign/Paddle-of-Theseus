@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: Preferences.h
+ *  File: Preferences.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,8 +7,8 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __PREFERENCES_H__
-#define __PREFERENCES_H__
+#ifndef __PREFERENCES_HPP__
+#define __PREFERENCES_HPP__
 
 //#define DEBUG // uncomment to enable printing variables for debug
 
@@ -27,4 +27,4 @@
 
 #define LED_PATTERN_NUM_REPEATS 4
 
-#endif /* __PREFERENCES_H__ */
+#endif /* __PREFERENCES_HPP__ */

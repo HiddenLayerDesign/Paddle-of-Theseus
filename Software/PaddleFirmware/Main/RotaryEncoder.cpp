@@ -9,9 +9,9 @@
  *******************************************************/
  
 #include "Arduino.h"
-#include "RotaryEncoder.h"
-#include "TeensyBSP.h"
-#include "Preferences.h"
+#include "RotaryEncoder.hpp"
+#include "BoardLayout.hpp"
+#include "Preferences.hpp"
 
 void RotEncSetLED(uint8_t color)
 {

@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: NonVolatile.h
+ *  File: NonVolatile.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,12 +7,12 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __NONVOLATILE_H__
-#define __NONVOLATILE_H__
+#ifndef __NONVOLATILE_HPP__
+#define __NONVOLATILE_HPP__
 
 #include "Arduino.h"
-#include "Version.h"
-#include "RotaryEncoder.h"
+#include "Version.hpp"
+#include "RotaryEncoder.hpp"
 
 /**
  * For now, let's keep everything within the TEENSY_LC limit for EEPROM (128B)
@@ -136,4 +136,4 @@ void memdumpEEPROM(void);
  */
 bool saveConfigToEEPROM(config_t in_config, rot_enc_state state);
 
-#endif /* __NONVOLATILE_H__ */
+#endif /* __NONVOLATILE_HPP__ */

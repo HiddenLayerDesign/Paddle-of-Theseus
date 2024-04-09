@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: Ultrasonic.h
+ *  File: Ultrasonic.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,8 +7,8 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __ULTRASONIC_H__
-#define __ULTRASONIC_H__
+#ifndef __ULTRASONIC_HPP__
+#define __ULTRASONIC_HPP__
 
 /**.
  * This file is now very barebones because the NewPing library is doing the heavy-lifting for the Ultrasonic firmware 

@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: Version.h
+ *  File: Version.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,8 +7,8 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __VERSION_H__
-#define __VERSION_H__
+#ifndef __VERSION_HPP__
+#define __VERSION_HPP__
 
 /**
  * Set these to set the SW version
@@ -23,4 +23,4 @@ typedef struct {
   uint8_t version_bugfix;
   } version_t;
 
-#endif /* __VERSION_H__ */
+#endif /* __VERSION_HPP__ */

@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: MMA8452Q.h
+ *  File: MMA8452Q.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,8 +7,8 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
-#ifndef __MMA8452Q_H__
-#define __MMA8452Q_H__
+#ifndef __MMA8452Q_HPP__
+#define __MMA8452Q_HPP__
  
 #include "Arduino.h"
 
@@ -40,4 +40,4 @@ class MMA8452Q
     uint8_t _slave_addr;
 };
 
-#endif /* __MMA8452Q_H__ */
+#endif /* __MMA8452Q_HPP__ */

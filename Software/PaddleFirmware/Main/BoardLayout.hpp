@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: TeensyBSP.h
+ *  File: BoardLayout.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,11 +7,11 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
-#ifndef __TEENSY_BSP_H__
-#define __TEENSY_BSP_H__
+#ifndef __TEENSY_BSP_HPP__
+#define __TEENSY_BSP_HPP__
 
 #include "Arduino.h"
-#include "Preferences.h"
+#include "Preferences.hpp"
 
 /**
  * Silence all printouts if not in DEBUG
@@ -72,4 +72,4 @@
 #define TEENSY_ROT_LEDG           2
 #define TEENSY_ROT_LEDR           1
 
-#endif /* __TEENSY_BSP_H__ */
+#endif /* __TEENSY_BSP_HPP__ */

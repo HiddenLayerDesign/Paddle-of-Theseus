@@ -21,11 +21,12 @@ This code is beerware; if you see me (or any other SparkFun employee) at the
 local, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
+#include <Wire.h>
 
 #include "Arduino.h"
-#include "MMA8452Q.h"
-#include "TeensyBSP.h"
-#include <Wire.h>
+
+#include "MMA8452Q.hpp"
+#include "BoardLayout.hpp"
 
 /**
  * Read a single byte from addressToRead and return it as a byte

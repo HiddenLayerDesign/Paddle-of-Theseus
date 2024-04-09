@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: RotaryEncoder.h
+ *  File: RotaryEncoder.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,8 +7,8 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
-#ifndef __ROT_ENC_H__
-#define __ROT_ENC_H__
+#ifndef __ROT_ENC_HPP__
+#define __ROT_ENC_HPP__
 
 #include "Arduino.h"
 
@@ -61,4 +61,4 @@ void RotEncStandardPattern(void);
  */
 void RotEncConfigPattern(void);
 
-#endif // __ROT_ENC_H__
+#endif // __ROT_ENC_HPP__
