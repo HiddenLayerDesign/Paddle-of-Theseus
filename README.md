@@ -7,7 +7,7 @@ Please take a look at [the Wiki](https://github.com/ChaseStewart/Paddle-of-These
 [Chase E Stewart](https://chasestewart.co) for [Hidden Layer Design](https://hiddenlayerdesign.com)
 
 ## Repository Contents
-* **/Software/PadleFirmware** - Software Arduino project to program the Teensy LC/4.0. This Teensy is the main microcontroller for this project, and uses input sensor data to output MIDI commands to an external controller.
+* **/Software/PadleFirmware** - Software Arduino project to program the Teensy 4.0. This Teensy is the main microcontroller for this project, and uses input sensor data to output MIDI commands to an external controller.
 * **/Software/ClientApp** - Software [FBS](https://build-system.fman.io/)-based [PyQt](https://riverbankcomputing.com/software/pyqt/) project that builds a GUI application to allow users to configure the Paddle's saved settings in EEPROM.
 * **/Software/StubPaddle** - Software Python program for ClientApp development to simulate a USB connection to the paddle. Requires a virtual COM port program on Windows to run.
 * **/Hardware/Fritzing**   - DEPRECATED Fritzing file for project Hardware _NOTE: HW Diagram uses a Teensy3.1 but I have verified proper function on Teensy4.0 and TeensyLC_
