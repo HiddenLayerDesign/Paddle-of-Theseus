@@ -12,6 +12,7 @@
  *
  */
 #include "QTouchBoard.hpp"
+#include "BoardLayout.hpp"
 
 /**************************************************************************/
 /*!
@@ -65,13 +66,13 @@ void QTouchBoard::_InitQT1070()
 {
   // Get Chip ID
   uint8_t chipId = _ReadSingleReg(false, REG_QT1070_CHIP_ID);
-  Serial.print("QT1070 chipId = 0x"); Serial.print(chipId, HEX); Serial.print(", should be 0x"); Serial.println(VAL_QT1070_CHIP_ID, HEX);
+  DEBUG_PRINT("QT1070 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT1070_CHIP_ID);
 
   // Get FW version
   uint8_t versionByte = _ReadSingleReg(false, REG_QT1070_VERSION);
   uint8_t versionMajor = (versionByte & 0xF0) >> 4;
   uint8_t versionMinor = (versionByte & 0x0F);
-  Serial.print("Firmware version = "); Serial.print(versionMajor); Serial.print("."); Serial.println(versionMinor);
+  DEBUG_PRINT("Firmware version = "); DEBUG_PRINT(versionMajor); DEBUG_PRINT("."); DEBUG_PRINTLN(versionMinor);
 
   // Set touch integration
   for (int i=0; i<7; i++)
@@ -93,13 +94,13 @@ void QTouchBoard::_InitQT2120()
 {
   // Get Chip ID
   uint8_t chipId = _ReadSingleReg(true, REG_QT2120_CHIP_ID);
-  Serial.print("QT2120 chipId = 0x"); Serial.print(chipId, HEX); Serial.print(", should be 0x"); Serial.println(VAL_QT2120_CHIP_ID, HEX);
+  DEBUG_PRINT("QT2120 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT2120_CHIP_ID);
 
   // Get FW version
   uint8_t versionByte = _ReadSingleReg(true, REG_QT2120_VERSION);
   uint8_t versionMajor = (versionByte & 0xF0) >> 4;
   uint8_t versionMinor = (versionByte & 0x0F);
-  Serial.print("Firmware version = "); Serial.print(versionMajor); Serial.print("."); Serial.println(versionMinor);
+  DEBUG_PRINT("Firmware version = "); DEBUG_PRINT(versionMajor); DEBUG_PRINT("."); DEBUG_PRINTLN(versionMinor);
 
   // Set touch integration
   _WriteSingleReg(true, 11, 4); // TODO revisit these settings
