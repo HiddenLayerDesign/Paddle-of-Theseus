@@ -182,5 +182,5 @@ void MMA8452Q::print_accel(void)
  */
 bool MMA8452Q::is_lefty_flipped(void)
 {
-  return (x < 0);
+  return (y > 0);
 }

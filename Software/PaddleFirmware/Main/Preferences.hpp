@@ -13,15 +13,15 @@
 //#define DEBUG // uncomment to enable printing variables for debug
 
 
-#define TEENSY_MIN_VOLUME 20
+#define TEENSY_MIN_VOLUME 10
 
 #define ULTRASONIC_PING_PERIOD (unsigned long) (3)
 
 #define MAX_PITCH_BEND_DELTA 1700
 
-#define CONFIG_HOLD_DURATION_MILLIS 5000
+#define CONFIG_HOLD_DURATION_MSEC 5000
 
-#define STRUM_BUTTON_DEBOUNCE_DELAY 10
+#define STRUM_BUTTON_DEBOUNCE_MSEC 10
 
 #define ROT_ENC_CTRL_CHANGE 0x16
 

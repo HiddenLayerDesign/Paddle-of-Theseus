@@ -172,15 +172,15 @@ void setup()
       }
     }
 
-    Serial.println("*** Setup FretBoard ***");
+    DEBUG_PRINTLN("*** Setup FretBoard ***");
     Wire.begin();
     fretBoard.begin(Wire);
-    Serial.println("*** Done ***");
+    DEBUG_PRINTLN("*** Done ***");
 
-    Serial.println("*** Setup StrumBoard ***");
+    DEBUG_PRINTLN("*** Setup StrumBoard ***");
     Wire1.begin();
     strumBoard.begin(Wire1);
-    Serial.println("*** Done ***");
+    DEBUG_PRINTLN("*** Done ***");
     
     running_config = loadConfigFromEEPROM(encoder_state);
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
@@ -246,7 +246,7 @@ void loop()
     prev_enc_reading = constrained_enc_reading;
   
     /* Read Fretboard */ 
-    if (fretBoard.isValueUpdate())
+    if (true) // TODO fix this to read from GPIO Interrupt pins
     {    
       keyStatus0 = fretBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_0);
       keyStatus1 = fretBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_1);
@@ -262,28 +262,7 @@ void loop()
       strumStatus2 = strumBoard.QT1070ReadSingleReg(REG_QT1070_KEY_STATUS_0);
       strum_keys = strumBoard.ReturnStrumKey(strumStatus0, strumStatus1, strumStatus2);
     }
-  
-  
-    /* send notes if needed */
-    if (strum_keys & 0x01)
-    {
-      button0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-    }
-    if (strum_keys & 0x02)
-    {
-      button1.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
-    }
-    if (strum_keys & 0x04)
-    {
-      button2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
-    }
-    if (strum_keys & 0x08)
-    {
-      button3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);      
-    }
-    
-# if 0
-
+     
     /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
     button0.Update(strum_keys & 0x01);
     button1.Update(strum_keys & 0x02);
@@ -298,7 +277,11 @@ void loop()
       button2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
     if (button3.ShouldSendNote())
       button3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-#endif  // 0
+
+    button0.CheckMIDINeedsUpdate();
+    button1.CheckMIDINeedsUpdate();
+    button2.CheckMIDINeedsUpdate();
+    button3.CheckMIDINeedsUpdate();
 
     /* Get Ultrasonic Distance sensor reading */
     if (micros() >= ping_time)

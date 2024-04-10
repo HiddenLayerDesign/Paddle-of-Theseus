@@ -74,7 +74,7 @@ StrumButton::StrumButton(strum_button_id id)
 {
   _id = id;
   array_idx = 0;
-  current_reading = LOW;
+  _current_reading = LOW;
   midi_needs_update= true;
   update_midi_msec = 0;
 
@@ -88,14 +88,15 @@ StrumButton::StrumButton(strum_button_id id)
 /**
  * Capture the readout of the sensor, update the state variables
  */
-void StrumButton::Update(bool current_reading)
+void StrumButton::Update(bool value)
 {
-  if (current_reading && midi_needs_update)
+  _current_reading = !value;
+  if (_current_reading && midi_needs_update)
   {
     press_time = millis();
   }
   
-  strum_button_array[array_idx] = current_reading;
+  strum_button_array[array_idx] = _current_reading;
   array_idx = (array_idx + 1) % STRUM_BUTTON_ARRAY_LEN;
 }
 
@@ -104,7 +105,7 @@ void StrumButton::Update(bool current_reading)
  */
 bool StrumButton::GetReading(void)
 {
-  return current_reading;
+  return _current_reading;
 }
 
 /**
@@ -117,7 +118,7 @@ void StrumButton::CheckMIDINeedsUpdate(void)
   {
     sum += strum_button_array[i]; 
   }
-  midi_needs_update= (!sum);
+  midi_needs_update = (!sum);
 }
 
 void StrumButton::SendNote(int fret, int analog_volume, bool is_lefty_flipped, config_t in_config)
@@ -125,7 +126,7 @@ void StrumButton::SendNote(int fret, int analog_volume, bool is_lefty_flipped, c
   current_note = getScaledNote(fret, _id, is_lefty_flipped, in_config);
   usbMIDI.sendNoteOff(previous_note, 0, MIDI_CHANNEL_2);   
   usbMIDI.sendNoteOn(current_note, analog_volume, MIDI_CHANNEL_2);
-  update_midi_msec  = millis() + STRUM_BUTTON_DEBOUNCE_DELAY;
+  update_midi_msec  = millis() + STRUM_BUTTON_DEBOUNCE_MSEC;
   midi_needs_update = false;
   previous_note = current_note;  
 }
@@ -145,6 +146,6 @@ bool StrumButton::IsLongHold(void)
     return false;
   }  
 
-  /* return whether StrumButton has been held for more than CONFIG_HOLD_DURATION_MILLIS msec */
-  return ((millis() - press_time) > CONFIG_HOLD_DURATION_MILLIS);
+  /* return whether StrumButton has been held for more than CONFIG_HOLD_DURATION_MSEC msec */
+  return ((millis() - press_time) > CONFIG_HOLD_DURATION_MSEC);
 }

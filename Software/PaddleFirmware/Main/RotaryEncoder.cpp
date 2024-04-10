@@ -66,6 +66,6 @@ void RotEncErrorPattern(void)
 
 int32_t ProcessRotEnc(int32_t rotEncReading, bool isLeftyFlipped)
 {
-  int32_t rotEnc = (isLeftyFlipped) ? rotEncReading : (-1 * rotEncReading) ;
-  return constrain(rotEnc, 0,255);
+  int32_t rotEnc = (isLeftyFlipped) ? (-1 * rotEncReading) : rotEncReading ;
+  return constrain(rotEnc, ROT_ENC_MIN, ROT_ENC_MAX);
 }

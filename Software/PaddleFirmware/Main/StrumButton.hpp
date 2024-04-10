@@ -38,12 +38,12 @@ class StrumButton
     unsigned long update_midi_msec;
     bool midi_needs_update;
     unsigned long press_time;
+    int strum_button_array[STRUM_BUTTON_ARRAY_LEN];
+    int _current_reading;
     
   private:
     strum_button_id _id;
-    int strum_button_array[STRUM_BUTTON_ARRAY_LEN];
     int array_idx;
-    int current_reading;
 };
 
 #endif /* __STRUM_BUTTON_HPP__ */
