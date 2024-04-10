@@ -37,11 +37,10 @@ const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
                                              "CHROMATIC"};
 void CheckUpdateVersionNumber(void)
 {
-  uint8_t eeprom_version_major  = EEPROM.read(EEPROM_VERSION_MAJOR_ADDRESS);
-  uint8_t eeprom_version_minor  = EEPROM.read(EEPROM_VERSION_MINOR_ADDRESS);
-  uint8_t eeprom_version_bugfix = EEPROM.read(EEPROM_VERSION_BUGFIX_ADDRESS);
-
-  /* Update VERSION bytes in EEPROM if needed */
+  /**
+   *  Update VERSION bytes in EEPROM 
+   *  unlike write(), update() will only write EEPROM if value would have changed
+   */
   EEPROM.update(EEPROM_VERSION_MAJOR_ADDRESS, VERSION_MAJOR);
   EEPROM.update(EEPROM_VERSION_MINOR_ADDRESS, VERSION_MINOR);
   EEPROM.update(EEPROM_VERSION_BUGFIX_ADDRESS, VERSION_BUGFIX);
@@ -91,7 +90,6 @@ config_t loadConfigFromEEPROM(rot_enc_state state)
   {
     return_config.modifier = MOD_MAJOR;
   }  
-  
   return return_config;
 }
 
