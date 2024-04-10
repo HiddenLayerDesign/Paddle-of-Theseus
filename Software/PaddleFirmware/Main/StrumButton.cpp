@@ -82,7 +82,6 @@ StrumButton::StrumButton(strum_button_id id)
   {
     strum_button_array[i] = 0;
   }
-
 }
 
 /**

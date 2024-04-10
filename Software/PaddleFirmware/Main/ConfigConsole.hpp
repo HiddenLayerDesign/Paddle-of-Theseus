@@ -11,8 +11,8 @@
 #define __CONFIG_CONSOLE_HPP__
 
 #include <Commander.h>
-#include "Arduino.h"
 
+#include "Arduino.h"
 #include "RotaryEncoder.hpp"
 
 extern Commander cmd;

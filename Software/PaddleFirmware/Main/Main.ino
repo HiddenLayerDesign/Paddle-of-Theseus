@@ -14,17 +14,17 @@
 #include <NewPing.h>
 
 #include "Arduino.h"
-#include "MMA8452Q.hpp"
+#include "BoardLayout.hpp"
 #include "ConfigConsole.hpp"
 #include "MIDIConstants.hpp"
+#include "MMA8452Q.hpp"
+#include "NonVolatile.hpp"
+#include "Preferences.hpp"
+#include "QTouchBoard.hpp"
 #include "RotaryEncoder.hpp"
-#include "BoardLayout.hpp"
 #include "StrumButton.hpp"
 #include "Ultrasonic.hpp"
-#include "NonVolatile.hpp"
-#include "QTouchBoard.hpp"
 #include "Version.hpp"
-#include "Preferences.hpp"
 
 /* Static Prototypes */
 static int getVolume(bool is_lefty_flipped);
@@ -235,8 +235,8 @@ void loop()
     prev_rot_button = curr_rot_button;
     
     /* Sample Rotary Encoder Twist Knob */
-  constrained_enc_reading = ProcessRotEnc(RotaryEncoder.read(), is_lefty_flipped); 
-  RotaryEncoder.write( (is_lefty_flipped) ? 
+    constrained_enc_reading = ProcessRotEnc(RotaryEncoder.read(), is_lefty_flipped); 
+    RotaryEncoder.write( (is_lefty_flipped) ? 
                        (-1 *constrained_enc_reading) : constrained_enc_reading);
        
     if (constrained_enc_reading != prev_enc_reading)
@@ -248,18 +248,18 @@ void loop()
     /* Read Fretboard */ 
     if (true) // TODO fix this to read from GPIO Interrupt pins
     {    
-      keyStatus0 = fretBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_0);
-      keyStatus1 = fretBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_1);
-      keyStatus2 = fretBoard.QT1070ReadSingleReg(REG_QT1070_KEY_STATUS_0);
+      keyStatus0 = fretBoard.GetLeastSigMask();
+      keyStatus1 = fretBoard.GetMiddleMask();
+      keyStatus2 = fretBoard.GetMostSigMask();
       current_fret = fretBoard.ReturnFret(keyStatus0, keyStatus1, keyStatus2);
     }
 
     /* Read Strumboard */
     if (strumBoard.isValueUpdate())
     {
-      strumStatus0 = strumBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_0);
-      strumStatus1 = strumBoard.QT2120ReadSingleReg(REG_QT2120_KEY_STATUS_1);
-      strumStatus2 = strumBoard.QT1070ReadSingleReg(REG_QT1070_KEY_STATUS_0);
+      strumStatus0 = strumBoard.GetLeastSigMask();
+      strumStatus1 = strumBoard.GetMiddleMask();
+      strumStatus2 = strumBoard.GetMostSigMask();
       strum_keys = strumBoard.ReturnStrumKey(strumStatus0, strumStatus1, strumStatus2);
     }
      
@@ -353,7 +353,9 @@ void loop()
      */ 
     while (usbMIDI.read()); 
     
+#ifdef DEBUG
     printLoopDebugInfo();
+#endif  /* DEBUG */
   }
 }
 
@@ -375,15 +377,15 @@ static void configurePins(void)
   pinMode(PIN_FRET_2120_INT, INPUT);
   pinMode(PIN_STRUM_1070_INT, INPUT);
   pinMode(PIN_STRUM_2120_INT, INPUT);
-
   pinMode(PIN_ROT_ENC_SW, INPUT);
   pinMode(PIN_ROT_POT, INPUT);
 
-  /* The rotary switch is common anode with external pulldown, do not turn on pullup */
-  pinMode(PIN_TEENSY_LED, OUTPUT);
+  /* The rotary switch LEDS are common anode with external pulldown */
   pinMode(PIN_ROT_LEDB, OUTPUT);
   pinMode(PIN_ROT_LEDG, OUTPUT);
   pinMode(PIN_ROT_LEDR, OUTPUT);  
+
+  pinMode(PIN_TEENSY_LED, OUTPUT);
 }
 
 /**
@@ -400,7 +402,7 @@ int getVolume(bool is_lefty_flipped)
 }
 
 /**
- * Just print a quick serial banner- this is to de-clutter setup()
+ * Just print a serial banner- this is to de-clutter setup()
  */
 void printBanner(void)
 {

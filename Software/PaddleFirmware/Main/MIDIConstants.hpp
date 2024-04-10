@@ -45,7 +45,6 @@ const int MIDI_CTRL_CHG_PITCHBEND  = 0xE0;
 const int MIDI_CTRL_CHG_MAX        = 0x7F;
 const int MIDI_CTRL_CHG_INVAL      = 0xFF;
 
-const int FRET_LEN = 29;
 const int MIDI_OCTAVE_LEN  = 7;
 const int MIDI_NUM_OCTAVES = 4;
 const int MIDI_SCALE_LEN = 128;

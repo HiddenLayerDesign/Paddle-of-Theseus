@@ -12,6 +12,7 @@
  *
  */
 #include "QTouchBoard.hpp"
+#include "I2CHandler.hpp"
 #include "BoardLayout.hpp"
 
 /**************************************************************************/
@@ -26,11 +27,13 @@
 QTouchBoard::QTouchBoard(int int1070, int int2120)
 {
   // set _i2cStream later in setup()
-  _intPin1070 = int1070;
-  _intPin2120 = int2120;
+  this->_intPin1070 = int1070;
+  this->_intPin2120 = int2120;
+  pinMode(this->_intPin1070, INPUT);
+  pinMode(this->_intPin2120, INPUT);
 
-  pinMode(_intPin1070, INPUT);
-  pinMode(_intPin2120, INPUT);
+  this->QT1070Handler = I2CHandler();
+  this->QT2120Handler = I2CHandler();
 }
 
 /**************************************************************************/
@@ -40,7 +43,8 @@ QTouchBoard::QTouchBoard(int int1070, int int2120)
 /**************************************************************************/
 void QTouchBoard::begin(TwoWire &inStream)
 {
-  _i2cStream = &inStream;
+  this->QT1070Handler.begin(inStream, QTOUCH1070_ADDR);
+  this->QT2120Handler.begin(inStream, QTOUCH2120_ADDR);
   initQTouch();
 }
 
@@ -65,24 +69,33 @@ void QTouchBoard::initQTouch()
 void QTouchBoard::_InitQT1070()
 {
   // Get Chip ID
-  uint8_t chipId = _ReadSingleReg(false, REG_QT1070_CHIP_ID);
-  DEBUG_PRINT("QT1070 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT1070_CHIP_ID);
+  uint8_t chipId = QT1070Handler.ReadSingleRegister(REG_QT1070_CHIP_ID);
+  if (chipId != VAL_QT2120_CHIP_ID)
+  {
+    DEBUG_PRINT("QT1070 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT1070_CHIP_ID);
+  }
 
   // Get FW version
-  uint8_t versionByte = _ReadSingleReg(false, REG_QT1070_VERSION);
+  uint8_t versionByte = QT1070Handler.ReadSingleRegister(REG_QT1070_VERSION);
   uint8_t versionMajor = (versionByte & 0xF0) >> 4;
   uint8_t versionMinor = (versionByte & 0x0F);
+
+#ifndef DEBUG
+  (void) versionMajor;
+  (void) versionMinor;
+#endif
+
   DEBUG_PRINT("Firmware version = "); DEBUG_PRINT(versionMajor); DEBUG_PRINT("."); DEBUG_PRINTLN(versionMinor);
 
   // Set touch integration
   for (int i=0; i<7; i++)
   {
-    _WriteSingleReg(false, i + REG_QT1070_INTEGRATION, 4); // TODO revisit these settings
-    _WriteSingleReg(false, i + REG_QT1070_AVE_AKS, 0x20); // TODO revisit these settings
+    QT1070Handler.WriteSingleRegister(i + REG_QT1070_INTEGRATION, 4); // TODO revisit these settings
+    QT1070Handler.WriteSingleRegister(i + REG_QT1070_AVE_AKS, 0x20); // TODO revisit these settings
   }
 
   // Set Low Power Mode
-  _WriteSingleReg(false, 54, 1); // TODO revisit these settings
+  QT1070Handler.WriteSingleRegister(54, 1); // TODO revisit these settings
 }
 
 /**************************************************************************/
@@ -93,71 +106,35 @@ void QTouchBoard::_InitQT1070()
 void QTouchBoard::_InitQT2120()
 {
   // Get Chip ID
-  uint8_t chipId = _ReadSingleReg(true, REG_QT2120_CHIP_ID);
-  DEBUG_PRINT("QT2120 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT2120_CHIP_ID);
+  uint8_t chipId = QT2120Handler.ReadSingleRegister(REG_QT2120_CHIP_ID);
+  if (chipId != VAL_QT2120_CHIP_ID)
+  {
+    DEBUG_PRINT("QT2120 chipId = 0x"); DEBUG_PRINT_HEX(chipId); DEBUG_PRINT(", should be 0x"); DEBUG_PRINTLN_HEX(VAL_QT2120_CHIP_ID);
+  }
 
   // Get FW version
-  uint8_t versionByte = _ReadSingleReg(true, REG_QT2120_VERSION);
+  uint8_t versionByte = QT2120Handler.ReadSingleRegister(REG_QT2120_VERSION);
   uint8_t versionMajor = (versionByte & 0xF0) >> 4;
   uint8_t versionMinor = (versionByte & 0x0F);
+
+#ifndef DEBUG
+  (void) versionMajor;
+  (void) versionMinor;
+#endif
+
   DEBUG_PRINT("Firmware version = "); DEBUG_PRINT(versionMajor); DEBUG_PRINT("."); DEBUG_PRINTLN(versionMinor);
 
   // Set touch integration
-  _WriteSingleReg(true, 11, 4); // TODO revisit these settings
+  QT2120Handler.WriteSingleRegister(11, 4); // TODO revisit these settings
 
   // Set drift hold time
-  _WriteSingleReg(true, 13, 3); // TODO revisit these settings
+  QT2120Handler.WriteSingleRegister(13, 3); // TODO revisit these settings
 
   // Set detect threshold
   for (int i=0; i<12; i++)
   {
-      _WriteSingleReg(true, 16+i, 19); // TODO revisit these settings
+      QT2120Handler.WriteSingleRegister(16+i, 19); // TODO revisit these settings
   } 
-}
-
-/**************************************************************************/
-/*!
-    @brief    Read a single AT42QTx register and return single byte of data
-    @param    isQTouch2120
-              True to communicate with QTOUCH2120_ADDR, else communicate with QTOUCH1070_ADDR 
-    @param    reg
-              Register address to read
-    @return   Value returned from I2C device at register address reg    
-*/
-/**************************************************************************/
-uint8_t QTouchBoard::_ReadSingleReg(bool isQTouch2120, uint8_t reg)
-{
-  uint8_t i2cAddr = (isQTouch2120) ? QTOUCH2120_ADDR : QTOUCH1070_ADDR;
-  
-  _i2cStream->beginTransmission(i2cAddr);
-  _i2cStream->write(reg);
-  _i2cStream->endTransmission(false); // endTransmission but keep the connection active
-
-  _i2cStream->requestFrom((int) i2cAddr, 1); // Ask for 1 byte, once done, bus is released by default
-
-  while(!_i2cStream->available()) ; // Wait for the data to come back
-  return _i2cStream->read(); // Return this one byte
-}
-
-/**************************************************************************/
-/*!
-    @brief    Write a single byte value to selected AT42QTx register reg
-    @param    isQTouch2120
-              True to communicate with QTOUCH2120_ADDR, else communicate with QTOUCH1070_ADDR 
-    @param    reg
-              Register address to write to
-    @param    value
-              Value to be written    
-*/
-/**************************************************************************/
-void QTouchBoard::_WriteSingleReg(bool isQTouch2120, uint8_t reg, uint8_t value)
-{
-  uint8_t i2cAddr = (isQTouch2120) ? QTOUCH2120_ADDR : QTOUCH1070_ADDR;
-  
-  _i2cStream->beginTransmission(i2cAddr);
-  _i2cStream->write(reg);
-  _i2cStream->write(value);
-  _i2cStream->endTransmission();
 }
 
 /**************************************************************************/
@@ -172,47 +149,24 @@ bool QTouchBoard::isValueUpdate()
   return (!digitalRead(_intPin1070) || !digitalRead(_intPin2120));
 }
 
-/**************************************************************************/
-/*!
-    @brief    Alias for reading register of QT2120
-*/
-/**************************************************************************/
-uint8_t QTouchBoard::QT2120ReadSingleReg(uint8_t reg)
+uint8_t QTouchBoard::GetMostSigMask(void)
 {
-  return _ReadSingleReg(true, reg); 
+  return QT1070Handler.ReadSingleRegister(REG_QT1070_KEY_STATUS_0);
 }
 
-/**************************************************************************/
-/*!
-    @brief    Alias for reading register of QT1070
-*/
-/**************************************************************************/
-uint8_t QTouchBoard::QT1070ReadSingleReg(uint8_t reg)
+uint8_t QTouchBoard::GetMiddleMask(void)
 {
-  return _ReadSingleReg(false, reg); 
+  return QT2120Handler.ReadSingleRegister(REG_QT2120_KEY_STATUS_1);
 }
 
-/**************************************************************************/
-/*!
-    @brief    Alias for writing register of QT2120
-*/
-/**************************************************************************/
-void QTouchBoard::QT2120WriteSingleReg(uint8_t reg, uint8_t value)
+uint8_t QTouchBoard::GetLeastSigMask(void)
 {
-  _WriteSingleReg(true, reg, value);  
+  return QT2120Handler.ReadSingleRegister(REG_QT2120_KEY_STATUS_0);
 }
 
-/**************************************************************************/
-/*!
-    @brief    Alias for writing register of QT1070
-*/
-/**************************************************************************/
-void QTouchBoard::QT1070WriteSingleReg(uint8_t reg, uint8_t value)
-{
-  _WriteSingleReg(false, reg, value);  
-}
 
- /**************************************************************************/
+
+/**************************************************************************/
 /*!
     @brief    Update _fret member with the highest fret currently pressed
     @param    ks0
