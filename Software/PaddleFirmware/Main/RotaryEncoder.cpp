@@ -13,6 +13,7 @@
 #include "BoardLayout.hpp"
 #include "Preferences.hpp"
 
+
 void RotEncSetLED(uint8_t color)
 {
   digitalWrite(PIN_ROT_LEDR, color & 0x1);
@@ -23,17 +24,17 @@ void RotEncSetLED(uint8_t color)
 void RotEncStandardPattern(void)
 {
   RotEncSetLED(LED_BLUE);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_PURPLE);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_GREEN);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_CYAN);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_RED);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_YELLOW);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_WHITE);
   delay(2000);  
 }

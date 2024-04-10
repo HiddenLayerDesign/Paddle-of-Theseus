@@ -97,12 +97,12 @@ void setup()
 {
   configurePins();    
   CheckUpdateVersionNumber();
-  
+
+  Serial.begin(9600);
+
   if (true == (is_config_mode = IsConfigModeEnabled()))
   {
     RotEncConfigPattern();
-
-    Serial.begin(9600);
     initializeCommander();
     
     while (!Serial)
@@ -136,7 +136,6 @@ void setup()
     flip_time = millis() + 500;
     is_green_not_yellow = true;
 
-    Serial.begin(9600);
     while (!Serial)
     {
       if (PollForSerial(flip_time, is_green_not_yellow))
@@ -145,6 +144,7 @@ void setup()
         flip_time = millis() + 500;
       }
     }
+
     if (CrashReport) 
     {
       Serial.print(CrashReport);
@@ -172,15 +172,10 @@ void setup()
       }
     }
 
-    DEBUG_PRINTLN("*** Setup FretBoard ***");
     Wire.begin();
     fretBoard.begin(Wire);
-    DEBUG_PRINTLN("*** Done ***");
-
-    DEBUG_PRINTLN("*** Setup StrumBoard ***");
     Wire1.begin();
     strumBoard.begin(Wire1);
-    DEBUG_PRINTLN("*** Done ***");
     
     running_config = loadConfigFromEEPROM(encoder_state);
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
@@ -188,6 +183,7 @@ void setup()
   accel.init();
   WriteConfigMode(false);
 }
+
 
 /*
  * Read all sensors, create and send MIDI messages as needed.
@@ -329,10 +325,10 @@ void loop()
       analog_volume = 0;
       if (prev_analog_volume >= TEENSY_MIN_VOLUME)
       {
-        usbMIDI.sendNoteOff(button0.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(button1.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(button2.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(button3.current_note, 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button0.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button1.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button2.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button3.GetCurrentNote(), 0, MIDI_CHANNEL_2);
       }
     }
     else
@@ -444,10 +440,10 @@ void printLoopDebugInfo()
 /**
  * Reset the Teensy in software
  */
-void softRestart() 
+void softRestart(void) 
 {
-  Serial.end();  //clears the serial monitor  if used
-  SCB_AIRCR = 0x05FA0004;  //write value for restart
+  Serial.end();  // clears the serial monitor  if used
+  REG_SCB_AIRCR = VAL_SCB_AIRCR_RESET;  // write value for restart
 }
 
 /**

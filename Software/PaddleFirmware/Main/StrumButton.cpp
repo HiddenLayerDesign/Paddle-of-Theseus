@@ -12,6 +12,8 @@
 #include "MIDIConstants.hpp"
 #include "BoardLayout.hpp"
 
+/* @todo a sort of "theory of operations" is owed here as to why so much internal state */
+
 static int getScaledNote(int fret, strum_button_id id, bool is_lefty_flipped, config_t in_config)
 {
   int delta;
@@ -72,15 +74,16 @@ static int getScaledNote(int fret, strum_button_id id, bool is_lefty_flipped, co
 
 StrumButton::StrumButton(strum_button_id id)
 {
-  _id = id;
-  array_idx = 0;
-  _current_reading = LOW;
-  midi_needs_update= true;
-  update_midi_msec = 0;
+  this->_id = id;
+  this->_array_idx = 0;
+  this->_current_reading = LOW;
+  this->_update_midi_msec = 0;
+  this->_press_time = 0;
+  this->_midi_needs_update= true;
 
   for (int i=0; i<STRUM_BUTTON_ARRAY_LEN; i++)
   {
-    strum_button_array[i] = 0;
+    _strum_button_array[i] = 0;
   }
 }
 
@@ -89,62 +92,82 @@ StrumButton::StrumButton(strum_button_id id)
  */
 void StrumButton::Update(bool value)
 {
-  _current_reading = !value;
-  if (_current_reading && midi_needs_update)
+  this->_current_reading = !value;
+  if (this->_current_reading && this->_midi_needs_update)
   {
-    press_time = millis();
+    this->_press_time = millis();
   }
   
-  strum_button_array[array_idx] = _current_reading;
-  array_idx = (array_idx + 1) % STRUM_BUTTON_ARRAY_LEN;
+  // set the reading into the array, increment the array modulo ARRAY_LEN
+  this->_strum_button_array[this->_array_idx] = this->_current_reading;
+  this->_array_idx = (this->_array_idx + 1) % STRUM_BUTTON_ARRAY_LEN;
 }
 
 /**
- * Return the current reading
+ * @brief Return the current reading
  */
 bool StrumButton::GetReading(void)
 {
-  return _current_reading;
+  return this->_current_reading;
 }
 
 /**
- * Return whether this reading is new 
+ * @brief Return whether this reading is new 
  */
 void StrumButton::CheckMIDINeedsUpdate(void)
 {
   int sum = 0;
   for (int i=0; i < STRUM_BUTTON_ARRAY_LEN; i++)
   {
-    sum += strum_button_array[i]; 
+    sum += this->_strum_button_array[i]; 
   }
-  midi_needs_update = (!sum);
+  this->_midi_needs_update = (!sum);
 }
 
+/**
+ * @brief Return current note
+ */
+uint8_t StrumButton::GetCurrentNote(void)
+{
+  return this->_current_note;
+}
+
+/**
+ * @brief Return previous note
+ */
+uint8_t StrumButton::GetPreviousNote(void)
+{
+  return this->_previous_note;
+}
+
+/**
+ * @brief Generate usbMIDI messages based on current note and volume
+ */
 void StrumButton::SendNote(int fret, int analog_volume, bool is_lefty_flipped, config_t in_config)
 {
-  current_note = getScaledNote(fret, _id, is_lefty_flipped, in_config);
-  usbMIDI.sendNoteOff(previous_note, 0, MIDI_CHANNEL_2);   
-  usbMIDI.sendNoteOn(current_note, analog_volume, MIDI_CHANNEL_2);
-  update_midi_msec  = millis() + STRUM_BUTTON_DEBOUNCE_MSEC;
-  midi_needs_update = false;
-  previous_note = current_note;  
+  this->_current_note = getScaledNote(fret, _id, is_lefty_flipped, in_config);
+  usbMIDI.sendNoteOff(this->_previous_note, 0, MIDI_CHANNEL_2);   
+  usbMIDI.sendNoteOn(this->_current_note, analog_volume, MIDI_CHANNEL_2);
+  this->_update_midi_msec  = millis() + STRUM_BUTTON_DEBOUNCE_MSEC;
+  this->_midi_needs_update = false;
+  this->_previous_note = this->_current_note;  
 }
 
 bool StrumButton::ShouldSendNote(void)
 {
   return (GetReading() && 
-          midi_needs_update && 
-          millis() > update_midi_msec);
+          this->_midi_needs_update && 
+          millis() > this->_update_midi_msec);
 }
 
 bool StrumButton::IsLongHold(void)
 {
   /* if StrumButton is not currently being held, then false */
-  if (midi_needs_update)
+  if (this->_midi_needs_update)
   {
     return false;
   }  
 
   /* return whether StrumButton has been held for more than CONFIG_HOLD_DURATION_MSEC msec */
-  return ((millis() - press_time) > CONFIG_HOLD_DURATION_MSEC);
+  return ((millis() - this->_press_time) > CONFIG_HOLD_DURATION_MSEC);
 }

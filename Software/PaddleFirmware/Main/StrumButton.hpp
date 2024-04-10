@@ -33,17 +33,19 @@ class StrumButton
     void CheckMIDINeedsUpdate(void);
     bool ShouldSendNote(void);
     bool IsLongHold(void);
-    int previous_note;
-    int current_note;
-    unsigned long update_midi_msec;
-    bool midi_needs_update;
-    unsigned long press_time;
-    int strum_button_array[STRUM_BUTTON_ARRAY_LEN];
-    int _current_reading;
-    
+    uint8_t GetCurrentNote(void);
+    uint8_t GetPreviousNote(void);
+
   private:
     strum_button_id _id;
-    int array_idx;
+    int _array_idx;
+    int _current_reading;
+    unsigned long _press_time;
+    unsigned long _update_midi_msec;
+    bool _midi_needs_update;
+    int _previous_note;
+    int _current_note;
+    int _strum_button_array[STRUM_BUTTON_ARRAY_LEN];
 };
 
 #endif /* __STRUM_BUTTON_HPP__ */

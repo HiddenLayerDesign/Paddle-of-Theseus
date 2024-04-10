@@ -14,7 +14,6 @@
 #include "NonVolatile.hpp"
 #include "BoardLayout.hpp"
 
-
 int config_addr_array[ROT_ENC_ENUM_SIZE] = {EEPROM_BLUE_BASE_ADDR, 
                                             EEPROM_CYAN_BASE_ADDR, 
                                             EEPROM_GREEN_BASE_ADDR, 
@@ -24,12 +23,12 @@ int config_addr_array[ROT_ENC_ENUM_SIZE] = {EEPROM_BLUE_BASE_ADDR,
                                             EEPROM_WHITE_BASE_ADDR};
 
 const char *color_str_array[ROT_ENC_ENUM_SIZE] = {"BLUE", 
-                                                      "CYAN", 
-                                                      "GREEN", 
-                                                      "PURPLE", 
-                                                      "RED", 
-                                                      "YELLOW", 
-                                                      "WHITE"};
+                                                  "CYAN", 
+                                                  "GREEN", 
+                                                  "PURPLE", 
+                                                  "RED", 
+                                                  "YELLOW", 
+                                                  "WHITE"};
 
 const char *modifier_str_array[MOD_LIMIT] = {"MAJOR",
                                              "MINOR",
@@ -42,23 +41,10 @@ void CheckUpdateVersionNumber(void)
   uint8_t eeprom_version_minor  = EEPROM.read(EEPROM_VERSION_MINOR_ADDRESS);
   uint8_t eeprom_version_bugfix = EEPROM.read(EEPROM_VERSION_BUGFIX_ADDRESS);
 
-  /* Update VERSION_MAJOR in EEPROM if needed */
-  if (eeprom_version_major != VERSION_MAJOR)
-  {
-    EEPROM.write(EEPROM_VERSION_MAJOR_ADDRESS, VERSION_MAJOR);
-  } 
-  
-  /* Update VERSION_MINOR in EEPROM if needed */
-  if (eeprom_version_minor != VERSION_MINOR) 
-  {
-    EEPROM.write(EEPROM_VERSION_MINOR_ADDRESS, VERSION_MINOR);
-  }
-  
-  /* Update VERSION_BUGFIX in EEPROM if needed */
-  if (eeprom_version_bugfix != VERSION_BUGFIX)
-  {
-    EEPROM.write(EEPROM_VERSION_BUGFIX_ADDRESS, VERSION_BUGFIX);
-  }
+  /* Update VERSION bytes in EEPROM if needed */
+  EEPROM.update(EEPROM_VERSION_MAJOR_ADDRESS, VERSION_MAJOR);
+  EEPROM.update(EEPROM_VERSION_MINOR_ADDRESS, VERSION_MINOR);
+  EEPROM.update(EEPROM_VERSION_BUGFIX_ADDRESS, VERSION_BUGFIX);
 }
 
 version_t GetVersionFromEEPROM(void)
@@ -82,7 +68,7 @@ void WriteConfigMode(bool is_config_mode_enabled)
   {
     DEBUG_PRINT("EEPROM: Writing config mode = ");
     DEBUG_PRINTLN((is_config_mode_enabled) ? "True " : "False");
-    EEPROM.write(EEPROM_CONFIG_MODE_ADDRESS, (int) is_config_mode_enabled);  
+    EEPROM.update(EEPROM_CONFIG_MODE_ADDRESS, (int) is_config_mode_enabled);  
   }
 }
 
@@ -121,7 +107,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing mode enabled = ");
     DEBUG_PRINTLN((in_config.is_enabled) ? "True " : "False");
-    EEPROM.write(base_addr + MODE_ENABLED_ADDR, (int) in_config.is_enabled);  
+    EEPROM.update(base_addr + MODE_ENABLED_ADDR, (int) in_config.is_enabled);  
     retval = true;
   } 
 
@@ -130,7 +116,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing root note = ");
     DEBUG_PRINTLN(in_config.root_note);
-    EEPROM.write(base_addr + ROOT_NOTE_ADDR, in_config.root_note);  
+    EEPROM.update(base_addr + ROOT_NOTE_ADDR, in_config.root_note);  
     retval = true;
   } 
 
@@ -139,7 +125,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing octave = ");
     DEBUG_PRINTLN(in_config.octave);
-    EEPROM.write(base_addr + OCTAVE_ADDR, in_config.octave);  
+    EEPROM.update(base_addr + OCTAVE_ADDR, in_config.octave);  
     retval = true;
   } 
 
@@ -148,7 +134,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing modifier = ");
     DEBUG_PRINTLN(in_config.modifier);
-    EEPROM.write(base_addr + SCALE_MOD_ADDR, (int) in_config.modifier);  
+    EEPROM.update(base_addr + SCALE_MOD_ADDR, (int) in_config.modifier);  
     retval = true;
   } 
 
@@ -157,7 +143,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing button1 delta = ");
     DEBUG_PRINTLN(in_config.button1_offset);
-    EEPROM.write(base_addr + CT1_DELTA_ADDR, (int) in_config.button1_offset);  
+    EEPROM.update(base_addr + CT1_DELTA_ADDR, (int) in_config.button1_offset);  
     retval = true;
   }
   
@@ -166,7 +152,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing button2 delta = ");
     DEBUG_PRINTLN(in_config.button2_offset);
-    EEPROM.write(base_addr + CT2_DELTA_ADDR, (int) in_config.button2_offset);  
+    EEPROM.update(base_addr + CT2_DELTA_ADDR, (int) in_config.button2_offset);  
     retval = true;
   }
   
@@ -175,7 +161,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing button3 delta = ");
     DEBUG_PRINTLN(in_config.button3_offset);
-    EEPROM.write(base_addr + CT3_DELTA_ADDR, (int) in_config.button3_offset);  
+    EEPROM.update(base_addr + CT3_DELTA_ADDR, (int) in_config.button3_offset);  
     retval = true;
   }
 
@@ -184,7 +170,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing MIDI control channel = ");
     DEBUG_PRINTLN(in_config.control_channel);
-    EEPROM.write(base_addr + CTRL_CHAN_ADDR, (int) in_config.control_channel);  
+    EEPROM.update(base_addr + CTRL_CHAN_ADDR, (int) in_config.control_channel);  
     retval = true;
   }
 
@@ -193,7 +179,7 @@ bool saveConfigToEEPROM(config_t in_config, rot_enc_state state)
     DEBUG_PRINT(color_str);
     DEBUG_PRINT(": Writing Pitchbend control channel = ");
     DEBUG_PRINTLN(in_config.pitchbend_channel);
-    EEPROM.write(base_addr + PB_CHAN_ADDR, (int) in_config.pitchbend_channel);  
+    EEPROM.update(base_addr + PB_CHAN_ADDR, (int) in_config.pitchbend_channel);  
     retval = true;
   }
   

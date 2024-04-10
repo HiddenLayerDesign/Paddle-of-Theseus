@@ -45,9 +45,8 @@ class QTouchBoard
   private:
     int _intPin1070;  ///< GPIO interrupt pin for AT42QT1070
     int _intPin2120;  ///< GPIO interrupt pin for AT42QT2120
-    I2CHandler QT2120Handler;
-    I2CHandler QT1070Handler;
-    
+    I2CHandler QT2120Handler;  ///< Handles I2C operations to AT42QT2120
+    I2CHandler QT1070Handler;  ///< Handles I2C operations to AT42QT1070
     void _InitQT1070(void);
     void _InitQT2120(void);
 

@@ -34,7 +34,9 @@
 #define DEBUG_PRINT_DEC3(x)
 #endif /* DEBUG */
 
-#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C) // Application Interrupt and Reset Control location for Teensy
+// Software Reset register and value
+#define REG_SCB_AIRCR (*(volatile uint32_t *)0xE000ED0C) // Application Interrupt and Reset Control location for Teensy
+#define VAL_SCB_AIRCR_RESET (0x05FA0004)
 
 //#define ULTRASONIC_PING // uncomment if using Parallax Ping ultrasonic Sensor
 #define INVERT_ROT_POT // uncomment if the rotary encoder turns the wrong way

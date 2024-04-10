@@ -15,10 +15,6 @@
 #include "RotaryEncoder.hpp"
 
 /**
- * For now, let's keep everything within the TEENSY_LC limit for EEPROM (128B)
- */
-
-/**
  * Store deltas between Keys
  */
 #define CT1_DELTA_ADDR    (uint8_t) 0
