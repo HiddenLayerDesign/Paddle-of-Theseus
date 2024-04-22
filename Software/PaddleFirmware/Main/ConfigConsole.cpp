@@ -7,10 +7,10 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#include "ConfigConsole.h"
-#include "NonVolatile.h"
-#include "RotaryEncoder.h"
-#include "MIDIConstants.h"
+#include "ConfigConsole.hpp"
+#include "NonVolatile.hpp"
+#include "RotaryEncoder.hpp"
+#include "MIDIConstants.hpp"
 
 #define CHAR_CR 13
 #define TRUE_STR "TRUE"
@@ -68,7 +68,7 @@ bool printConfigHandler(Commander &Cmdr)
     Cmdr.print("\"");
     Cmdr.print(color_str_array[i]);
     Cmdr.print("\": ");
-    printConfig(Cmdr, i, (i == ROT_ENC_ENUM_SIZE-1));
+    printConfig(Cmdr, (rot_enc_state) i, (i == ROT_ENC_ENUM_SIZE-1));
   }
   Cmdr.println("}}");
   return 0;
@@ -76,7 +76,7 @@ bool printConfigHandler(Commander &Cmdr)
 
 bool selectColorHandler(Commander &Cmdr)
 {
-  String compare = NULL;
+  String compare;
 
   if (!Cmdr.hasPayload())
   {
@@ -85,7 +85,7 @@ bool selectColorHandler(Commander &Cmdr)
   }
 
   compare = Cmdr.getPayloadString();
-  if ("" == compare.c_str())
+  if (0 == compare.length())
   {
     Cmdr.println("ERROR: This command needs a payload. Example: `color=BLUE`!");
     return false;  
@@ -133,7 +133,7 @@ bool selectColorHandler(Commander &Cmdr)
 
 bool colorEnableHandler(Commander &Cmdr)
 {
-  String compare = NULL;
+  String compare;
   const char *color_str = color_str_array[(int) config_state];
 
   if (!Cmdr.hasPayload())
@@ -143,7 +143,7 @@ bool colorEnableHandler(Commander &Cmdr)
   }
 
   compare = Cmdr.getPayloadString();
-  if ("" == compare.c_str())
+  if (0 == compare.length())
   {
     Cmdr.println("ERROR: This command needs a payload. Example: `enable=TRUE`!");
     return false;  
@@ -174,8 +174,7 @@ bool colorEnableHandler(Commander &Cmdr)
 bool rootNoteHandler(Commander &Cmdr)
 {
   int myInt;
-  const char *color_str = color_str_array[(int) config_state];
-  String compare = NULL;
+  String compare;
 
   if (!Cmdr.hasPayload())
   {
@@ -184,7 +183,7 @@ bool rootNoteHandler(Commander &Cmdr)
   }
 
   compare = Cmdr.getPayloadString();
-  if ("" == compare.c_str())
+  if (0 == compare.length())
   {
     Cmdr.println("ERROR: This command needs a payload. Example: `root=C#`!");
     return false;  
@@ -272,7 +271,7 @@ bool octaveHandler(Commander &Cmdr)
 
 bool modifierHandler(Commander &Cmdr)
 {
-  String compare = NULL;
+  String compare;
   
   if (!Cmdr.hasPayload())
   {
@@ -281,7 +280,7 @@ bool modifierHandler(Commander &Cmdr)
   }
 
   compare = Cmdr.getPayloadString();
-  if ("" == compare.c_str())
+  if (0 == compare.length())
   {
     Cmdr.println("ERROR: only accepted values are \"MAJOR\", \"MINOR\", \"PENT_MAJOR\", \"PENT_MINOR\"!");
     return false;  
@@ -412,7 +411,7 @@ bool defaultsHandler(Commander &Cmdr)
 
   for (int i=0; i < ROT_ENC_ENUM_SIZE; i++)
   {
-    saveConfigToEEPROM(default_config, i);
+    saveConfigToEEPROM(default_config, (rot_enc_state) i);
   }
   Cmdr.println("SUCCESS: Reset ALL configs to default values");
   return true;

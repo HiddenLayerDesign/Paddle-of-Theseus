@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: RotaryEncoder.h
+ *  File: RotaryEncoder.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,14 +7,13 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
-#ifndef __ROT_ENC_H__
-#define __ROT_ENC_H__
+#ifndef __ROT_ENC_HPP__
+#define __ROT_ENC_HPP__
 
 #include "Arduino.h"
 
 #define ROT_ENC_MAX 127
 #define ROT_ENC_MIN 0
-
 
 /* Enumeration of Settings that can be controlled by the rotary encoder */
 enum rot_enc_state 
@@ -33,15 +32,19 @@ enum rot_enc_state
  * LED RGB colors (assumes common anode, as for Sparkfun COM-10982) 
  * Set a given bit to zero to light the LED- so OFF is 0x7 and WHITE is 0x0
  */
-#define LED_OFF    0x7 //B111
-#define LED_RED    0x6 //B110
-#define LED_GREEN  0x5 //B101
-#define LED_BLUE   0x3 //B011
-#define LED_YELLOW 0x4 //B100
-#define LED_PURPLE 0x2 //B010
-#define LED_CYAN   0x1 //B001
-#define LED_WHITE  0x0 //B000
+#define LED_OFF    0x7  ///< B111 sets LED off
+#define LED_RED    0x6  ///< B110 sets LED red
+#define LED_GREEN  0x5  ///< B101 sets LED green
+#define LED_BLUE   0x3  ///< B011 sets LED blue
+#define LED_YELLOW 0x4  ///< B100 sets LED yellow
+#define LED_PURPLE 0x2  ///< B010 sets LED purple
+#define LED_CYAN   0x1  ///< B001 sets LED cyan
+#define LED_WHITE  0x0  ///< B000 sets LED white
 
+/**
+ * Color values that map to the rot_enc_state enum
+ * @todo this should become a struct that holds both together
+ */
 const int rot_enc_led_color_array[ROT_ENC_ENUM_SIZE] = {LED_BLUE, LED_CYAN, LED_GREEN, LED_PURPLE, LED_RED, LED_YELLOW, LED_WHITE};
 
 /**
@@ -61,4 +64,12 @@ void RotEncStandardPattern(void);
  */
 void RotEncConfigPattern(void);
 
-#endif // __ROT_ENC_H__
+/**
+ * Process the raw RotaryEncoder value returned by Encoder class, return result
+ *
+ * @param rotEncReading Raw int32_t value returned by Encoder class
+ * @param isLeftyFlipped True if currently lefty-oriented, else False
+ */
+int32_t ProcessRotEnc(int32_t rotEncReading, bool IsLeftyFlipped);
+
+#endif // __ROT_ENC_HPP__

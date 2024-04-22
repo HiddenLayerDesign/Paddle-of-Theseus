@@ -14,17 +14,17 @@
 #include <NewPing.h>
 
 #include "Arduino.h"
-#include "MMA8452Q.h"
-#include "CapTouch.h"
-#include "ConfigConsole.h"
-#include "LinearPotentiometer.h"
-#include "MIDIConstants.h"
-#include "RotaryEncoder.h"
-#include "TeensyBSP.h"
-#include "Ultrasonic.h"
-#include "NonVolatile.h"
-#include "Version.h"
-#include "Preferences.h"
+#include "BoardLayout.hpp"
+#include "ConfigConsole.hpp"
+#include "MIDIConstants.hpp"
+#include "MMA8452Q.hpp"
+#include "NonVolatile.hpp"
+#include "Preferences.hpp"
+#include "QTouchBoard.hpp"
+#include "RotaryEncoder.hpp"
+#include "StrumButton.hpp"
+#include "Ultrasonic.hpp"
+#include "Version.hpp"
 
 /* Static Prototypes */
 static int getVolume(bool is_lefty_flipped);
@@ -41,14 +41,18 @@ static void printBanner(void);
 #endif /* DEBUG */
 
 /* Sensor class variables */
-NewPing ultrasonic(TEENSY_ULTRA_TRIG_PIN, TEENSY_ULTRA_SENS_PIN, PITCH_BEND_MAX_CM+1);
-Encoder rotEnc(TEENSY_ROT_ENC_PIN_1, TEENSY_ROT_ENC_PIN_2);
-CapTouch capTouch0(TEENSY_CAP_TOUCH0_PIN, CAP_TOUCH_0);
-CapTouch capTouch1(TEENSY_CAP_TOUCH1_PIN, CAP_TOUCH_1);
-CapTouch capTouch2(TEENSY_CAP_TOUCH2_PIN, CAP_TOUCH_2);
-CapTouch capTouch3(TEENSY_CAP_TOUCH3_PIN, CAP_TOUCH_3);
+NewPing ultrasonic(PIN_ULTRA_TRIG, PIN_ULTRA_SENS, PITCH_BEND_MAX_CM+1);
+Encoder RotaryEncoder = Encoder(PIN_ROT_ENC_A, PIN_ROT_ENC_C);
+QTouchBoard fretBoard = QTouchBoard(PIN_FRET_1070_INT, PIN_FRET_2120_INT);
+QTouchBoard strumBoard = QTouchBoard(PIN_STRUM_1070_INT, PIN_STRUM_2120_INT);
+StrumButton button0 = StrumButton(STRUM_BUTTON_0);
+StrumButton button1 = StrumButton(STRUM_BUTTON_1);
+StrumButton button2 = StrumButton(STRUM_BUTTON_2);
+StrumButton button3 = StrumButton(STRUM_BUTTON_3);
+
 MMA8452Q accel;
 Commander cmd;
+
 int myInt = 0;
 float myFloat = 0.0;
 
@@ -63,8 +67,13 @@ int prev_bend_val = 0;
 int analog_volume = 0;
 int prev_analog_volume = 0;
 
+// QTouchBoard variables
+uint8_t strumStatus0, strumStatus1, strumStatus2;
+uint8_t keyStatus0, keyStatus1, keyStatus2;
+
 /* MIDI variables */
 int current_fret = 0;
+uint8_t strum_keys = 0;
 
 /* Rotary Encoder Variables */
 int curr_enc_reading = 0;
@@ -88,12 +97,12 @@ void setup()
 {
   configurePins();    
   CheckUpdateVersionNumber();
-  
+
+  Serial.begin(9600);
+
   if (true == (is_config_mode = IsConfigModeEnabled()))
   {
     RotEncConfigPattern();
-
-    Serial.begin(9600);
     initializeCommander();
     
     while (!Serial)
@@ -127,7 +136,6 @@ void setup()
     flip_time = millis() + 500;
     is_green_not_yellow = true;
 
-    Serial.begin(9600);
     while (!Serial)
     {
       if (PollForSerial(flip_time, is_green_not_yellow))
@@ -135,6 +143,12 @@ void setup()
         is_green_not_yellow = !is_green_not_yellow;
         flip_time = millis() + 500;
       }
+    }
+
+    if (CrashReport) 
+    {
+      Serial.print(CrashReport);
+      delay(5000);
     }
     printBanner();
 #endif /* DEBUG */
@@ -157,6 +171,11 @@ void setup()
         break;
       }
     }
+
+    Wire.begin();
+    fretBoard.begin(Wire);
+    Wire1.begin();
+    strumBoard.begin(Wire1);
     
     running_config = loadConfigFromEEPROM(encoder_state);
     RotEncSetLED(rot_enc_led_color_array[encoder_state]);
@@ -164,6 +183,7 @@ void setup()
   accel.init();
   WriteConfigMode(false);
 }
+
 
 /*
  * Read all sensors, create and send MIDI messages as needed.
@@ -184,13 +204,13 @@ void loop()
     is_lefty_flipped = accel.is_lefty_flipped();
   
     /* Sample Rotary Encoder Pushbutton */
-    curr_rot_button = digitalRead(TEENSY_ROT_ENC_BUTTON_PIN);
+    curr_rot_button = digitalRead(PIN_ROT_ENC_SW);
     if (curr_rot_button == HIGH && prev_rot_button == LOW)  
     {
       /**
        * Reboot into config mode if config gesture entered
        */
-      if (capTouch0.IsLongHold() && capTouch1.IsLongHold() && capTouch2.IsLongHold() && capTouch3.IsLongHold())
+      if ((strumBoard.ReturnStrumKey(strumStatus0, strumStatus1, strumStatus2) & 0x0F) == 0x0F)
       {
           DEBUG_PRINT("Setting Config Mode!");
           WriteConfigMode(true);
@@ -211,21 +231,9 @@ void loop()
     prev_rot_button = curr_rot_button;
     
     /* Sample Rotary Encoder Twist Knob */
-    if (!is_lefty_flipped)
-    {
-      curr_enc_reading =  prev_enc_reading + (-1 * (rotEnc.read() - prev_enc_reading));
-      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
-      rotEnc.write(constrained_enc_reading);
-    }
-    else
-    {
-      curr_enc_reading = rotEnc.read();
-      constrained_enc_reading = constrain(curr_enc_reading, ROT_ENC_MIN, ROT_ENC_MAX);
-      if (constrained_enc_reading != curr_enc_reading)
-      {
-        rotEnc.write(constrained_enc_reading);
-      }
-    }
+    constrained_enc_reading = ProcessRotEnc(RotaryEncoder.read(), is_lefty_flipped); 
+    RotaryEncoder.write( (is_lefty_flipped) ? 
+                       (-1 *constrained_enc_reading) : constrained_enc_reading);
        
     if (constrained_enc_reading != prev_enc_reading)
     {
@@ -233,31 +241,44 @@ void loop()
     }
     prev_enc_reading = constrained_enc_reading;
   
-    /* Read MIDI note from potentiometer */
-    current_fret = fret_from_lin_pot();
-  
+    /* Read Fretboard */ 
+    if (true) // TODO fix this to read from GPIO Interrupt pins
+    {    
+      keyStatus0 = fretBoard.GetLeastSigMask();
+      keyStatus1 = fretBoard.GetMiddleMask();
+      keyStatus2 = fretBoard.GetMostSigMask();
+      current_fret = fretBoard.ReturnFret(keyStatus0, keyStatus1, keyStatus2);
+    }
+
+    /* Read Strumboard */
+    if (strumBoard.isValueUpdate())
+    {
+      strumStatus0 = strumBoard.GetLeastSigMask();
+      strumStatus1 = strumBoard.GetMiddleMask();
+      strumStatus2 = strumBoard.GetMostSigMask();
+      strum_keys = strumBoard.ReturnStrumKey(strumStatus0, strumStatus1, strumStatus2);
+    }
+     
     /* Send note on debounced rising edge of TEENSY_CAP_TOUCH1_PIN */
-    capTouch0.Update();
-    capTouch1.Update();
-    capTouch2.Update();
-    capTouch3.Update();
-  
-    /* send notes if needed */
-    if (capTouch0.ShouldSendNote()) 
-      capTouch0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-    if (capTouch1.ShouldSendNote()) 
-      capTouch1.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-    if (capTouch2.ShouldSendNote())
-      capTouch2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-    if (capTouch3.ShouldSendNote())
-      capTouch3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
-  
-    /* Consider CapTouch sensors as triggered if any of last CAP_TOUCH_ARRAY_LEN samples were high */
-    capTouch0.CheckMIDINeedsUpdate();
-    capTouch1.CheckMIDINeedsUpdate();
-    capTouch2.CheckMIDINeedsUpdate();
-    capTouch3.CheckMIDINeedsUpdate();
-  
+    button0.Update(strum_keys & 0x01);
+    button1.Update(strum_keys & 0x02);
+    button2.Update(strum_keys & 0x04);
+    button3.Update(strum_keys & 0x08);
+
+    if (button0.ShouldSendNote()) 
+      button0.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+    if (button1.ShouldSendNote()) 
+      button1.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+    if (button2.ShouldSendNote())
+      button2.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+    if (button3.ShouldSendNote())
+      button3.SendNote(current_fret, analog_volume, is_lefty_flipped,running_config);
+
+    button0.CheckMIDINeedsUpdate();
+    button1.CheckMIDINeedsUpdate();
+    button2.CheckMIDINeedsUpdate();
+    button3.CheckMIDINeedsUpdate();
+
     /* Get Ultrasonic Distance sensor reading */
     if (micros() >= ping_time)
     {
@@ -293,7 +314,6 @@ void loop()
       {
         // also don't send pitchbend                    
       }
-      
       prev_bend_val = curr_bend_val;
     }
   
@@ -305,10 +325,10 @@ void loop()
       analog_volume = 0;
       if (prev_analog_volume >= TEENSY_MIN_VOLUME)
       {
-        usbMIDI.sendNoteOff(capTouch0.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(capTouch1.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(capTouch2.current_note, 0, MIDI_CHANNEL_2);
-        usbMIDI.sendNoteOff(capTouch3.current_note, 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button0.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button1.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button2.GetCurrentNote(), 0, MIDI_CHANNEL_2);
+        usbMIDI.sendNoteOff(button3.GetCurrentNote(), 0, MIDI_CHANNEL_2);
       }
     }
     else
@@ -329,7 +349,9 @@ void loop()
      */ 
     while (usbMIDI.read()); 
     
+#ifdef DEBUG
     printLoopDebugInfo();
+#endif  /* DEBUG */
   }
 }
 
@@ -347,18 +369,19 @@ static void pingCheck(void)
 static void configurePins(void)
 {
   /* Set input sensor pins */
-  pinMode(TEENSY_CAP_TOUCH0_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH1_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH2_PIN, INPUT);
-  pinMode(TEENSY_CAP_TOUCH3_PIN, INPUT);
-  pinMode(TEENSY_ROT_ENC_BUTTON_PIN, INPUT);
-  pinMode(TEENSY_ROT_POT_PIN, INPUT);
+  pinMode(PIN_FRET_1070_INT, INPUT);
+  pinMode(PIN_FRET_2120_INT, INPUT);
+  pinMode(PIN_STRUM_1070_INT, INPUT);
+  pinMode(PIN_STRUM_2120_INT, INPUT);
+  pinMode(PIN_ROT_ENC_SW, INPUT);
+  pinMode(PIN_ROT_POT, INPUT);
 
-  /* The rotary switch is common anode with external pulldown, do not turn on pullup */
-  pinMode(TEENSY_LED_PIN, OUTPUT);
-  pinMode(TEENSY_ROT_LEDB, OUTPUT);
-  pinMode(TEENSY_ROT_LEDG, OUTPUT);
-  pinMode(TEENSY_ROT_LEDR, OUTPUT);  
+  /* The rotary switch LEDS are common anode with external pulldown */
+  pinMode(PIN_ROT_LEDB, OUTPUT);
+  pinMode(PIN_ROT_LEDG, OUTPUT);
+  pinMode(PIN_ROT_LEDR, OUTPUT);  
+
+  pinMode(PIN_TEENSY_LED, OUTPUT);
 }
 
 /**
@@ -370,12 +393,12 @@ static void configurePins(void)
 int getVolume(bool is_lefty_flipped)
 {
   return (is_lefty_flipped) ?
-            floor(analogRead(TEENSY_ROT_POT_PIN) * 128.0/1024.0) :
-            floor((1024 - analogRead(TEENSY_ROT_POT_PIN)) * 128.0/1024.0);
+            floor(analogRead(PIN_ROT_POT) * 128.0/1024.0) :
+            floor((1024 - analogRead(PIN_ROT_POT)) * 128.0/1024.0);
 }
 
 /**
- * Just print a quick serial banner- this is to de-clutter setup()
+ * Just print a serial banner- this is to de-clutter setup()
  */
 void printBanner(void)
 {
@@ -409,9 +432,7 @@ void printBanner(void)
  */
 void printLoopDebugInfo()
 {
-  DEBUG_PRINT("\rFret reading: ");
-  DEBUG_PRINT(analogRead(TEENSY_LIN_POT_PIN));
-  DEBUG_PRINT(", volume: ");
+  DEBUG_PRINT("\rVolume: ");
   DEBUG_PRINT(analog_volume);
   DEBUG_PRINT("     ");
 }
@@ -419,10 +440,10 @@ void printLoopDebugInfo()
 /**
  * Reset the Teensy in software
  */
-void softRestart() 
+void softRestart(void) 
 {
-  Serial.end();  //clears the serial monitor  if used
-  SCB_AIRCR = 0x05FA0004;  //write value for restart
+  Serial.end();  // clears the serial monitor  if used
+  REG_SCB_AIRCR = VAL_SCB_AIRCR_RESET;  // write value for restart
 }
 
 /**

@@ -21,95 +21,41 @@ This code is beerware; if you see me (or any other SparkFun employee) at the
 local, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
-
-#include "Arduino.h"
-#include "MMA8452Q.h"
-#include "TeensyBSP.h"
 #include <Wire.h>
 
-/**
- * Read a single byte from addressToRead and return it as a byte
- * 
- * @param addressToRead [in] The address of the register to read
- * @return byte Value returned from register
- */
-byte readRegister(byte addressToRead)
-{
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToRead);
-  Wire.endTransmission(false); //endTransmission but keep the connection active
-
-  Wire.requestFrom(MMA8452Q_SLAVE_ADDR, 1); //Ask for 1 byte, once done, bus is released by default
-
-  while(!Wire.available()) ; //Wait for the data to come back
-  return Wire.read(); //Return this one byte
-}
-
-/** 
- * Read bytesToRead sequentially, starting at addressToRead into the dest byte array 
- * 
- * @param addressToRead [in] register address to read in the slave
- * @param bytesToRead [in] count of bytes to read 
- * @param dest [in/out] pointer to the destination for data
- */
-void readRegisters(byte addressToRead, int bytesToRead, byte * dest)
-{
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToRead);
-  Wire.endTransmission(false); //endTransmission but keep the connection active
-
-  Wire.requestFrom(MMA8452Q_SLAVE_ADDR, bytesToRead); //Ask for bytes, once done, bus is released by default
-
-  while(Wire.available() < bytesToRead); //Hang out until we get the # of bytes we expect
-
-  for(int x = 0 ; x < bytesToRead ; x++)
-  {
-    dest[x] = Wire.read();
-  }    
-}
-
-/** 
- * Writes a single byte (dataToWrite) into addressToWrite
- * 
- * @param addressToWrite [in] Register address for write destination
- * @param dataToWrite [in] Byte of data to write
- */
-void writeRegister(byte addressToWrite, byte dataToWrite)
-{
-  Wire.beginTransmission(MMA8452Q_SLAVE_ADDR);
-  Wire.write(addressToWrite);
-  Wire.write(dataToWrite);
-  Wire.endTransmission(); //Stop transmitting
-}
-
-/** 
- * Sets the MMA8452 to standby mode. It must be in standby to change most register settings 
- */
-void MMA8452Standby()
-{
-  byte c = readRegister(MMA8452Q_CTRL1_REG);
-  writeRegister(MMA8452Q_CTRL1_REG, c & ~(0x01)); //Clear the active bit to go into standby
-}
-
-/**
- *  Sets the MMA8452 to active mode. Needs to be in this mode to output data
- */
-void MMA8452Active()
-{
-  byte c = readRegister(MMA8452Q_CTRL1_REG);
-  writeRegister(MMA8452Q_CTRL1_REG, c | 0x01); //Set the active bit to begin detection
-}
+#include "Arduino.h"
+#include "MMA8452Q.hpp"
+#include "BoardLayout.hpp"
 
 /**
  * Instantiate class by opening wire connection and setting slave address
  */
 MMA8452Q::MMA8452Q()
 {
-  Wire.begin();
-  _slave_addr = MMA8452Q_SLAVE_ADDR;
-  x = 0;
-  y = 0;
-  z = 0;
+  this->_MMAHandler = I2CHandler();
+  Wire1.begin();
+  this->_MMAHandler.begin(Wire1, MMA8452Q_SLAVE_ADDR);
+  this->_x = 0;
+  this->_y = 0;
+  this->_z = 0;
+}
+
+/** 
+ * Sets the MMA8452 to standby mode. It must be in standby to change most register settings 
+ */
+void MMA8452Q::_MMA8452Standby(void)
+{
+  byte c = this->_MMAHandler.ReadSingleRegister(MMA8452Q_CTRL1_REG);
+  this->_MMAHandler.WriteSingleRegister(MMA8452Q_CTRL1_REG, c & ~(0x01)); //Clear the active bit to go into standby
+}
+
+/**
+ *  Sets the MMA8452 to active mode. Needs to be in this mode to output data
+ */
+void MMA8452Q::_MMA8452Active(void)
+{
+  byte c = this->_MMAHandler.ReadSingleRegister(MMA8452Q_CTRL1_REG);
+  this->_MMAHandler.WriteSingleRegister(MMA8452Q_CTRL1_REG, c | 0x01); //Set the active bit to begin detection
 }
 
 /**
@@ -119,7 +65,7 @@ MMA8452Q::MMA8452Q()
  */
 int8_t MMA8452Q::init(void)
 {
-  byte c = readRegister(MMA8452Q_WHOAMI_REG);  // Read WHOAMI register
+  byte c = this->_MMAHandler.ReadSingleRegister(MMA8452Q_WHOAMI_REG);  // Read WHOAMI register
   if (c == MMA8452Q_WHOAMI_VAL) // WHOAMI should always be 0x2A
   {  
     DEBUG_PRINTLN("INFO: MMA8452Q is online...");
@@ -132,17 +78,17 @@ int8_t MMA8452Q::init(void)
     return 0;
   }
   
-  MMA8452Standby();  // Must be in standby to change registers
+  this->_MMA8452Standby();  // Must be in standby to change registers
 
   // Set up the full scale range to 2, 4, or 8g.
   byte fsr = GSCALE;
   if(fsr > 8) fsr = 8; //Easy error check
   fsr >>= 2; // Neat trick, see page 22. 00 = 2G, 01 = 4A, 10 = 8G
-  writeRegister(MMA8452Q_XYZ_DATA_CFG_REG, fsr);
+  this->_MMAHandler.WriteSingleRegister(MMA8452Q_XYZ_DATA_CFG_REG, fsr);
 
   //The default data rate is 800Hz and we don't modify it in this example code
 
-  MMA8452Active();  // Set to active to start reading
+  this->_MMA8452Active();  // Set to active to start reading
   return 1;
 }
 
@@ -153,33 +99,39 @@ void MMA8452Q::accel_update()
 {
   byte rawData[6];  // x/y/z accel register data stored here
 
-  readRegisters(MMA8452Q_OUT_X_MSB_REG, 6, rawData);  // Read the six raw data registers into data array
+  this->_MMAHandler.ReadRegisters(MMA8452Q_OUT_X_MSB_REG, 6, rawData);  // Read the six raw data registers into data array
   
-  x = ((short)(rawData[0]<<8 | rawData[1])) >> 4;
-  y = ((short)(rawData[2]<<8 | rawData[3])) >> 4;
-  z = ((short)(rawData[4]<<8 | rawData[5])) >> 4;
+  this->_x = ((short)(rawData[0]<<8 | rawData[1])) >> 4;
+  this->_y = ((short)(rawData[2]<<8 | rawData[3])) >> 4;
+  this->_z = ((short)(rawData[4]<<8 | rawData[5])) >> 4;
 }
 
 /**
- * Diagnostic tool- does not play nice with DEBUG_PRINTLN
+ * Print the Acceleration
  */
 void MMA8452Q::print_accel(void)
 {  
     DEBUG_PRINT("\rINFO: X_ACCEL: ");
-    DEBUG_PRINT_DEC4(x);
+    DEBUG_PRINT_DEC4(this->_x);
+
     DEBUG_PRINT(", Y_ACCEL: ");
-    DEBUG_PRINT_DEC4(y);
+    DEBUG_PRINT_DEC4(this->_y);
+
     DEBUG_PRINT(", Z_ACCEL: ");
-    DEBUG_PRINT_DEC4(z);
+    DEBUG_PRINT_DEC4(this->_z);
+    DEBUG_PRINTLN("\n");
 }
 
 /**
- * accelerometer value of (x < 0) implies a left-handed person
+ * accelerometer value of (y > 0) implies a left-handed person
  * is using the instrument
+ *
+ * NOTE: Of course the lefty-flipped value depends on orientation of the MMA8452Q chip
+ * So final value of this is subject to the final install orientation of the project
  * 
  * @return bool True == The paddle is lefty flipped, else False
  */
 bool MMA8452Q::is_lefty_flipped(void)
 {
-  return (x < 0);
+  return (this->_y > 0);
 }

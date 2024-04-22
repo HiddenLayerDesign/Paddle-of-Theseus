@@ -9,31 +9,32 @@
  *******************************************************/
  
 #include "Arduino.h"
-#include "RotaryEncoder.h"
-#include "TeensyBSP.h"
-#include "Preferences.h"
+#include "RotaryEncoder.hpp"
+#include "BoardLayout.hpp"
+#include "Preferences.hpp"
+
 
 void RotEncSetLED(uint8_t color)
 {
-  digitalWrite(TEENSY_ROT_LEDR, color & 0x1);
-  digitalWrite(TEENSY_ROT_LEDG, color & 0x2);
-  digitalWrite(TEENSY_ROT_LEDB, color & 0x4);
+  digitalWrite(PIN_ROT_LEDR, color & 0x1);
+  digitalWrite(PIN_ROT_LEDG, color & 0x2);
+  digitalWrite(PIN_ROT_LEDB, color & 0x4);
 }
 
 void RotEncStandardPattern(void)
 {
   RotEncSetLED(LED_BLUE);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_PURPLE);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_GREEN);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_CYAN);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_RED);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_YELLOW);
-  delay(180);  
+  delay(120);  
   RotEncSetLED(LED_WHITE);
   delay(2000);  
 }
@@ -62,4 +63,10 @@ void RotEncErrorPattern(void)
   }
   RotEncSetLED(LED_OFF);
   delay(2000);  
+}
+
+int32_t ProcessRotEnc(int32_t rotEncReading, bool isLeftyFlipped)
+{
+  int32_t rotEnc = (isLeftyFlipped) ? (-1 * rotEncReading) : rotEncReading ;
+  return constrain(rotEnc, ROT_ENC_MIN, ROT_ENC_MAX);
 }

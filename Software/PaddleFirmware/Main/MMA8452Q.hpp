@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: MMA8452Q.h
+ *  File: MMA8452Q.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,10 +7,12 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)    
  *  
  *******************************************************/
-#ifndef __MMA8452Q_H__
-#define __MMA8452Q_H__
+#ifndef __MMA8452Q_HPP__
+#define __MMA8452Q_HPP__
  
 #include "Arduino.h"
+
+#include "I2CHandler.hpp"
 
 /* MMA8452Q Slave Addr and simple WHOAMI response */
 #define MMA8452Q_SLAVE_ADDR     0x1D
@@ -26,18 +28,20 @@
 
 class MMA8452Q
 {
+  private:
+    int8_t MMA8452Q_set_registers(void);
+    void _MMA8452Standby(void);
+    void _MMA8452Active(void);
+    float _x;
+    float _y;
+    float _z;
+    I2CHandler _MMAHandler;
   public:
     MMA8452Q(void);
     int8_t init(void);
     void accel_update(void);
     void print_accel(void);
     bool is_lefty_flipped(void);
-    float x;
-    float y;
-    float z;
-  private:
-    int8_t MMA8452Q_set_registers(); 
-    uint8_t _slave_addr;
 };
 
-#endif /* __MMA8452Q_H__ */
+#endif /* __MMA8452Q_HPP__ */

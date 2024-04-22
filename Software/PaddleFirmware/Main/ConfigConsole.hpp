@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: LinearPotentiometer.h
+ *  File: ConfigConsole.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,12 +7,13 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __CONFIG_CONSOLE_H__
-#define __CONFIG_CONSOLE_H__
+#ifndef __CONFIG_CONSOLE_HPP__
+#define __CONFIG_CONSOLE_HPP__
 
 #include <Commander.h>
+
 #include "Arduino.h"
-#include "RotaryEncoder.h"
+#include "RotaryEncoder.hpp"
 
 extern Commander cmd;
 extern int myInt;
@@ -143,4 +144,4 @@ const commandList_t masterCommands[] = {
   {"exit",       exitHandler,        "exit this menu and reboot, saving all settings. Format is `exit`"}
 };
 
-#endif /* __CONFIG_CONSOLE_H__ */
+#endif /* __CONFIG_CONSOLE_HPP__ */

@@ -1,5 +1,5 @@
 /******************************************************* 
- *  File: Ultrasonic.h
+ *  File: Ultrasonic.hpp
  *    
  *  Author: Chase E. Stewart
  *  For Hidden Layer Design
@@ -7,14 +7,14 @@
  *  License: Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
  *
  *******************************************************/
-#ifndef __ULTRASONIC_H__
-#define __ULTRASONIC_H__
+#ifndef __ULTRASONIC_HPP__
+#define __ULTRASONIC_HPP__
 
 /**.
  * This file is now very barebones because the NewPing library is doing the heavy-lifting for the Ultrasonic firmware 
  */
-#define PITCH_BEND_MAX_CM 30 // adjust this for sensitivity range of pitch bend
-#define PITCH_BEND_MIN_CM 2 // adjust this for sensitivity range of pitch bend
+#define PITCH_BEND_MAX_CM 30 ///< adjust this for sensitivity range of pitch bend
+#define PITCH_BEND_MIN_CM 2 ///< adjust this for sensitivity range of pitch bend
 
 /**
  * MIDI Pitch bend message accepts a 14-bit twos compliment value, 
@@ -29,6 +29,5 @@
  * If using pitch bend for another MIDI control code, the range is only 0-127
  */
 #define ONEBYTE_SCALED_PITCH_BEND(x) (int) (pow(2,7) * (PITCH_BEND_MAX_CM - x)  / PITCH_BEND_MAX_CM)  // Do not adjust!
-
 
 #endif // __ULTRASONIC_H__
